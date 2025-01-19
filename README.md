@@ -1,2 +1,2 @@
 # Spiderverse
-Spider bot... spider bot... does whatever a spider bot does.
+Spider bot... spider bot... does whatever a spider bot does!
