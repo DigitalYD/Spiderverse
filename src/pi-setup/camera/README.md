@@ -1,1 +1,1 @@
-This is for the camera codes that would be in here!
+Full this https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages this link has all you need to get the camera working. 

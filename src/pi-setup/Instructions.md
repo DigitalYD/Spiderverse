@@ -9,3 +9,10 @@ Ubuntu:
     laggy. So with the server you have eminlated the issue of a Graphical User Interface (GUI). Before anything you would have to get the
     PI 4 connected to the internet with the instructions in the |network| folder. This way you would want to install
     a VS Code Server that is using a localhost server. This would be in the |Server| folder.
+
+Overall:
+
+1. Get the Pi connected to the Internet
+2. Install the ROS2 Humble Hawksbill
+3. Install the camera software (Intel Realsense d435i)
+    a. test by "realsense-viewer"
