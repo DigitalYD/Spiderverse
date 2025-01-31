@@ -6,5 +6,6 @@ Raspbian:
 
 Ubuntu:
     You would need to have install Ubuntu Server 22.04 due to the Ubuntu Desktop is using up too much resources where it would be 
-    laggy. So with the server you have eminlated the issue of a Graphical User Interface (GUI). This way you would want to install
+    laggy. So with the server you have eminlated the issue of a Graphical User Interface (GUI). Before anything you would have to get the
+    PI 4 connected to the internet with the instructions in the |network| folder. This way you would want to install
     a VS Code Server that is using a localhost server. This would be in the |Server| folder.
