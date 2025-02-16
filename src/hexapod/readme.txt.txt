@@ -1,0 +1,1 @@
+All files are on the raspi4 in the hexapod. Does not sync with this repo.
