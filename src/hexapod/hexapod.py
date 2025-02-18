@@ -1,6 +1,9 @@
 import time
 import numpy as np
 from threading import Lock
+from leg import Leg
+from servo import Servo
+
 
 PI = np.pi
 DEGTORAD = np.radians(1)
@@ -9,9 +12,10 @@ MAXITER = 250
 
 
 class Hexapod:
-    def __init__(self):
+    def __init__(self, leg_configs):
         '''
             Initialize variables/controllers
+            Body-Level kinematics (gait, stability, coordination)
             modes: initialize, stand, walk, rotate, shutdown, calibration
             gaits: tripod, wave, ripple
 
@@ -27,12 +31,28 @@ class Hexapod:
             hook up legs 5 & 0 at pins 0 on the servoboard.
         '''
         self.max_speed = 1.0
+        self._legs = {}
+        
+        for leg_name, config, in leg_configs.items():
+            servos = [Servo(index) for index in config["servos"]]
+            offsets = config["offsets"]
+        
+        self._legs[leg_name, *servos, offsets]
 
+    def set_legOffsets(self, leg):
+        ''''''
+        self._legs[leg].set_offsets = {
+            "coxa" : [0,0,0],
+            "femur" : [0,0,0],
+            "tibia" : [0,0,0]
+        }
 
-    def move_leg(self, leg, angles):
+    def move(self):
         '''
             Move leg based on inverse kinematic angles
         '''
+        
+        pass
 
 
     def stand(self):

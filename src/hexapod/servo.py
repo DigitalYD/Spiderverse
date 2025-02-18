@@ -5,7 +5,7 @@ sys.path.append('../')
 from common.pca9685 import PCA9685
 
 
-class Servo(object):
+class Servo:
     def __init__(self, left_pca = 0x40, right_pca = 0x41, pulse_min = 500, pulse_max = 2500, freq = 60, debug=False):
         self.offset = [[0,0,0]] * 6 # make an array for offsets of lets
         self.pca_left = PCA9685(left_pca, debug)
