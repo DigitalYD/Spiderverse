@@ -6,13 +6,13 @@ from common.pca9685 import PCA9685
 
 
 class Servo:
-    def __init__(self, left_pca = 0x40, right_pca = 0x41, pulse_min = 500, pulse_max = 2500, freq = 60, debug=False):
-        self.offset = [[0,0,0]] * 6 # make an array for offsets of lets
+    def __init__(self, index, left_pca = 0x40, right_pca = 0x41, pulse_min = 500, pulse_max = 2500, freq = 60, debug=False):
+        self.servo_index = index
+        self.offset = [0,0,0] # make an array for offsets of legs
         self.pca_left = PCA9685(left_pca, debug)
         #self.right_pca = PCA9685(right_pca, debug)
         self.pulse_min = pulse_min
         self.pulse_max = pulse_max
-
         self.pulse_middle = (self.pulse_max + self.pulse_min)/2
 
         # set PWM
@@ -25,34 +25,14 @@ class Servo:
     def set_offset(self, offset):
         self.offset = offset
 
-    def set_angle(self, leg_index, servo_index, kin_angle):
-        # left rear -> left front, right front -> right rear. (clockwise)
-
-        if leg_index == 0:
-            index = 0 + servo_index
+    def set_angle(self, servo_index, kin_angle):
+        if self.servo_index <= 8:
             pca = self.pca_left
-        elif leg_index == 1:
-            index = 3 + servo_index
-            pca = self.pca_left
-        elif leg_index == 2:
-            index = 6 + servo_index
-            pca = self.pca_left
-        elif leg_index == 3:
-            index = 6 + servo_index
-            #pca = self.right_pca
-        elif leg_index == 4:
-            index = 3 + servo_index
-            #pca = self.right_pca
-        elif leg_index == 5:
-            index = 0 + servo_index
-            #pca = self.right_pca
-        else:
-            raise ValueError
-
-        kin_angle_corr = kin_angle + self.offset[leg_index][servo_index]
+        
+        kin_angle_corr = kin_angle + self.offset
         inverse = -1 if servo_index == 1 else 1
         pulse = self.angle2pulse(kin_angle_corr, inverse)
-        pca.setServoPulse(index, pulse)
+        pca.setServoPulse(servo_index, pulse)
 
 # Test servos by testing "legs" (Note only testing 1 leg)
 '''
