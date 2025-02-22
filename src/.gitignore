@@ -1,0 +1,5 @@
+src/camera/stream_ws/src/realsense-ros
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
