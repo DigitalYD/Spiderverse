@@ -1,7 +1,8 @@
 from math import sin, cos, pi, atan2, sqrt, acos
+from leg_configs import leg_configs
 
 class Leg:
-    def __init__(self, name:str, leg_index, coxa:int, femur:int, tibia:int, offsets=None):
+    def __init__(self, name:str, leg_index:int, coxa:int, femur:int, tibia:int, offsets=None):
         '''
             Each leg is comprised of a coxa, femur, tibia
             ie: servo0: coxa (forward/back)
@@ -11,7 +12,7 @@ class Leg:
         '''
         super().__init__()
         self.name = name
-        
+        self.leg_index = leg_index
         self.servos = {
             "coxa" : coxa,
             "femur" : femur,
@@ -60,8 +61,7 @@ class Leg:
             return self._offsets[joint]
         else:
             raise ValueError(f"Invalid joint name: {joint}")
-        
-        
+
     def forward_kinematics(self, target_x, target_y, target_z):
         '''
             Implement forward kinematics for leg movement

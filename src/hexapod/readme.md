@@ -1,0 +1,38 @@
+## Hexapod measurements
+
+
+https://github.com/Auc7us/Auc7us_v0.1/blob/master/robot/core.py
+
+## useful but no clue on how it works
+https://github.com/Valthoron/hexapod-mk1-python/blob/master/GaitControllers/PeriodicDisplacement.py
+https://oscarliang.com/inverse-kinematics-implementation-hexapod-robots/
+
+https://www.youtube.com/@asodemann3/videos
+
+
+
+https://www.youtube.com/watch?v=3RHg6OJLYhM
+Robotics1 U1 (Kinematics) S6 (Inverse Kinematics) P1
+
+https://www.youtube.com/watch?v=D93iQVoSScQ
+Inverse kinematics of Articulated manipulator
+
+
+https://www.youtube.com/watch?v=MJIe1nkX_Xk
+https://github.com/PhilippSchulzGit/Hexapod-MK2/blob/main/Inverse%20Kinematics/Transformations%20MK2.0%20-%20Frames.pdf
+Hexapod MK2 -Inverse Kinematics
+
+## useful but in c++
+https://github.com/bgreer/HEX/blob/master/LIB_HEXAPOD/hexapod.cpp
+
+## somewhat helpful
+
+## includes virtualization
+https://github.com/ViolinLee/PiHexa18/blob/master/pihexa/leg.py#L86 
+
+
+## not really useful
+https://github.com/Valthoron/hexapod-mk1-python/blob/master/Hexapod.py
+
+## Took the "Adafruit Servo driver" from here
+https://github.com/daavidee/hexapod/blob/master/Adafruit_PWM_Servo_Driver.py
