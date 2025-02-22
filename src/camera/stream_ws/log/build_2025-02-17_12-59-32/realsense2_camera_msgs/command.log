@@ -1,0 +1,4 @@
+Invoking command in '/home/king/stream_ws/build/realsense2_camera_msgs': /usr/bin/cmake --build /home/king/stream_ws/build/realsense2_camera_msgs -- -j4 -l4
+Invoked command in '/home/king/stream_ws/build/realsense2_camera_msgs' returned '0': /usr/bin/cmake --build /home/king/stream_ws/build/realsense2_camera_msgs -- -j4 -l4
+Invoking command in '/home/king/stream_ws/build/realsense2_camera_msgs': /usr/bin/cmake --install /home/king/stream_ws/build/realsense2_camera_msgs
+Invoked command in '/home/king/stream_ws/build/realsense2_camera_msgs' returned '0': /usr/bin/cmake --install /home/king/stream_ws/build/realsense2_camera_msgs

@@ -1,0 +1,52 @@
+[0.054s] Invoking command in '/home/king/stream_ws/build/realsense2_description': AMENT_PREFIX_PATH=/home/king/stream_ws/install/realsense2_camera_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/king/stream_ws/install/realsense2_camera_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/king/stream_ws/install/realsense2_camera_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/king/stream_ws/install/realsense2_camera_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --build /home/king/stream_ws/build/realsense2_description -- -j4 -l4
+[0.210s] Invoked command in '/home/king/stream_ws/build/realsense2_description' returned '0': AMENT_PREFIX_PATH=/home/king/stream_ws/install/realsense2_camera_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/king/stream_ws/install/realsense2_camera_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/king/stream_ws/install/realsense2_camera_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/king/stream_ws/install/realsense2_camera_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --build /home/king/stream_ws/build/realsense2_description -- -j4 -l4
+[0.212s] Invoking command in '/home/king/stream_ws/build/realsense2_description': AMENT_PREFIX_PATH=/home/king/stream_ws/install/realsense2_camera_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/king/stream_ws/install/realsense2_camera_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/king/stream_ws/install/realsense2_camera_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/king/stream_ws/install/realsense2_camera_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --install /home/king/stream_ws/build/realsense2_description
+[0.256s] -- Install configuration: ""
+[0.257s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/launch
+[0.259s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/launch/launch_utils.py
+[0.260s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/launch/view_model.launch.py
+[0.262s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/meshes
+[0.263s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/meshes/d405.stl
+[0.264s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/meshes/d435.dae
+[0.266s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/meshes/plug_collision.stl
+[0.268s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/meshes/d455.stl
+[0.269s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/meshes/plug.stl
+[0.271s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/meshes/d415.stl
+[0.273s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/meshes/l515.dae
+[0.274s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/rviz
+[0.276s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/rviz/urdf.rviz
+[0.277s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf
+[0.279s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/_r430.urdf.xacro
+[0.281s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/test_r410_camera.urdf.xacro
+[0.282s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/_materials.urdf.xacro
+[0.286s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/test_d415_camera.urdf.xacro
+[0.287s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/test_d435_multiple_cameras.urdf.xacro
+[0.289s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/test_d455_camera.urdf.xacro
+[0.292s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/_d405.urdf.xacro
+[0.293s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/_d435i_imu_modules.urdf.xacro
+[0.297s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/_usb_plug.urdf.xacro
+[0.298s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/test_d405_camera.urdf.xacro
+[0.298s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/_r410.urdf.xacro
+[0.299s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/test_d435i_camera.urdf.xacro
+[0.305s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/_d455.urdf.xacro
+[0.306s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/_d415.urdf.xacro
+[0.307s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/test_d435_camera.urdf.xacro
+[0.310s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/test_r430_camera.urdf.xacro
+[0.311s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/_d435.urdf.xacro
+[0.312s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/urdf/_d435i.urdf.xacro
+[0.313s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/ament_index/resource_index/package_run_dependencies/realsense2_description
+[0.315s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/ament_index/resource_index/parent_prefix_path/realsense2_description
+[0.316s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/environment/ament_prefix_path.sh
+[0.317s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/environment/ament_prefix_path.dsv
+[0.317s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/environment/path.sh
+[0.318s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/environment/path.dsv
+[0.319s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/local_setup.bash
+[0.325s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/local_setup.sh
+[0.326s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/local_setup.zsh
+[0.326s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/local_setup.dsv
+[0.327s] -- Installing: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/package.dsv
+[0.328s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/ament_index/resource_index/packages/realsense2_description
+[0.328s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/cmake/realsense2_descriptionConfig.cmake
+[0.329s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/cmake/realsense2_descriptionConfig-version.cmake
+[0.330s] -- Up-to-date: /home/king/stream_ws/install/realsense2_description/share/realsense2_description/package.xml
+[0.332s] Invoked command in '/home/king/stream_ws/build/realsense2_description' returned '0': AMENT_PREFIX_PATH=/home/king/stream_ws/install/realsense2_camera_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/king/stream_ws/install/realsense2_camera_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/king/stream_ws/install/realsense2_camera_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/king/stream_ws/install/realsense2_camera_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --install /home/king/stream_ws/build/realsense2_description
