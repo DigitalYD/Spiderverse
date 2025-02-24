@@ -1,53 +1,39 @@
 import numpy as np
 
-
 class BezierCurve:
     def __init__(self, n=100):
-        self.p = []
-        self.cp = np.empty((0, 2), dtype=np.float64)
-        self.d = 0
-        self.t = 0
-        self.step = np.float64(1.0/n)
-        self.run = False
+        '''
+        Create a bezier curve. (Adding points, and generating all values is done later)
+        '''
+        self.points_list = []  # Control points
+        self.num_points = n
+        self.cp = np.empty((0, 2), dtype=np.float64)  # Computed curve points
 
     def add_point(self, x, y):
-        if self.d == 0:
-            self.p.append([[x, y]])
-        else:
-            self.p[0].append([x, y])
-            self.p.append([])
-        self.d += 1
+        """ Add a control point (x, y) to the curve. """
+        self.points_list.append([x, y])
 
-    def bezier(self):
-        for d in range(1, self.d):
-            self.p[d] = []
-            for i in range(self.d - d):
-                self.p[d].append([
-                    self.p[d - 1][i][0] + self.t * (self.p[d - 1][i + 1][0] - self.p[d - 1][i][0]),
-                    self.p[d - 1][i][1] + self.t * (self.p[d - 1][i + 1][1] - self.p[d - 1][i][1])
-                ])
-        xy = np.array(self.p[-1])
-        self.cp = np.append(self.cp, xy, axis=0)
+    def de_casteljau(self, t):
+        """ Compute a single point on the Bezier curve using De Casteljau's algorithm. """
+        points = np.array(self.points_list, dtype=np.float64)
+        while len(points) > 1:
+            points = (1 - t) * points[:-1] + t * points[1:]  # Linear interpolation
+        return points[0]
 
-    def generate(self, t=None):
-        if t:
-            if type(t) is not list:
-                t = [t]
-            for x in t:
-                self.t = x
-                self.bezier()
-        else:
-            while True:
-                self.bezier()
-                if self.t == 1:
-                    break
-                self.t = min(self.t + self.step, 1)
-        self.run = True
+    def generate(self):
+        """ Generate the full Bezier curve. """
+        self.cp = np.array([self.de_casteljau(t) for t in np.linspace(0, 1, self.num_points)])
 
-    def curve(self, t=None):
-        if not self.run:
-            self.generate(t)
+    def curve(self):
+        """ Return the generated Bezier curve points. """
+        if len(self.cp) == 0:
+            self.generate()
         return self.cp
 
-    def points(self):
-        return np.array(self.p[0])
+    def control_points(self):
+        """ Return the control points. """
+        return np.array(self.points_list)
+    
+
+if __name__ == "__main__":
+    pass

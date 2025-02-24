@@ -1,21 +1,27 @@
 ## Hexapod measurements
 
+## Review this for simulation?
+https://github.com/robs-tech-workbench/hexapod_spiderbot_tutorials/blob/main/tutorial_inverse_kinematics/inverse_kinematics_code.ipynb
 
 https://github.com/Auc7us/Auc7us_v0.1/blob/master/robot/core.py
 
-## useful but no clue on how it works
-https://github.com/Valthoron/hexapod-mk1-python/blob/master/GaitControllers/PeriodicDisplacement.py
+
+## Useful
+https://www.youtube.com/watch?v=M5DI3tQw1tU
 https://oscarliang.com/inverse-kinematics-implementation-hexapod-robots/
-
-https://www.youtube.com/@asodemann3/videos
-
-
 
 https://www.youtube.com/watch?v=3RHg6OJLYhM
 Robotics1 U1 (Kinematics) S6 (Inverse Kinematics) P1
 
 https://www.youtube.com/watch?v=D93iQVoSScQ
 Inverse kinematics of Articulated manipulator
+
+
+## useful but no clue on how it works
+https://github.com/Valthoron/hexapod-mk1-python/blob/master/GaitControllers/PeriodicDisplacement.py
+
+https://www.youtube.com/@asodemann3/videos
+
 
 
 https://www.youtube.com/watch?v=MJIe1nkX_Xk
