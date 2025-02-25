@@ -1,5 +1,5 @@
 from math import sin, cos, pi, atan2, sqrt, acos
-from leg_configs import leg_configs
+from hexapod.src.leg_configs import leg_configs
 
 class Leg:
     def __init__(self, name:str, leg_index:int, coxa:int, femur:int, tibia:int, offsets=None):

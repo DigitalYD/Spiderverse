@@ -19,6 +19,9 @@ import time
 if __name__ == "__main__":
     hexapod = Hexapod(leg_configs, hexapod_configs)
     
+    
+    
+    
     # x,y,z = int(np.degrees(-77.5)),int(np.degrees(193)),int(np.degrees(134))
     
     # hexapod.move_joint("left_rear", "coxa", int(np.degrees(x)))

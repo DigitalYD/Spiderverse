@@ -6,7 +6,7 @@ from common.pca9685 import PCA9685
 
 
 class Servo:
-    def __init__(self, index, offset:int, pca = 0x40, pulse_min = 500, pulse_max = 2500, freq = 60, debug=False):
+    def __init__(self, index, offset:int, pca = 0x40, pulse_min = 500, pulse_max = 2500, freq = 50, debug=False):
         '''
             Servo Class
             input:
@@ -17,17 +17,19 @@ class Servo:
                 freq: frequency to run the servo at (generally 50 hz or 60 hz)
                 debug: Resets mode_01 in PCA9685
         '''
-        self.servo_index = index
         if pca == 0x40:
             self.pca_index = 0
         elif pca == 0x41:
             self.pca_index = 1
+            
+        self.servo_index = index
         self.offset = offset # make an array for offsets of legs
         self.pca = PCA9685(pca, debug)
+        
         self.pulse_min = pulse_min
         self.pulse_max = pulse_max
         self.pulse_middle = (self.pulse_max + self.pulse_min)/2
-
+        
         # set PWM
         self.pca.setPWMFreq(freq)
 

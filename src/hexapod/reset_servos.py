@@ -1,4 +1,4 @@
-from pca9685 import PCA9685
+from hexapod.src.pca9685 import PCA9685
 import time
 
 ## Reset all leg positions

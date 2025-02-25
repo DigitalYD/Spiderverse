@@ -5,16 +5,18 @@ from src.leg import Leg
 from src.servo import Servo
 from src.leg_configs import leg_configs
 from src.hexapod_configs import hexapod_configs
+from src.coord import *
 
 PI = np.pi
 DEGTORAD = np.radians(1)
 RADTODEG = np.degrees(1)
-MAXITER = 250
 
 
 class Hexapod:
-    valid_modes = {"initialize","stand","walk","rotate","shutdown","calibaration"}
-    valid_gaits = {"tripod", "wave", "ripple", "quadrupedal", "tetrapod"}
+    VALID_MODES = ["initialize","stand","walk","rotate","shutdown","calibaration"]
+    VALID_GATES = ["tripod", "wave", "ripple", "quadrupedal", "tetrapod"]
+    VALID_LEGS = ["LR","LM", "LF", "RF", "RM","RR"]
+    
     def __init__(self, leg_configs, hexapod_configs):
         '''
             Initialize variables/controllers
@@ -37,25 +39,85 @@ class Hexapod:
         self.max_speed = 1.0
         self.legs = {}
         self.mode = "tripod"
+        self.leg_lift_height = 20
+        
+        # Position
+        self.body_position = coord3D()
+        self.body_rotation = coord3D()
+        
+        # Rotation
+        self.transient = coord3D()
+        self.totalBalance = coord3D()
 
         for body_pose, config in hexapod_configs.items():
             self.body_pose = config["pose"]
-            print(self.body_pose)
+            coxa_offsets = config["coxa_offsets"]
+        
+        self.c_offset = {}
+        curr_pos = {}
         # setup gaits
-        self.tripod_gait_groups = [["left_rear", "right_middle", "left_front"],["right_front","left_middle","right_rear"]]
-
+        self.tripod_gait_groups = [["LR", "RM", "LF"], ["RF","LM","RR"]]
+            
+        leg_index = {}
+        servo_pins = {}
+        offsets = {}
+        pulse_min = {}
+        pulse_max={}
+        segment_lengths = {}
         # Create leg class
         for leg_name, config in leg_configs.items():
-            leg_index = config["leg_index"]
-            servo_pins = config["servos"]  # Extract servo pins
-            segment_lengths = config["segment_lengths"]
-            offsets = config["offsets"]  # Extract joint offsets
-            pulse_min = config["pulsemin"]
-            pulse_max = config["pulsemax"]
-            print(offsets)
-            # Create Leg objects (which internally create Servos)
-            self.legs[leg_name] = Leg(leg_name, leg_index, servo_pins, pulse_min, pulse_max, segment_lengths, offsets)
-    
+            self.c_offset[leg_name] = coord2D()
+            self.c_offset[leg_name].x = coxa_offsets[leg_name][0]
+            self.c_offset[leg_name].y = coxa_offsets[leg_name][1]
+
+            leg_index[leg_name] = config["leg_index"]
+            servo_pins[leg_name] = config["servos"]  # Extract servo pins
+            segment_lengths[leg_name] = config["segment_lengths"]
+            offsets[leg_name] = config["offsets"]  # Extract starting joint offsets to set the angles at startup
+            pulse_min[leg_name] = config["pulsemin"]
+            pulse_max[leg_name] = config["pulsemax"]
+            
+            
+         # Initial leg positions [x,y,z] || Will need adjusting
+        curr_pos = {}
+        temp_vals = {
+            "LR": {
+                "x": -np.cos(np.deg2rad(60)) * (segment_lengths["LR"][1] + segment_lengths["LR"][0]),
+                "y": -np.sin(np.deg2rad(60)) * (segment_lengths["LR"][1] + segment_lengths["LR"][0]),
+                "z": segment_lengths["LR"][2],
+                },
+            "LM": {
+                "x": -(segment_lengths["LM"][1] + segment_lengths["LM"][0]),
+                "y": 0,
+                "z": segment_lengths["LM"][2],
+                },
+            "LF": {
+                "x": -np.cos(np.deg2rad(60)) * (segment_lengths["LF"][1] + segment_lengths["LF"][0]),
+                "y": np.sin(np.deg2rad(60)) * (segment_lengths["LF"][1] + segment_lengths["LF"][0]),
+                "z": segment_lengths["LF"][2],
+                },
+            "RF": {
+                "x": np.cos(np.deg2rad(60)) * (segment_lengths["RF"][1] + segment_lengths["RF"][0]),
+                "y": np.sin(np.deg2rad(60)) * (segment_lengths["RF"][1] + segment_lengths["RF"][0]),
+                "z": segment_lengths["RF"][2],
+                },
+            "RM": {
+                "x": np.cos(np.deg2rad(60)) * (segment_lengths["RM"][1] + segment_lengths["RM"][0]),
+                "y": 0,
+                "z": segment_lengths["RM"][2],
+                },
+            "RR": {
+                "x": np.cos(np.deg2rad(60)) * (segment_lengths["RR"][1] + segment_lengths["RR"][0]),
+                "y": -np.sin(np.deg2rad(60)) * (segment_lengths["RR"][1] + segment_lengths["RR"][0]),
+                "z":segment_lengths["RR"][2],
+                },
+        }
+        
+        for name, values in temp_vals.items():
+            curr_pos[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
+            self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], curr_pos[name], offsets[name])
+
+
     def get_legs(self):
         return self.legs
     
@@ -135,7 +197,6 @@ class Hexapod:
     def tetra_gait(self, steps):
         pass
 
-
     def walk(self, gait="tripod", direction="", speed=1.0):
         if gait == "tripod":
             self.tripod_gait(direction, speed)
@@ -149,10 +210,25 @@ class Hexapod:
             self.tetra_gait(speed)
         else:
             raise ValueError(f"Invalid gait {gait}")
-
-
-
-
+        
+    def rotation_2d(self, theta):
+        return np.array([[np.cos(theta), -np.sin[theta]],[np.sin(theta), np.cos(theta)]])
+    
+    def rot_mat_3d_x(self, theta):
+        return np.array([[1, 0, 0],
+                         [0, np.cos(theta), -np.sin(theta)],
+                         [0, np.sin(theta), np.cos(theta)]])
+    
+    def rot_mat_3d_y(self, theta):
+        return np.array([[np.cos(theta), 0, np.sin(theta)],
+                         [0, 1, 0],
+                         [-np.sin(theta), 0, np.cos(theta)]])
+    
+    def rot_mat_3d_z(self, theta):
+        return np.array([[np.cos(theta), -np.sin(theta), 0],
+                         [np.sin(theta), np.cos(theta), 0],
+                         [0, 0, 1]])
+        
 if __name__ == "__main__":
     hexapod = Hexapod(leg_configs, hexapod_configs)
 
@@ -166,7 +242,7 @@ if __name__ == "__main__":
     #  Y
 
     # x, y, z
-    # theta1, theta2, theta3 = hexapod.move_leg("left_rear", [10,10,-10])
+    # theta1, theta2, theta3 = hexapod.move_leg("LR", [10,10,-10])
 
     # theta1 = np.degrees(theta1)
     # theta2 = np.degrees(theta2)
@@ -174,30 +250,30 @@ if __name__ == "__main__":
 
     # print(theta1, theta2, theta3)
 
-    # hexapod.move_joint("left_rear", "coxa",theta1)
-    # hexapod.move_joint("left_rear", "femur",theta2)
-    # hexapod.move_joint("left_rear", "tibia",theta3)
+    # hexapod.move_joint("LR", "coxa",theta1)
+    # hexapod.move_joint("LR", "femur",theta2)
+    # hexapod.move_joint("LR", "tibia",theta3)
 
     for i in range(0, 90):
-        hexapod.move_joint("left_rear", "tibia", i)
+        hexapod.move_joint("LR", "tibia", i)
 
     for i in range(0, 160):
-        hexapod.move_joint("left_rear", "femur", i)
+        hexapod.move_joint("LR", "femur", i)
     
     for i in range(160, 0, -1):
-        hexapod.move_joint("left_rear", "femur", i)
+        hexapod.move_joint("LR", "femur", i)
 
     for i in range(90, 0, -1):
-        hexapod.move_joint("left_rear", "tibia", i)
+        hexapod.move_joint("LR", "tibia", i)
     time.sleep(1)
     time.sleep(2)
     for i in range(0, 65):
-        hexapod.move_joint("left_rear", "coxa", i)
+        hexapod.move_joint("LR", "coxa", i)
     
     time.sleep(1)
     for i in range(65, -35, -1):
-        hexapod.move_joint("left_rear", "coxa", i)
+        hexapod.move_joint("LR", "coxa", i)
 
     time.sleep(1)
     for i in range(-35, 0):
-        hexapod.move_joint("left_rear", "coxa", i)
+        hexapod.move_joint("LR", "coxa", i)

@@ -1,10 +1,16 @@
 ## Hexapod measurements
+https://matplotlib.org/stable/gallery/event_handling/poly_editor.html
+
+https://github.com/engineerm-jp/Inverse_Kinematics_YouTube/blob/main/Hexapod/IK.py
 
 ## Review this for simulation?
 https://github.com/robs-tech-workbench/hexapod_spiderbot_tutorials/blob/main/tutorial_inverse_kinematics/inverse_kinematics_code.ipynb
 
 https://github.com/Auc7us/Auc7us_v0.1/blob/master/robot/core.py
 
+https://github.com/engineerm-jp/Inverse_Kinematics_YouTube/blob/main/Hexapod/IK.py
+
+https://github.com/robs-tech-workbench/hexapod_spiderbot_tutorials/blob/main/tutorial_inverse_kinematics/inverse_kinematics_code.ipynb
 
 ## Useful
 https://www.youtube.com/watch?v=M5DI3tQw1tU
@@ -22,8 +28,12 @@ https://github.com/Valthoron/hexapod-mk1-python/blob/master/GaitControllers/Peri
 
 https://www.youtube.com/@asodemann3/videos
 
+### Forward kin
+https://www.youtube.com/watch?v=EzNAs2w1cS0
+https://www.youtube.com/watch?v=751yl4RHTlI
+https://www.youtube.com/watch?v=M5DI3tQw1tU&t=449s
 
-
+Hexapod MK2 -Inverse Kinematics
 https://www.youtube.com/watch?v=MJIe1nkX_Xk
 https://github.com/PhilippSchulzGit/Hexapod-MK2/blob/main/Inverse%20Kinematics/Transformations%20MK2.0%20-%20Frames.pdf
 Hexapod MK2 -Inverse Kinematics

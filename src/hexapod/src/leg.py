@@ -2,9 +2,10 @@ from math import sin, cos, pi, atan2, sqrt, acos
 from src.leg_configs import leg_configs
 from src.servo import Servo
 import numpy as np
+from src.coord import *
 
 class Leg:
-    def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths, offsets=None):
+    def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths,cur_pos, offsets=None):
         '''
             Each leg is comprised of a coxa, femur, tibia
             ie: servo0: coxa (forward/back)
@@ -17,19 +18,21 @@ class Leg:
         self.leg_index = leg_index
         self.base_position = offsets
         self._offsets = offsets
-
-        if leg_index <= 2:
-            self.servos = {
-                "coxa" : Servo(servo_pins[0], offsets["coxa"], pca=0x40, pulse_min=pulse_min, pulse_max=pulse_max),
-                "femur" : Servo(servo_pins[1], offsets["femur"], pca=0x40, pulse_min=pulse_min, pulse_max=pulse_max),
-                "tibia" : Servo(servo_pins[2], offsets["tibia"], pca=0x40, pulse_min=pulse_min, pulse_max=pulse_max)
-            }
-        else:
-            self.servos = {
-                "coxa" : Servo(servo_pins[0], offsets["coxa"], pca=0x41, pulse_min=pulse_min, pulse_max=pulse_max),
-                "femur" : Servo(servo_pins[1], offsets["femur"], pca=0x41, pulse_min=pulse_min, pulse_max=pulse_max),
-                "tibia" : Servo(servo_pins[2],offsets["tibia"],  pca=0x41, pulse_min=pulse_min, pulse_max=pulse_max)
-            }
+        self.cur_pos = cur_pos
+        
+        ## Uncomment this
+        # if leg_index <= 2:
+        #     self.servos = {
+        #         "coxa" : Servo(servo_pins[0], offsets["coxa"], pca=0x40, pulse_min=pulse_min, pulse_max=pulse_max),
+        #         "femur" : Servo(servo_pins[1], offsets["femur"], pca=0x40, pulse_min=pulse_min, pulse_max=pulse_max),
+        #         "tibia" : Servo(servo_pins[2], offsets["tibia"], pca=0x40, pulse_min=pulse_min, pulse_max=pulse_max)
+        #     }
+        # else:
+        #     self.servos = {
+        #         "coxa" : Servo(servo_pins[0], offsets["coxa"], pca=0x41, pulse_min=pulse_min, pulse_max=pulse_max),
+        #         "femur" : Servo(servo_pins[1], offsets["femur"], pca=0x41, pulse_min=pulse_min, pulse_max=pulse_max),
+        #         "tibia" : Servo(servo_pins[2],offsets["tibia"],  pca=0x41, pulse_min=pulse_min, pulse_max=pulse_max)
+        #     }
         
 
         # Initialize segment sizes of hexapod legs
@@ -38,14 +41,12 @@ class Leg:
         self._femur_len = segment_lengths[1]    # Length of Femur
         self._tibia_len = segment_lengths[2]    # Length of Tibia 
         self._leg_length = self._femur_len + self._coxa_len + self._tibia_len # Length of whole leg
-
-        self._side_length = 130.0 # Length from one coxa tonext
-
+        
         # Initialize thetas
         self._FemurAngle = 0.0
         self._TibiaAngle = 0.0
         self._CoxaAngle = 0.0
-        #self._joints = self.forward_kinematics() # Calculate joint Angles for (endofactor of foot position) 
+        self._joints = self.forward_kinematics() # Calculate joint Angles for (endofactor of foot position) 
 
         
     def set_joint_angles(self, joint, angle):
@@ -70,7 +71,7 @@ class Leg:
 
 
 
-    def forward_kinematics(self, joint_angles):
+    def forward_kinematics(self, joint_angles=None):
         '''
             Implement forward kinematics for leg movement
             Compute foot position from joint angles
@@ -85,7 +86,7 @@ class Leg:
         value = self.normalize_angle(angle)
         return max(min_angle, min(max_angle, value))
 
-    def inverse_kinematics(self, target_position= None):
+    def inverse_kinematics(self, target_position = None):
         '''
             Implement inverse kinematics for leg movement
             Compute joint angles from desired foot positions
@@ -97,23 +98,10 @@ class Leg:
         x, y, z = target_position
         coxa_angle, femur_angle, tibia_angle = 0,0,0
 
-        # # # Theta1 (rotation around coxa joint)
-        # coxa_angle = np.arctan2(y, x) + np.radians(self._offsets["coxa"])
-
-        # # Projected distances
-        # r1 = np.sqrt(x**2 + y**2)
-        # r2 = z - self._coxa_len
-
-        # # Angle phi2
-        # phi2 = np.arctan2(r2, r1)
-
-        # # Distance from femur joint to target
-        # r3 = np.sqrt(r1**2 + r2**2)
-
         # compute target femur-to-toe (l3)
         l0 = np.sqrt(x**2 + y**2) - self._coxa_len
         l3 = np.sqrt(l0**2 + z**2)
-        print(l0,l3)
+        
         if ((l3 < (self._tibia_len + self._femur_len)) and (l3 > (self._tibia_len - self._femur_len))):
             #compute tibia angle
             phi_tibia = np.arccos(np.clip((self._femur_len**2 + self._tibia_len**2 - l3**2)/(2*self._femur_len*self._femur_len),-1,1))
