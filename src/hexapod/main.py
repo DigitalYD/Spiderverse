@@ -11,16 +11,69 @@
 from src.hexapod import Hexapod
 from src.leg_configs import leg_configs
 from src.hexapod_configs import hexapod_configs
+from src.coord import *
 from common.bezier2d import BezierCurve
 from common.new_bezier import bezier_curve
 import numpy as np
 import time
 
+
+walk_length = coord3D() 
+
+def main_loop(hexapod):
+    '''
+        Implement movement and loop here
+    '''
+    # Test stuff
+    hexapod.inverse_kinematics()
+    
+    # In a loop starting here
+    # -----
+    # receive new message from controller
+    # Decode controller
+        #bodypos xy = 0
+        # bodyrot x,y,z = 0
+        # walk_length.x = 0
+        # walk_length.y = 0
+        # walk_length.roty = 0
+        # calculate gait/body balance
+    
+    # Resets these each iteration to 0 | maybe track it within hexapod
+    # hexPos = coord3D()
+    # hexRot = coord3D()
+
+    # offsetx, offsety, offset angle
+
+    # Call hexapod inverse kinematics
+    # Call hexapod update, or move legs to move
+    
+    # Gait sequence()
+    # body balance
+    
+    # set hexapod position and rotation to be updated
+    # hexapod.update()
+    # hexapod.inverse_kinematics()
+    # hexapod.move_leg?
+    
+    '''
+        calculate every leg's angles first, then move the legs individually
+    '''
+    
+    
+    ## These values go into inverse kinematics
+    # hexPos = current position + body position + gaitposition
+    # hexRot = bodyRotx, z, bodyroty= roty+gaitPos.roty
+    pass
+
+
 if __name__ == "__main__":
+    # setup controller stuff here
+    
+    # Setup hexapod rotation/movement    
     hexapod = Hexapod(leg_configs, hexapod_configs)
     
-    
-    
+    main_loop(hexapod)
+
     
     # x,y,z = int(np.degrees(-77.5)),int(np.degrees(193)),int(np.degrees(134))
     

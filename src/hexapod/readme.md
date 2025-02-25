@@ -52,3 +52,14 @@ https://github.com/Valthoron/hexapod-mk1-python/blob/master/Hexapod.py
 
 ## Took the "Adafruit Servo driver" from here
 https://github.com/daavidee/hexapod/blob/master/Adafruit_PWM_Servo_Driver.py
+
+
+
+
+# ==========------------------------
+"offsets": {
+    # [coxa, femur, tibia] offsets 
+    "coxa": -30,  # coxa joint offset from body
+    "femur": 0,  # femur offset relative to coxa
+    "tibia": 0  # tibia offset relative to femur
+}

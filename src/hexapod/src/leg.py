@@ -5,7 +5,7 @@ import numpy as np
 from src.coord import *
 
 class Leg:
-    def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths,cur_pos, offsets=None):
+    def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths, coxa_ofs):
         '''
             Each leg is comprised of a coxa, femur, tibia
             ie: servo0: coxa (forward/back)
@@ -16,9 +16,10 @@ class Leg:
         super().__init__()
         self.name = name
         self.leg_index = leg_index
-        self.base_position = offsets
-        self._offsets = offsets
-        self.cur_pos = cur_pos
+        
+        # coord from hexapod
+        self.base_position = coxa_ofs # Starting position of legs
+        self.cur_pos = coxa_ofs # Distance from center of body to coxa
         
         ## Uncomment this
         # if leg_index <= 2:
@@ -36,7 +37,6 @@ class Leg:
         
 
         # Initialize segment sizes of hexapod legs
-        self.segment_lengths = segment_lengths
         self._coxa_len = segment_lengths[0]     # Legnth of Coxa
         self._femur_len = segment_lengths[1]    # Length of Femur
         self._tibia_len = segment_lengths[2]    # Length of Tibia 
@@ -46,7 +46,9 @@ class Leg:
         self._FemurAngle = 0.0
         self._TibiaAngle = 0.0
         self._CoxaAngle = 0.0
-        self._joints = self.forward_kinematics() # Calculate joint Angles for (endofactor of foot position) 
+        
+        # adjust joints to starting positions (May not need this)
+        #self._joints = self.inverse_kinematics() # Calculate joint Angles for (endofactor of foot position) 
 
         
     def set_joint_angles(self, joint, angle):
@@ -63,12 +65,10 @@ class Leg:
         # returns current angles of the joints in a list
         return [self._theta1, self._theta2, self._theta3]
     
-    
     def set_angles(self, angles):
         # set the angles of the hexapod
         # ----------------------------------------------- Kinda want to normalize these to +-90 based off position on[]
         self._theta1, self._theta2, self._theta3 = angles
-
 
 
     def forward_kinematics(self, joint_angles=None):
@@ -86,18 +86,28 @@ class Leg:
         value = self.normalize_angle(angle)
         return max(min_angle, min(max_angle, value))
 
-    def inverse_kinematics(self, target_position = None):
+    def inverse_kinematics(self, bodyikposition, footpos):
         '''
             Implement inverse kinematics for leg movement
             Compute joint angles from desired foot positions
             don't forget to use offsets in calculation
         '''
-        if target_position is None:
-            target_position = self._joints[3]
-
-        x, y, z = target_position
         coxa_angle, femur_angle, tibia_angle = 0,0,0
-
+        
+        # update foot position
+        footpos.x = footpos.x + bodyikposition.x
+        footpos.y = footpos.y + footpos.y
+        footpos.z = footpos.z + footpos.z
+        
+        # move from global to local
+        toepos = coord3D()
+        
+        # multiple positions by angle offsets around a circle for each leg
+        toepos.x =
+        toepos.y =
+        toepos.z =
+        
+        return
         # compute target femur-to-toe (l3)
         l0 = np.sqrt(x**2 + y**2) - self._coxa_len
         l3 = np.sqrt(l0**2 + z**2)
