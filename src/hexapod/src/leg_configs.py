@@ -4,6 +4,7 @@ leg_configs = {
         "servos": [0, 1, 2],  # coxa, femur, tibia
         "pulsemin" : 500,
         "pulsemax": 2500,
+        "angleoffset": -146.172, # ADD AND CHANGE THESE
         "segment_lengths": [45, 110, 193],
         "position": [-60.5, 89],
     },
