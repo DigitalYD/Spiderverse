@@ -5,7 +5,7 @@ import numpy as np
 from src.coord import *
 
 class Leg:
-    def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths, coxa_ofs):
+    def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths, coxa_ofs, angleoffset):
         '''
             Each leg is comprised of a coxa, femur, tibia
             ie: servo0: coxa (forward/back)
@@ -20,7 +20,8 @@ class Leg:
         # coord from hexapod
         self.base_position = coxa_ofs # Starting position of legs
         self.cur_pos = coxa_ofs # Distance from center of body to coxa
-        
+        self.angle_offset = angleoffset
+
         ## Uncomment this
         # if leg_index <= 2:
         #     self.servos = {
@@ -91,49 +92,89 @@ class Leg:
             Implement inverse kinematics for leg movement
             Compute joint angles from desired foot positions
             don't forget to use offsets in calculation
+
+            #     Z    
+            #     |    
+            #     |    
+            #     |    
+            #     O------ X
+            #    /
+            #   /
+            #  Y
+
         '''
         coxa_angle, femur_angle, tibia_angle = 0,0,0
         
         # update foot position
         footpos.x = footpos.x + bodyikposition.x
-        footpos.y = footpos.y + footpos.y
-        footpos.z = footpos.z + footpos.z
+        footpos.y = footpos.y + bodyikposition.y
+        footpos.z = footpos.z + bodyikposition.z
+
+        
         
         # move from global to local
         toepos = coord3D()
         
         # multiple positions by angle offsets around a circle for each leg
-        toepos.x =
-        toepos.y =
-        toepos.z =
+        toepos.x = footpos.x * np.cos(np.clip(np.deg2rad(self.angle_offset),-1,1)) - footpos.y * np.sin(np.clip(np.deg2rad(self.angle_offset),-1,1))
+        toepos.y = footpos.x * np.sin(np.clip(np.deg2rad(self.angle_offset),-1,1)) + footpos.y * np.cos(np.clip(np.deg2rad(self.angle_offset),-1,1))
+        toepos.z = footpos.z
         
-        return
-        # compute target femur-to-toe (l3)
-        l0 = np.sqrt(x**2 + y**2) - self._coxa_len
-        l3 = np.sqrt(l0**2 + z**2)
+        # ##--------------------------
+        # #### Variation 1
+        # ##--------------------------
         
-        if ((l3 < (self._tibia_len + self._femur_len)) and (l3 > (self._tibia_len - self._femur_len))):
-            #compute tibia angle
-            phi_tibia = np.arccos(np.clip((self._femur_len**2 + self._tibia_len**2 - l3**2)/(2*self._femur_len*self._femur_len),-1,1))
-            # Add calibration constant here
-            phi_tibia = self.clamp_angle(phi_tibia)
+        # coxa angle
+        self._CoxaAngle = np.arctan2(toepos.x, toepos.y)
+    
+        #print(toepos.x, toepos.y)
+        # Length between coxa/foot
+        leg_length = np.sqrt(toepos.x**2 + toepos.y**2)
+        print(leg_length)
+        # length between coxa/toe
 
-            #compute femur
-            gamma_femur = np.atan2(z,l0)
-            phi_femur = np.arccos(np.clip((self._femur_len**2 + l3**2 - self._tibia_len)/(2*self._femur_len*l3),-1,1))
-            # add calibaration consatanthere
-            gamma_femur = self.clamp_angle(gamma_femur+phi_femur)
 
-            #compute coxa
-            theta_coxa = np.atan2(x,y) # + calibration constant here
+        # Angle between SW line and ground in rad
 
-            coxa_angle = theta_coxa
-            femur_angle = gamma_femur
-            tibia_angle = phi_tibia
+        # angle between sw line and femur
+
+        # IK femur angle
+
+        # IK tibia angle
+
+        # convert tibia angle in relation to normal of femur angle
+
+
+        # ##--------------------------
+        # #### Variation 3
+        # ##--------------------------
+       
+       # compute target femur-to-toe (l3)
+        # l0 = np.sqrt(x**2 + y**2) - self._coxa_len
+        # l3 = np.sqrt(l0**2 + z**2)
+        
+        # if ((l3 < (self._tibia_len + self._femur_len)) and (l3 > (self._tibia_len - self._femur_len))):
+        #     #compute tibia angle
+        #     phi_tibia = np.arccos(np.clip((self._femur_len**2 + self._tibia_len**2 - l3**2)/(2*self._femur_len*self._femur_len),-1,1))
+        #     # Add calibration constant here
+        #     phi_tibia = self.clamp_angle(phi_tibia)
+
+        #     #compute femur
+        #     gamma_femur = np.atan2(z,l0)
+        #     phi_femur = np.arccos(np.clip((self._femur_len**2 + l3**2 - self._tibia_len)/(2*self._femur_len*l3),-1,1))
+        #     # add calibaration consatanthere
+        #     gamma_femur = self.clamp_angle(gamma_femur+phi_femur)
+
+        #     #compute coxa
+        #     theta_coxa = np.atan2(x,y) # + calibration constant here
+
+        #     coxa_angle = theta_coxa
+        #     femur_angle = gamma_femur
+        #     tibia_angle = phi_tibia
         
 
             # ##--------------------------
-            # #### Variation 3
+            # #### Variation 4
             # ##--------------------------
             # hf = np.sqrt(y**2 + z**2)
 
@@ -163,5 +204,5 @@ class Leg:
             # coxa_angle = np.arctan2(y,x)
 
 
-            return coxa_angle, femur_angle, tibia_angle
-        return  coxa_angle, femur_angle, tibia_angle
+        return coxa_angle, femur_angle, tibia_angle
+        

@@ -8,8 +8,6 @@ https://github.com/robs-tech-workbench/hexapod_spiderbot_tutorials/blob/main/tut
 
 https://github.com/Auc7us/Auc7us_v0.1/blob/master/robot/core.py
 
-https://github.com/engineerm-jp/Inverse_Kinematics_YouTube/blob/main/Hexapod/IK.py
-
 https://github.com/robs-tech-workbench/hexapod_spiderbot_tutorials/blob/main/tutorial_inverse_kinematics/inverse_kinematics_code.ipynb
 
 ## Useful

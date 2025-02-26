@@ -4,7 +4,7 @@ leg_configs = {
         "servos": [0, 1, 2],  # coxa, femur, tibia
         "pulsemin" : 500,
         "pulsemax": 2500,
-        "angleoffset": -146.172, # ADD AND CHANGE THESE
+        "angleoffset": 214.309,
         "segment_lengths": [45, 110, 193],
         "position": [-60.5, 89],
     },
@@ -13,6 +13,7 @@ leg_configs = {
         "servos": [3, 4, 5],
         "pulsemin" : 500,
         "pulsemax": 2500,
+        "angleoffset": 270,
         "segment_lengths": [45, 110, 193],
         "position":  [-97, 0],
     },
@@ -21,6 +22,7 @@ leg_configs = {
         "servos": [6, 7, 8],
         "pulsemin" : 500,
         "pulsemax": 2500,
+        "angleoffset": 325.931,
         "segment_lengths": [45, 110, 193],
         "position": [-60.5, -89],
     },
@@ -29,6 +31,7 @@ leg_configs = {
         "servos": [9, 10, 11],
         "pulsemin" : 500,
         "pulsemax": 2500,
+        "angleoffset": 34.0685,
         "segment_lengths": [45, 110, 193],
         "position": [60.5, 89],
     },
@@ -37,6 +40,7 @@ leg_configs = {
         "servos": [12, 13, 14],
         "pulsemin" : 500,
         "pulsemax": 2500,
+        "angleoffset": 90,
         "segment_lengths": [45, 110, 193],
         "position": [97, 0],
     },
@@ -45,8 +49,8 @@ leg_configs = {
         "servos": [15, 16, 17],
         "pulsemin" : 500,
         "pulsemax": 2500,
+        "angleoffset": 146.172,
         "segment_lengths": [45, 110, 193],
         "position": [60.5, -89],
     }
 }
-
