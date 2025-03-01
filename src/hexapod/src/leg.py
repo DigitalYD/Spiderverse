@@ -5,7 +5,7 @@ import numpy as np
 from src.coord import *
 
 class Leg:
-    def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths, coxa_ofs, angleoffset):
+    def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths, toe_offsets, angleoffset):
         '''
             Each leg is comprised of a coxa, femur, tibia
             ie: servo0: coxa (forward/back)
@@ -18,10 +18,8 @@ class Leg:
         self.leg_index = leg_index
         
         # coord from hexapod
-        self.base_position = coxa_ofs # Starting position of legs
-        self.cur_pos = coxa_ofs # Distance from center of body to coxa
-        print(self.cur_pos.x, self.cur_pos.y, self.cur_pos.z)
-
+        self.base_position = toe_offsets # Starting position of legs
+        self.cur_pos = toe_offsets # Distance from center of body to coxa
         self.angle_offset = angleoffset
 
         ## Uncomment this
@@ -43,7 +41,7 @@ class Leg:
         self._coxa_len = segment_lengths[0]     # Legnth of Coxa
         self._femur_len = segment_lengths[1]    # Length of Femur
         self._tibia_len = segment_lengths[2]    # Length of Tibia 
-        self._leg_length = self._femur_len + self._coxa_len + self._tibia_len # Length of whole leg
+        self._leg_max_length = self._femur_len + self._coxa_len + self._tibia_len # Length of whole leg
     
         # Initialize thetas
         self._FemurAngle = 0.0
@@ -89,7 +87,7 @@ class Leg:
         value = self.normalize_angle(angle)
         return max(min_angle, min(max_angle, value))
 
-    def inverse_kinematics(self, bodyikposition, footpos):
+    def inverse_kinematics(self, bodyikposition):
         '''
             Implement inverse kinematics for leg movement
             Compute joint angles from desired foot positions
@@ -107,30 +105,45 @@ class Leg:
         '''
         coxa_angle, femur_angle, tibia_angle = 0,0,0
         
-        # update foot position
-        footpos.x = footpos.x + bodyikposition.x
-        footpos.y = footpos.y + bodyikposition.y
-        footpos.z = footpos.z + bodyikposition.z
         
-        # move from global to local
-        toepos = coord3D()
+        # Translate foot position felative to body center
+        print(bodyikposition.x, bodyikposition.y, bodyikposition.z)
         
-        # multiple positions by angle offsets around a circle for each leg
-        toepos.x = footpos.x * np.cos((np.deg2rad(self.angle_offset),-1,1)) - footpos.y * np.sin(np.deg2rad(self.angle_offset))
-        toepos.y = footpos.x * np.sin((np.deg2rad(self.angle_offset),-1,1)) + footpos.y * np.cos(np.deg2rad(self.angle_offset))
-        toepos.z = footpos.z
+        footposition = coord3D()
+        footposition.x = self.cur_pos.x + self.gait_position.x
         
-        # ##--------------------------
-        # #### Variation 1
-        # ##--------------------------
         
-        # coxa angle
-        self._CoxaAngle = np.arctan2(toepos.x, toepos.y)
+        
+        #############
+        ##### Implementation v1 q.q
+        #############
+        # # update foot position
+        # footpos.x = footpos.x + bodyikposition.x
+        # footpos.y = footpos.y + bodyikposition.y
+        # footpos.z = footpos.z + bodyikposition.z
+        # #print(footpos.x, footpos.y, footpos.z)
+        # # move from global to local
+        # toepos = coord3D()
+        
+        # # multiple positions by angle offsets around a circle for each leg
+        # toepos.x = footpos.x * np.cos(np.deg2rad(self.angle_offset)) - footpos.y * np.sin(np.deg2rad(self.angle_offset))
+        # toepos.y = footpos.x * np.sin(np.deg2rad(self.angle_offset)) + footpos.y * np.cos(np.deg2rad(self.angle_offset))
+        # toepos.z = footpos.z
+        
+        
+        
+        # # ##--------------------------
+        # # #### Variation 1
+        # # ##--------------------------
+        
+        # # coxa angle
+        # self._CoxaAngle = np.arctan2(toepos.y, toepos.x)
+
     
-        #print(toepos.x, toepos.y)
-        # Length between coxa/foot
-        leg_length = np.sqrt(toepos.x**2 + toepos.y**2)
-        print(leg_length)
+        # #print(toepos.x, toepos.y)
+        # # Length between coxa/foot
+        # leg_length = np.sqrt(toepos.x**2 + toepos.y**2)
+        #print(leg_length)
         # length between coxa/toe
 
 
