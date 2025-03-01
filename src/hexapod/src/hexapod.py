@@ -53,9 +53,8 @@ class Hexapod:
         for body_pose, config in hexapod_configs.items():
             self.body_pose = config["pose"]
             coxa_offsets = config["coxa_offsets"]
-            print(coxa_offsets)
         
-        self.coxa_offset = {}
+        self.body_coxa_offset = {}
         self.gait_pos = {}
         
         # setup hexapod body positions in 3D space
@@ -75,10 +74,10 @@ class Hexapod:
         segment_lengths = {}
         # Create leg class
         for leg_name, config in leg_configs.items():
-            self.coxa_offset[leg_name] = coord2D()
-            self.coxa_offset[leg_name].x = coxa_offsets[leg_name][0]
-            self.coxa_offset[leg_name].y = coxa_offsets[leg_name][1]
 
+            self.body_coxa_offset[leg_name] = coord2D()
+            self.body_coxa_offset[leg_name].x = coxa_offsets[leg_name][0] # Distance x from center of body to coxa
+            self.body_coxa_offset[leg_name].y = coxa_offsets[leg_name][1] # Distance y from center of body to coxa
 
             leg_index[leg_name] = config["leg_index"]
             servo_pins[leg_name] = config["servos"]  # Extract servo pins
@@ -90,7 +89,6 @@ class Hexapod:
             self.gait_pos[leg_name] = coord3D()
             
          # Initial leg positions [x,y,z] || Will need adjusting
-        leg_ofs = {}
         temp_vals = {
             "LR": {
                 "x": -np.cos(np.deg2rad(56.172)) * (segment_lengths["LR"][0] + segment_lengths["LR"][1]),
@@ -123,9 +121,10 @@ class Hexapod:
                 "z": segment_lengths["RR"][2],
             },
             }
+        coxa_ofs = {}
         for name, values in temp_vals.items():
-            leg_ofs[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
-            self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], leg_ofs[name], angleoffset[name])
+            coxa_ofs[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
+            self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], coxa_ofs[name], angleoffset[name])
 
     def get_legs(self):
         return self.legs
@@ -167,58 +166,6 @@ class Hexapod:
         
         return step_positions
 
-    # Gaits are below
-    def tripod_gait(self, steps):
-        '''
-            3 legs move at the same time
-            ex (0,4,2) (1,3,5)
-            "no delay"
-        '''
-        step_positions = self.generate_tripod_step_positions()
-        for group in self.tripod_gait_groups:
-            for leg_name in group:
-                self.move_leg(leg_name, step_positions[leg_name])
-
-
-    def triple_gait(self,steps):
-        '''
-            3 legs at the same time
-            1/6 phase offset
-            phase_delay = speed/6
-            sleep(phase_delay)
-        '''
-        pass
-    def wave_gait(self, steps):
-        ''' One leg is lifted at a time 0,1,2,5,4,3'''
-        pass
-
-    def ripple_gait(self, steps):
-        '''
-            One leg at a time 0, 3, 1, 5, 2, 4
-            happens at phases see image
-            phase 1/6
-        '''
-        pass
-    
-    def quad_gait(self, steps):
-        pass
-
-    def tetra_gait(self, steps):
-        pass
-
-    def walk(self, gait="tripod", direction="", speed=1.0):
-        if gait == "tripod":
-            self.tripod_gait(direction, speed)
-        elif gait == "wave": #also known as ripple
-            self.wave_gait(direction, speed)
-        elif gait == "ripple":
-            self.ripple_gait(direction, speed)
-        elif gait == "quadrupedal":
-            self.quad_gait(speed)
-        elif gait == "tetrapod":
-            self.tetra_gait(speed)
-        else:
-            raise ValueError(f"Invalid gait {gait}")
         
     def rotation_2d(self, theta):
         '''
@@ -253,7 +200,6 @@ class Hexapod:
         return np.array([[np.cos(theta), -np.sin(theta), 0],
                          [np.sin(theta), np.cos(theta), 0],
                          [0, 0, 1]])
-        
     
     def inverse_kinematics(self):
         # call leg inverse kinematics and feed it
@@ -267,7 +213,7 @@ class Hexapod:
             footposition.x = self.legs[leg].cur_pos.x + self.body_position.x + self.gait_pos[leg].x
             footposition.y = self.legs[leg].cur_pos.y + self.body_position.y + self.gait_pos[leg].y
             footposition.z = self.legs[leg].cur_pos.z + self.body_position.z + self.gait_pos[leg].z
-            #print(footposition.x, footposition.y, footposition.z)
+            
             # Rotation
             rotation.x = self.body_rotation.x
             rotation.y = self.body_rotation.y + self.gait_pos[leg].roty
@@ -276,9 +222,8 @@ class Hexapod:
             # ------------------------
             # Body kinemtatics
             # ------------------------
-
-            body.x = footposition.x + self.coxa_offset[leg].x
-            body.y = footposition.y + self.coxa_offset[leg].y
+            body.x = footposition.x + self.body_coxa_offset[leg].x
+            body.y = footposition.y + self.body_coxa_offset[leg].y
             body.z = footposition.z
             
             # print(body.x, body.y, body.z)
@@ -289,8 +234,13 @@ class Hexapod:
             Rx = self.rot_mat_3d_x(rotation.x) # pitch
             Ry = self.rot_mat_3d_y(rotation.y) # yaw
             Rz = self.rot_mat_3d_z(rotation.z) # roll
+
             
-            R = Rz @ Ry @ Rx   
+            R = Rz @ Ry @ Rx
+            '''[[1. 0. 0.] no rotation
+                [0. 1. 0.]
+                [0. 0. 1.]]            
+            '''
             temp_pos = np.array([body.x, body.y, body.z]) #body position in space
             rotated_point = R @ temp_pos
             bodyikPosition.from_array(rotated_point)
@@ -302,28 +252,7 @@ class Hexapod:
             self.legs[leg].inverse_kinematics(bodyikPosition, footposition)
             
             
-            
-        
-    def update(self):
-        # get current position of each leg, and the gait position of each leg add with current position
-        # Do this for x,y,z positions
-        
-        '''
-            rotio = hexapod rotation (rotio)
-            RB_FeetPos = (posio)
-        ''' 
-        # initialize temp vars
-        
-        for legs in self.VALID_LEGS:
-            # Get values from legs
-            pass
-        
-    def calculate_gait(self):
-        '''
-            Calculate where each leg is during the gait and return x,y,z,rot
-            Each leg has 3 positions that a single leg can be lifted to
-        '''
-        return
+    
     
     
 if __name__ == "__main__":

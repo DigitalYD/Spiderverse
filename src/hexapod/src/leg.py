@@ -20,6 +20,8 @@ class Leg:
         # coord from hexapod
         self.base_position = coxa_ofs # Starting position of legs
         self.cur_pos = coxa_ofs # Distance from center of body to coxa
+        print(self.cur_pos.x, self.cur_pos.y, self.cur_pos.z)
+
         self.angle_offset = angleoffset
 
         ## Uncomment this
@@ -42,7 +44,7 @@ class Leg:
         self._femur_len = segment_lengths[1]    # Length of Femur
         self._tibia_len = segment_lengths[2]    # Length of Tibia 
         self._leg_length = self._femur_len + self._coxa_len + self._tibia_len # Length of whole leg
-        
+    
         # Initialize thetas
         self._FemurAngle = 0.0
         self._TibiaAngle = 0.0
@@ -93,14 +95,14 @@ class Leg:
             Compute joint angles from desired foot positions
             don't forget to use offsets in calculation
 
-            #     Z    
+            #     Z    (up)
             #     |    
             #     |    
             #     |    
-            #     O------ X
+            #     O------ y (forward)
             #    /
             #   /
-            #  Y
+            #  x (right/left)
 
         '''
         coxa_angle, femur_angle, tibia_angle = 0,0,0
@@ -109,15 +111,13 @@ class Leg:
         footpos.x = footpos.x + bodyikposition.x
         footpos.y = footpos.y + bodyikposition.y
         footpos.z = footpos.z + bodyikposition.z
-
-        
         
         # move from global to local
         toepos = coord3D()
         
         # multiple positions by angle offsets around a circle for each leg
-        toepos.x = footpos.x * np.cos(np.clip(np.deg2rad(self.angle_offset),-1,1)) - footpos.y * np.sin(np.clip(np.deg2rad(self.angle_offset),-1,1))
-        toepos.y = footpos.x * np.sin(np.clip(np.deg2rad(self.angle_offset),-1,1)) + footpos.y * np.cos(np.clip(np.deg2rad(self.angle_offset),-1,1))
+        toepos.x = footpos.x * np.cos((np.deg2rad(self.angle_offset),-1,1)) - footpos.y * np.sin(np.deg2rad(self.angle_offset))
+        toepos.y = footpos.x * np.sin((np.deg2rad(self.angle_offset),-1,1)) + footpos.y * np.cos(np.deg2rad(self.angle_offset))
         toepos.z = footpos.z
         
         # ##--------------------------
