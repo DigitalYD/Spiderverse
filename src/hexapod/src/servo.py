@@ -6,7 +6,7 @@ from common.pca9685 import PCA9685
 
 
 class Servo:
-    def __init__(self, index, offset:int, pca = 0x40, pulse_min = 500, pulse_max = 2500, freq = 50, debug=False):
+    def __init__(self, index, offset:int=0, pca = 0x40, pulse_min = 500, pulse_max = 2500, freq = 50, debug=False):
         '''
             Servo Class
             input:
@@ -76,7 +76,7 @@ class Servo:
         inverse = -1 if self.servo_index % 3 else 1
         pulse = self.angle2pulse(kin_angle_corr, inverse)
         self.pca.setServoPulse(servo_index, pulse)
-        time.sleep(0.02)
+        time.sleep(0.001)
 
 
 if __name__ == '__main__':

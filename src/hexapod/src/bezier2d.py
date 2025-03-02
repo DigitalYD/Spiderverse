@@ -7,7 +7,7 @@ class BezierCurve:
         '''
         self.points_list = []  # Control points
         self.num_points = n
-        self.points = np.empty((0, 2), dtype=np.float64)  # Computed curve points
+        self.cp = np.empty((0, 2), dtype=np.float64)  # Computed curve points
 
     def add_point(self, x, y):
         """ Add a control point (x, y) to the curve. """
@@ -22,13 +22,13 @@ class BezierCurve:
 
     def generate(self):
         """ Generate the full Bezier curve. """
-        self.points = np.array([self.de_casteljau(t) for t in np.linspace(0, 1, self.num_points)])
+        self.cp = np.array([self.de_casteljau(t) for t in np.linspace(0, 1, self.num_points)])
 
     def curve(self):
         """ Return the generated Bezier curve points. """
-        if len(self.points) == 0:
+        if len(self.cp) == 0:
             self.generate()
-        return self.points
+        return self.cp
 
     def control_points(self):
         """ Return the control points. """

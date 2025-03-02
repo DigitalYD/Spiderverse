@@ -59,7 +59,6 @@ class Hexapod:
         # setup hexapod body positions in 3D space
         self.position = coord3D()
         self.rotation = coord3D()
-
         
         # setup gaits
         self.tripod_gait_groups = [["LR", "RM", "LF"], ["RF","LM","RR"]]
@@ -92,9 +91,9 @@ class Hexapod:
          # Initial leg positions [x,y,z] || Will need adjusting
         temp_vals = {
             "LR": {
-                "x": -np.cos(np.deg2rad(56.172)) * (segment_lengths["LR"][0] + segment_lengths["LR"][1]),
-                "y": -np.sin(np.deg2rad(56.172)) * (segment_lengths["LR"][0] + segment_lengths["LR"][1]),
-                "z": segment_lengths["LR"][2],
+                "x": -np.cos(np.deg2rad(56.172)) * (segment_lengths["LR"][0] + segment_lengths["LR"][1] - segment_lengths["LR"][2]),
+                "y": -np.sin(np.deg2rad(56.172)) * (segment_lengths["LR"][0] + segment_lengths["LR"][1] - segment_lengths["LR"][2]),
+                "z": segment_lengths["LR"][2]-30, # Adding -30 brings leg out away from hexapod
             },
             "LM": {
                 "x": -(segment_lengths["LM"][0] + segment_lengths["LM"][1]),
@@ -102,13 +101,13 @@ class Hexapod:
                 "z": segment_lengths["LM"][2],
             },
             "LF": {
-                "x": -np.cos(np.deg2rad(55.931)) * (segment_lengths["LF"][0] + segment_lengths["LF"][1]),
-                "y": np.sin(np.deg2rad(55.931)) * (segment_lengths["LF"][0] + segment_lengths["LF"][1]),
+                "x": -np.cos(np.deg2rad(55.931)) * (segment_lengths["LF"][0] + segment_lengths["LF"][1] - segment_lengths["LR"][2]),
+                "y": np.sin(np.deg2rad(55.931)) * (segment_lengths["LF"][0] + segment_lengths["LF"][1]  - segment_lengths["LR"][2]),
                 "z": segment_lengths["LF"][2],
             },
             "RF": {
-                "x": np.cos(np.deg2rad(55.931)) * (segment_lengths["RF"][0] + segment_lengths["RF"][1]),
-                "y": np.sin(np.deg2rad(55.931)) * (segment_lengths["RF"][0] + segment_lengths["RF"][1]),
+                "x": np.cos(np.deg2rad(55.931)) * (segment_lengths["RF"][0] + segment_lengths["RF"][1]  - segment_lengths["LR"][2]),
+                "y": np.sin(np.deg2rad(55.931)) * (segment_lengths["RF"][0] + segment_lengths["RF"][1]  - segment_lengths["LR"][2]),
                 "z": segment_lengths["RF"][2],
             },
             "RM": {
@@ -117,8 +116,8 @@ class Hexapod:
                 "z": segment_lengths["RM"][2],
             },
             "RR": {
-                "x": np.cos(np.deg2rad(56.172)) * (segment_lengths["RR"][0] + segment_lengths["RR"][1]),
-                "y": -np.sin(np.deg2rad(56.172)) * (segment_lengths["RR"][0] + segment_lengths["RR"][1]),
+                "x": np.cos(np.deg2rad(56.172)) * (segment_lengths["RR"][0] + segment_lengths["RR"][1]  - segment_lengths["LR"][2]),
+                "y": -np.sin(np.deg2rad(56.172)) * (segment_lengths["RR"][0] + segment_lengths["RR"][1]  - segment_lengths["LR"][2]),
                 "z": segment_lengths["RR"][2],
             },
             }
@@ -126,12 +125,16 @@ class Hexapod:
         leg_lengths = {}
         for leg,vals in temp_vals.items():
             leg_lengths[leg] = np.sqrt(vals['x']**2 + vals['y']**2 + vals['z']**2)
-        print(leg_lengths)
-        
+        print(f"leg lengths: ",leg_lengths)
+
         toe_offsets = {}
         for name, values in temp_vals.items():
-            toe_offsets[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
-            self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], toe_offsets[name], angleoffset[name])
+            if name == "LR":
+                toe_offsets[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
+                self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], toe_offsets[name], angleoffset[name])
+                print(f"toe positions/offsets:", toe_offsets[name].x, toe_offsets[name].y, toe_offsets[name].z)
+        
+
 
     def get_legs(self):
         return self.legs
@@ -208,79 +211,58 @@ class Hexapod:
                          [np.sin(theta), np.cos(theta), 0],
                          [0, 0, 1]])
     
-    def inverse_kinematics(self):
-        
+
+    def inverse_kinematics(self, position):
         # call leg inverse kinematics and feed it
-        
-        footposition = coord3D() # foot position
-        bodyikPosition = coord3D() # body-corrected foot position
-        
-        
-        Rz = self.rot_mat_3d_z(self.body_rotation.z)
-        Ry = self.rot_mat_3d_y(self.body_rotation.y)
-        Rx = self.rot_mat_3d_z(self.body_rotation.x)
-
-        R = Rz @ Ry @ Rx # combine rotations z-y-x
+        footposition = coord3D()
+        rotation = coord3D()
+        body = coord3D()
+        positions = []
         for leg in self.VALID_LEGS:
-            
-            footposition.x = self.legs[leg].cur_pos.x + self.gait_pos[leg].x
-            footposition.y = self.legs[leg].cur_pos.y + self.gait_pos[leg].y
-            footposition.z = self.legs[leg].cur_pos.z + self.gait_pos[leg].z
-            
-            # Get origional foot position
-            translated_foot = np.array([footposition.x - self.body_coxa_offset[leg].x, footposition.y - self.body_coxa_offset[leg].y, footposition.z])
-            
-            # Apply body rotation to foot position
-            rotated_foot = R @ translated_foot
-            
-            bodyikPosition.from_array(rotated_foot)
-            
-            # Send transformed position to leg
-            self.legs[leg].inverse_kinematics(bodyikPosition)
-        
-        
-        # for leg in self.VALID_LEGS:
+            # Do some body kinematics here, send values to legs to change from global to local frame
+            if leg == "LR":
+                # Setup position
+                footposition.x = self.legs[leg].cur_pos.x + self.body_position.x + position[0] # self.gait_pos[leg].x
+                footposition.y = self.legs[leg].cur_pos.y + self.body_position.y + position[1] # self.gait_pos[leg].y
+                footposition.z = self.legs[leg].cur_pos.z + self.body_position.z + position[2] # self.gait_pos[leg].z
+                
+                #print(f'footposition: ',footposition.x, footposition.y, footposition.z)
+                # Rotation
+                rotation.x = self.body_rotation.x
+                rotation.y = self.body_rotation.y + self.gait_pos[leg].roty
+                rotation.z = self.body_rotation.z
+                
+                # ------------------------
+                # Body kinemtatics
+                # ------------------------
+                body.x = footposition.x + self.body_coxa_offset[leg].x
+                body.y = footposition.y + self.body_coxa_offset[leg].y
+                body.z = footposition.z
+                
+                #print(body.x, body.y, body.z)
+                # calculate position corrections using rotation matrix
+                # https://en.wikipedia.org/wiki/Rotation_matrix
+                Rx = self.rot_mat_3d_x(rotation.x) # pitch
+                Ry = self.rot_mat_3d_y(rotation.y) # yaw
+                Rz = self.rot_mat_3d_z(rotation.z) # roll
+                
+                R = Rz @ Ry @ Rx
+                '''[[1. 0. 0.] no rotation
+                    [0. 1. 0.]
+                    [0. 0. 1.]]            
+                '''
+                temp_pos = np.array([body.x, body.y, body.z]) #body position in space
+                rotated_point = R @ temp_pos
 
-        #     # Setup position of each coxa's height/rotation
-        #     posIO.x = self.legs[leg].toe_position.x + self.body_position.x + self.gait_pos[leg].x
-        #     posIO.y = self.legs[leg].toe_position.y + self.body_position.y + self.gait_pos[leg].y
-        #     posIO.z = self.legs[leg].toe_position.z + self.body_position.z + self.gait_pos[leg].z
-            
-        #     # Rotation
-        #     rotIO.x = self.body_rotation.x
-        #     rotIO.y = self.body_rotation.y + self.gait_pos[leg].roty
-        #     rotIO.z = self.body_rotation.z
-            
-        #     # ------------------------
-        #     # Body kinemtatics
-        #     # ------------------------
-        #     body.x = posIO.x + self.body_coxa_offset[leg].x
-        #     body.y = posIO.y + self.body_coxa_offset[leg].y
-        #     body.z = posIO.z
-            
-        #     # print(body.x, body.y, body.z)
-        #     # calculate position corrections using rotation matrix
-            
-        #     # https://en.wikipedia.org/wiki/Rotation_matrix
-        #     Rx = self.rot_mat_3d_x(rotIO.x) # pitch
-        #     Ry = self.rot_mat_3d_y(rotIO.y) # yaw
-        #     Rz = self.rot_mat_3d_z(rotIO.z) # roll
-
-            
-        #     R = Rz @ Ry @ Rx
-        #     '''[[1. 0. 0.] no rotation
-        #         [0. 1. 0.]
-        #         [0. 0. 1.]]            
-        #     '''
-        #     temp_pos = np.array([body.x, body.y, body.z]) #body position in space
-        #     rotated_point = R @ temp_pos
-        #     bodyikPosition.from_array(rotated_point)
+                bodyikPosition = coord3D()
+                bodyikPosition.from_array(rotated_point)
+                
+                #print("BodyikPosition: ", bodyikPosition.x, bodyikPosition.y, bodyikPosition.z)
         
-        #     # Send values to legs for leg kinematics
-        #     self.legs[leg].inverse_kinematics(bodyikPosition, footposition)
             
-            
-    
+                # Send values to legs for leg kinematics
+                positions.append(self.legs[leg].inverse_kinematics(bodyikPosition, footposition))
+            return positions
     
     
 if __name__ == "__main__":
