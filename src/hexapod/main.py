@@ -27,7 +27,7 @@ def main_loop(hexapod):
     # # Given starting position
     start_position = np.array([0,0,-80])
 
-    # # # # Adjust control points relative to the starting position
+    # Adjust control points relative to the starting position
     control_points = [
         start_position,  # P0: Start (Back, Grounded)
         start_position + np.array([10, 0, 25]),  # P1: Lift up
@@ -37,20 +37,16 @@ def main_loop(hexapod):
         start_position  # P5: Return to Start
     ]
     #Generate Bezier curve
-    # time.sleep(1)
     curve_points = bezier_curve(control_points, num_points=200)
+    
+    
+    #  aquire thetas and move hexapod legs 
     while True:
         for (x,y,z) in curve_points:
-            positions = hexapod.inverse_kinematics((x,y,z))
-
-    # for theta1,theta2,theta3 in enumerate(positions):
-    #     print(np.degrees(theta1), np.degrees(theta2), np.degrees(theta3))
-    #     hexapod.move_joint("LR", "coxa", int(np.degrees(theta1)))
-    #     hexapod.move_joint("LR", "femur", int(np.degrees(theta2)))
-    #     hexapod.move_joint("LR", "tibia", int(np.degrees(theta3)))
-    #     time.sleep(0.1)
-
-
+            thetas = hexapod.inverse_kinematics((x,y,z))
+            print(hexapod.get_leg_positions())
+            # hexapod.forward_kinematics(thetas)
+            # hexapod.move_legs(thetas)
 
     # In a loop starting here
     # -----
@@ -93,10 +89,32 @@ def main_loop(hexapod):
 
 if __name__ == "__main__":
     # setup controller stuff here
+
+    
+    
+    
+    # Setup control points
+    # # Given starting position
+    start_position = np.array([0,0,-80])
+
+    # # # # Adjust control points relative to the starting position
+    control_points = [
+        start_position,  # P0: Start (Back, Grounded)
+        start_position + np.array([10, 0, 25]),  # P1: Lift up
+        start_position + np.array([20, 0, 60]),  # P2: Peak (Highest point)
+        start_position + np.array([25, 0.0, 25]),  # P3: Descend
+        start_position + np.array([20, 0.0, 0]),  # P4: grounded
+        start_position  # P5: Return to Start
+    ]
+    #print(control_points)
+    #Generate Bezier curve
+    # time.sleep(1)
+    curve_points = bezier_curve(control_points, num_points=200)
+    
     
     # Setup hexapod rotation/movement    
-    hexapod = Hexapod(leg_configs, hexapod_configs)
-    
+    hexapod = Hexapod(leg_configs, hexapod_configs, curve_points)
+
     main_loop(hexapod)
 
     

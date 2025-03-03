@@ -17,21 +17,21 @@ class Hexapod:
     VALID_GATES = ["tripod", "wave", "ripple", "quadrupedal", "tetrapod"]
     VALID_LEGS = ["LR","LM", "LF", "RF", "RM","RR"]
     
-    def __init__(self, leg_configs, hexapod_configs):
+    def __init__(self, leg_configs, hexapod_configs, bezier_points):
         '''
             Initialize variables/controllers
             Body-Level kinematics (gait, stability, coordination)
             modes: initialize, stand, walk, rotate, shutdown, calibration
             gaits: tripod, wave, ripple
 
-            leftRear        Left Front
+            LR      LM      LF
             [0]     [1]     [2]
                 \\    |    /
                 ----------
                 ----------
                /     |    \\
             [5]     [4]      [3]
-            rightRear       Right Front
+            RR      RM       RF
 
             hook up legs 5 & 0 at pins 0 on the servoboard.
         '''
@@ -40,12 +40,10 @@ class Hexapod:
         self.legs = {}
         self.mode = "tripod"
         
-        
-        self.leg_lift_height = 30 # might need moved to legs
-        self.liftpos = 0 # number of positions a single leg is lefted (3)
         self.divfactor = 0 # number of steps a leg is on the floor while walking
         self.multipler = 0 # multiplier for length of each step
-        
+        self.bezierpoints = bezier_points # bezier curve points that get rotated around for each leg
+
         # Body Position
         self.body_position = coord3D()
         self.body_rotation = coord3D()
@@ -62,6 +60,7 @@ class Hexapod:
         
         # setup gaits
         self.tripod_gait_groups = [["LR", "RM", "LF"], ["RF","LM","RR"]]
+        self.gait_pos = {}
         
         # setup temp vars
         leg_index = {}
@@ -70,7 +69,7 @@ class Hexapod:
         pulse_min = {}
         pulse_max={}
         segment_lengths = {}
-        self.gait_pos = {}
+    
         # Create leg class
         for leg_name, config in leg_configs.items():
 
@@ -125,27 +124,31 @@ class Hexapod:
         leg_lengths = {}
         for leg,vals in temp_vals.items():
             leg_lengths[leg] = np.sqrt(vals['x']**2 + vals['y']**2 + vals['z']**2)
-        print(f"leg lengths: ",leg_lengths)
+        #print(f"leg lengths: ",leg_lengths)
 
         toe_offsets = {}
         for name, values in temp_vals.items():
             if name == "LR":
                 toe_offsets[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
                 self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], toe_offsets[name], angleoffset[name])
-                print(f"toe positions/offsets:", toe_offsets[name].x, toe_offsets[name].y, toe_offsets[name].z)
+                #print(f"toe positions/offsets:", toe_offsets[name].x, toe_offsets[name].y, toe_offsets[name].z)
         
 
-
+    def set_bezier_points(self, points:dict):
+        self.bezierpoints = points
+        
     def get_legs(self):
         return self.legs
     
-    def move_leg(self, leg_id, target_position):
+    def move_legs(self, theta:int):
         '''
             get angles from inverse kinematics
         '''
-        return self.legs[leg_id].inverse_kinematics(target_position)
-    
-    
+        for i, leg_id in enumerate(self.legs):
+            self.legs[leg_id].set_joint_angles("coxa", theta[0])
+            self.legs[leg_id].set_joint_angles("femur", theta[1])
+            self.legs[leg_id].set_joint_angles("tibia", theta[2])
+
     def move_joint(self, leg, joint, amount):
         if leg in self.legs:
             self.legs[leg].set_joint_angles(joint, amount)
@@ -153,7 +156,7 @@ class Hexapod:
             raise ValueError(f"Invalid Leg: {leg}")
 
     def get_leg_positions(self):
-        return {name: leg.forward_kinematics(leg.joint_angles) for name, leg in self.legs.items()}
+        return self.forward_kinematics()
     
     def stand(self):
         self.set_mode("stand")
@@ -176,7 +179,6 @@ class Hexapod:
         
         return step_positions
 
-        
     def rotation_2d(self, theta):
         '''
             Accepts an angle, converts it to radians and returns
@@ -220,7 +222,7 @@ class Hexapod:
         positions = []
         for leg in self.VALID_LEGS:
             # Do some body kinematics here, send values to legs to change from global to local frame
-            if leg == "LR":
+            if leg == "LR": # Remove this for all legs, change for 3 legs test
                 # Setup position
                 footposition.x = self.legs[leg].cur_pos.x + self.body_position.x + position[0] # self.gait_pos[leg].x
                 footposition.y = self.legs[leg].cur_pos.y + self.body_position.y + position[1] # self.gait_pos[leg].y
@@ -262,8 +264,17 @@ class Hexapod:
             
                 # Send values to legs for leg kinematics
                 positions.append(self.legs[leg].inverse_kinematics(bodyikPosition, footposition))
+            
             return positions
     
+    def forward_kinematics(self):
+        # For each leg calculate the forward kinematics and return
+        positions = {}
+        for i, name in enumerate (self.legs):
+            if name == "LR":
+                positions[name] = self.legs[name].forward_kinematics()
+            return positions
+
     
 if __name__ == "__main__":
     hexapod = Hexapod(leg_configs, hexapod_configs)
