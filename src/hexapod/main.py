@@ -16,11 +16,11 @@ from common.bezier2d import BezierCurve
 from common.new_bezier import bezier_curve
 import numpy as np
 import time
-
+from src.anim_plot import *
 
 walk_length = coord3D() 
 
-def main_loop(hexapod):
+def main_loop(hexapod, hexapod_animation):
     '''
         Implement movement and loop here
     '''
@@ -39,6 +39,7 @@ def main_loop(hexapod):
     #Generate Bezier curve
     curve_points = bezier_curve(control_points, num_points=200)
     
+<<<<<<< HEAD
     
     #  aquire thetas and move hexapod legs 
     while True:
@@ -48,6 +49,18 @@ def main_loop(hexapod):
             # hexapod.forward_kinematics(thetas)
             # hexapod.move_legs(thetas)
 
+=======
+<<<<<<< Updated upstream
+=======
+    #  aquire thetas and move hexapod legs 
+    while True:
+        for (x,y,z) in curve_points:
+            rad_thetas = hexapod.inverse_kinematics((x,y,z))
+            hexapod_animation.update(rad_thetas)
+            
+            # hexapod.move_legs(thetas)
+>>>>>>> Stashed changes
+>>>>>>> 231e5a5 (Auto stash before checking out "HEAD")
     # In a loop starting here
     # -----
     # receive new message from controller
@@ -79,19 +92,43 @@ def main_loop(hexapod):
     '''
         calculate every leg's angles first, then move the legs individually
     '''
-    
-    
-    ## These values go into inverse kinematics
-    # hexPos = current position + body position + gaitposition
-    # hexRot = bodyRotx, z, bodyroty= roty+gaitPos.roty
-    pass
 
 
 if __name__ == "__main__":
     # setup controller stuff here
+<<<<<<< HEAD
 
     
     
+    
+    # Setup control points
+    # # Given starting position
+    start_position = np.array([0,0,-80])
+
+    # # # # Adjust control points relative to the starting position
+    control_points = [
+        start_position,  # P0: Start (Back, Grounded)
+        start_position + np.array([10, 0, 25]),  # P1: Lift up
+        start_position + np.array([20, 0, 60]),  # P2: Peak (Highest point)
+        start_position + np.array([25, 0.0, 25]),  # P3: Descend
+        start_position + np.array([20, 0.0, 0]),  # P4: grounded
+        start_position  # P5: Return to Start
+    ]
+    #print(control_points)
+    #Generate Bezier curve
+    # time.sleep(1)
+    curve_points = bezier_curve(control_points, num_points=200)
+    
+=======
+<<<<<<< Updated upstream
+>>>>>>> 231e5a5 (Auto stash before checking out "HEAD")
+    
+    # Setup hexapod rotation/movement    
+    hexapod = Hexapod(leg_configs, hexapod_configs, curve_points)
+
+    main_loop(hexapod)
+=======
+
     
     # Setup control points
     # # Given starting position
@@ -115,28 +152,27 @@ if __name__ == "__main__":
     # Setup hexapod rotation/movement    
     hexapod = Hexapod(leg_configs, hexapod_configs, curve_points)
 
-    main_loop(hexapod)
+    leg_lengths = { #Adjust thes for the legs (Assumes all legs are the same length)
+    "coxa": 45,
+    "femur": 110,
+    "tibia": 193
+    }
+    mount_angle = {
+        "LR": 214.309,
+        "LM": 270,
+        "LF": 325.931,
+        "RF": 34.0685,
+        "RM": 90,
+        "RR": 146.172,
+    }
+>>>>>>> Stashed changes
 
-    
-    # x,y,z = int(np.degrees(-77.5)),int(np.degrees(193)),int(np.degrees(134))
-    
-    # hexapod.move_joint("left_rear", "coxa", int(np.degrees(x)))
-    # hexapod.move_joint("left_rear", "femur", int(np.degrees(y)))
-    # hexapod.move_joint("left_rear", "tibia", int(np.degrees(z)))
+    hexapod_animation = HexapodAnimator(leg_lengths, mount_angle)
 
-    # control_points = [
-    #     np.array([0.0, 0.0, 100.0]),
-    #     np.array([0.0, 0.0, 10.0]),
-    # ]
-    # curve_points = bezier_curve(control_points, num_points=50)
-    # for (x,y,z) in curve_points:
-    #     theta1, theta2, theta3 = hexapod.move_leg("left_rear", (x,y,z))
-    #     print(np.degrees(theta1), np.degrees(theta2), np.degrees(theta3))
-    #     hexapod.move_joint("left_rear", "coxa", int(np.degrees(theta1)))
-    #     hexapod.move_joint("left_rear", "femur", int(np.degrees(theta2)))
-    #     hexapod.move_joint("left_rear", "tibia", int(np.degrees(theta3)))
+    main_loop(hexapod, hexapod_animation)
 
     time.sleep(2)
+<<<<<<< Updated upstream
 
     # theta1,theta2,theta3 = hexapod.move_leg("left_rear", (90,75,-18))
     # hexapod.move_joint("left_rear", "coxa", int(np.degrees(theta1)))
@@ -179,3 +215,5 @@ if __name__ == "__main__":
     # time.sleep(1)
     # for i in range(-35, 0):
     #     hexapod.move_joint("left_rear", "coxa", i)
+=======
+>>>>>>> Stashed changes
