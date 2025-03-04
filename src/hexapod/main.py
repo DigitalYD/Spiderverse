@@ -25,56 +25,21 @@ def main_loop(hexapod, hexapod_animation):
         Implement movement and loop here
     '''
     # # Given starting position
-<<<<<<< HEAD
-    start_position = np.array([0,0,-80])
-=======
     # # Given starting position
     start_position = np.array([-10,0,-80])
->>>>>>> e45fea6 (6 leg sim & works)
 
     # Adjust control points relative to the starting position
     control_points = [
         start_position,  # P0: Start (Back, Grounded)
         start_position + np.array([10, 0, 25]),  # P1: Lift up
-<<<<<<< HEAD
-        start_position + np.array([20, 0, 60]),  # P2: Peak (Highest point)
-        start_position + np.array([25, 0.0, 25]),  # P3: Descend
-        start_position + np.array([20, 0.0, 0]),  # P4: grounded
-=======
         start_position + np.array([20, 0, 75]),  # P2: Peak (Highest point)
         start_position + np.array([25, 0.0, 25]),  # P3: Descend
         start_position + np.array([25, 0.0, 0]),  # P4: grounded
         start_position + np.array([25, 0.0, 0]),  # P4: grounded
->>>>>>> e45fea6 (6 leg sim & works)
         start_position  # P5: Return to Start
     ]
     #Generate Bezier curve
     curve_points = bezier_curve(control_points, num_points=200)
-<<<<<<< HEAD
-    
-<<<<<<< HEAD
-    
-    #  aquire thetas and move hexapod legs 
-    while True:
-        for (x,y,z) in curve_points:
-            thetas = hexapod.inverse_kinematics((x,y,z))
-            print(hexapod.get_leg_positions())
-            # hexapod.forward_kinematics(thetas)
-            # hexapod.move_legs(thetas)
-
-=======
-<<<<<<< Updated upstream
-=======
-    #  aquire thetas and move hexapod legs 
-    while True:
-        for (x,y,z) in curve_points:
-            rad_thetas = hexapod.inverse_kinematics((x,y,z))
-            hexapod_animation.update(rad_thetas)
-            
-            # hexapod.move_legs(thetas)
->>>>>>> Stashed changes
->>>>>>> 231e5a5 (Auto stash before checking out "HEAD")
-=======
 
     hexapod.inverse_kinematics([-10,0,-80])
     time.sleep(2)
@@ -90,7 +55,6 @@ def main_loop(hexapod, hexapod_animation):
             #print(rads)
             hexapod_animation.update(rads)
 
->>>>>>> e45fea6 (6 leg sim & works)
     # In a loop starting here
     # -----
     # receive new message from controller
@@ -126,41 +90,6 @@ def main_loop(hexapod, hexapod_animation):
 
 if __name__ == "__main__":
     # setup controller stuff here
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-    
-    
-    
-    # Setup control points
-    # # Given starting position
-    start_position = np.array([0,0,-80])
-
-    # # # # Adjust control points relative to the starting position
-    control_points = [
-        start_position,  # P0: Start (Back, Grounded)
-        start_position + np.array([10, 0, 25]),  # P1: Lift up
-        start_position + np.array([20, 0, 60]),  # P2: Peak (Highest point)
-        start_position + np.array([25, 0.0, 25]),  # P3: Descend
-        start_position + np.array([20, 0.0, 0]),  # P4: grounded
-        start_position  # P5: Return to Start
-    ]
-    #print(control_points)
-    #Generate Bezier curve
-    # time.sleep(1)
-    curve_points = bezier_curve(control_points, num_points=200)
-    
-=======
-<<<<<<< Updated upstream
->>>>>>> 231e5a5 (Auto stash before checking out "HEAD")
-    
-    # Setup hexapod rotation/movement    
-    hexapod = Hexapod(leg_configs, hexapod_configs, curve_points)
-
-    main_loop(hexapod)
-=======
-=======
->>>>>>> e45fea6 (6 leg sim & works)
 
     
     # Setup control points
@@ -204,51 +133,3 @@ if __name__ == "__main__":
     main_loop(hexapod, hexapod_animation)
 
     time.sleep(2)
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-
-    # theta1,theta2,theta3 = hexapod.move_leg("left_rear", (90,75,-18))
-    # hexapod.move_joint("left_rear", "coxa", int(np.degrees(theta1)))
-    # hexapod.move_joint("left_rear", "femur", int(np.degrees(theta2)))
-    # hexapod.move_joint("left_rear", "tibia", int(np.degrees(theta3)))
-
-
-    # ## Rotate coxa
-    # for i in range(0, 65):
-    #     hexapod.move_joint("left_rear", "coxa", i)
-    
-    # time.sleep(1)
-    # for i in range(65, -35, -1):
-    #     hexapod.move_joint("left_rear", "coxa", i)
-
-    # time.sleep(1)
-    # for i in range(-35, 0):
-    #     hexapod.move_joint("left_rear", "coxa", i)
-
-    # ## Rotate femur
-    # for i in range(0, 0):
-    #     hexapod.move_joint("left_rear", "femur", i)
-    
-    # time.sleep(1)
-    # for i in range(65, -35, -1):
-    #     hexapod.move_joint("left_rear", "femur", i)
-
-    # time.sleep(1)
-    # for i in range(-35, 0):
-    #     hexapod.move_joint("left_rear", "femur", i)
-
-    # ## Rotate fibia
-    # for i in range(0, 65):
-    #     hexapod.move_joint("left_rear", "coxa", i)
-    
-    # time.sleep(1)
-    # for i in range(65, -35, -1):
-    #     hexapod.move_joint("left_rear", "coxa", i)
-
-    # time.sleep(1)
-    # for i in range(-35, 0):
-    #     hexapod.move_joint("left_rear", "coxa", i)
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> e45fea6 (6 leg sim & works)
