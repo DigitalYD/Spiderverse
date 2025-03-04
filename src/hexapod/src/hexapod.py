@@ -52,9 +52,15 @@ class Hexapod:
         for body_pose, config in hexapod_configs.items():
             self.body_pose = config["pose"]
             coxa_offsets = config["coxa_offsets"]
+<<<<<<< HEAD
         
         self.body_coxa_offset = {}
+=======
+>>>>>>> e45fea6 (6 leg sim & works)
         
+        self.body_coxa_offsets = {}
+        self.rad_angles = {}
+        self.leg_angles = {}
         # setup hexapod body positions in 3D space
         self.position = coord3D()
         self.rotation = coord3D()
@@ -74,9 +80,15 @@ class Hexapod:
         # Create leg class
         for leg_name, config in leg_configs.items():
 
+<<<<<<< HEAD
             self.body_coxa_offset[leg_name] = coord2D()
             self.body_coxa_offset[leg_name].x = coxa_offsets[leg_name][0] # Distance x from center of body to coxa
             self.body_coxa_offset[leg_name].y = coxa_offsets[leg_name][1] # Distance y from center of body to coxa
+=======
+            self.body_coxa_offsets[leg_name] = coord2D()
+            self.body_coxa_offsets[leg_name].x = coxa_offsets[leg_name][0] # Distance x from center of body to coxa
+            self.body_coxa_offsets[leg_name].y = coxa_offsets[leg_name][1] # Distance y from center of body to coxa
+>>>>>>> e45fea6 (6 leg sim & works)
             self.gait_pos[leg_name] = coord3D()
             
             
@@ -122,22 +134,27 @@ class Hexapod:
             },
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e45fea6 (6 leg sim & works)
         
         leg_lengths = {}
         for leg,vals in temp_vals.items():
             leg_lengths[leg] = np.sqrt(vals['x']**2 + vals['y']**2 + vals['z']**2)
         #print(f"leg lengths: ",leg_lengths)
+<<<<<<< HEAD
 =======
+=======
+
+        toe_offsets = {}
+>>>>>>> e45fea6 (6 leg sim & works)
         for name, values in temp_vals.items():
-<<<<<<< Updated upstream
-            leg_ofs[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
-            self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], leg_ofs[name], angleoffset[name])
-=======
-            if name == "LR":
+            if name == "LR" or name == "LM" or name == "LF":
                 toe_offsets[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
                 self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], toe_offsets[name], coxa_offsets[name], angleoffset[name])
-                #print(f"toe positions/offsets:", toe_offsets[name].x, toe_offsets[name].y, toe_offsets[name].z)
+            # #print(f"toe positions/offsets:", toe_offsets[name].x, toe_offsets[name].y, toe_offsets[name].z)
         
+<<<<<<< HEAD
 >>>>>>> Stashed changes
 >>>>>>> 231e5a5 (Auto stash before checking out "HEAD")
 
@@ -149,12 +166,16 @@ class Hexapod:
                 #print(f"toe positions/offsets:", toe_offsets[name].x, toe_offsets[name].y, toe_offsets[name].z)
         
 
+=======
+
+>>>>>>> e45fea6 (6 leg sim & works)
     def set_bezier_points(self, points:dict):
         self.bezierpoints = points
         
     def get_legs(self):
         return self.legs
     
+<<<<<<< HEAD
     def move_legs(self, theta:int):
         '''
             get angles from inverse kinematics
@@ -163,6 +184,26 @@ class Hexapod:
             self.legs[leg_id].set_joint_angles("coxa", theta[0])
             self.legs[leg_id].set_joint_angles("femur", theta[1])
             self.legs[leg_id].set_joint_angles("tibia", theta[2])
+=======
+    def move_legs(self):
+        '''
+            get angles from inverse kinematics
+        '''
+
+        for i, leg_id in enumerate(self.legs):
+            self.legs[leg_id].set_joint_angles("coxa", self.leg_angles[leg_id][0])
+            self.legs[leg_id].set_joint_angles("femur", self.leg_angles[leg_id][1])
+            self.legs[leg_id].set_joint_angles("tibia", self.leg_angles[leg_id][2])
+
+    def move_individual_leg(self, leg_id):
+        '''
+            get angles from inverse kinematics
+        '''
+        self.legs[leg_id].set_joint_angles("coxa", self.leg_angles[leg_id][0])
+        self.legs[leg_id].set_joint_angles("femur", self.leg_angles[leg_id][1])
+        self.legs[leg_id].set_joint_angles("tibia", self.leg_angles[leg_id][2])
+
+>>>>>>> e45fea6 (6 leg sim & works)
 
     def move_joint(self, leg, joint, amount):
         if leg in self.legs:
@@ -241,19 +282,26 @@ class Hexapod:
         rotation = coord3D()
         body = coord3D()
 <<<<<<< HEAD
+<<<<<<< HEAD
         positions = []
         for leg in self.VALID_LEGS:
             # Do some body kinematics here, send values to legs to change from global to local frame
 =======
 <<<<<<< Updated upstream
         for leg in self.VALID_LEGS:
+=======
+        rad_angles = {}
+        angles = {}
+        for i,leg in enumerate(self.legs):
+>>>>>>> e45fea6 (6 leg sim & works)
             # Do some body kinematics here, send values to legs to change from global to local frame
             
             # Setup position
-            footposition.x = self.legs[leg].cur_pos.x + self.body_position.x + self.gait_pos[leg].x
-            footposition.y = self.legs[leg].cur_pos.y + self.body_position.y + self.gait_pos[leg].y
-            footposition.z = self.legs[leg].cur_pos.z + self.body_position.z + self.gait_pos[leg].z
-            #print(footposition.x, footposition.y, footposition.z)
+            footposition.x = self.legs[leg].cur_pos.x + self.body_position.x + position[0] # self.gait_pos[leg].x
+            footposition.y = self.legs[leg].cur_pos.y + self.body_position.y + position[1] # self.gait_pos[leg].y
+            footposition.z = self.legs[leg].cur_pos.z + self.body_position.z + position[2] # self.gait_pos[leg].z
+            
+            #print(f'footposition: ',footposition.x, footposition.y, footposition.z)
             # Rotation
             rotation.x = self.body_rotation.x
             rotation.y = self.body_rotation.y + self.gait_pos[leg].roty
@@ -262,6 +310,7 @@ class Hexapod:
             # ------------------------
             # Body kinemtatics
             # ------------------------
+<<<<<<< HEAD
 =======
         rad_angles = {}
         for i,leg in enumerate(self.VALID_LEGS):
@@ -337,42 +386,58 @@ class Hexapod:
 <<<<<<< HEAD
 =======
             #print(bodyikPosition.x, bodyikPosition.y, bodyikPosition.z)
+=======
+            body.x = footposition.x + self.body_coxa_offsets[leg].x
+            body.y = footposition.y + self.body_coxa_offsets[leg].y
+            body.z = footposition.z
+            
+            # calculate position corrections using rotation matrix
+            # https://en.wikipedia.org/wiki/Rotation_matrix
+            Rx = self.rot_mat_3d_x(rotation.x) # pitch
+            Ry = self.rot_mat_3d_y(rotation.y) # yaw
+            Rz = self.rot_mat_3d_z(rotation.z) # roll
+            
+            R = Rz @ Ry @ Rx
+            '''[[1. 0. 0.] no rotation
+                [0. 1. 0.]
+                [0. 0. 1.]]            
+            '''
+            temp_pos = np.array([body.x, body.y, body.z]) #body position in space
+            rotated_point = R @ temp_pos
+
+            bodyikPosition = coord3D()
+            bodyikPosition.from_array(rotated_point)
+            
+            #print("BodyikPosition: ", bodyikPosition.x, bodyikPosition.y, bodyikPosition.z)
+>>>>>>> e45fea6 (6 leg sim & works)
     
         
             # Send values to legs for leg kinematics
-            self.legs[leg].inverse_kinematics(bodyikPosition, footposition)
-            
-            
-            
+            rad_angles[leg], angles[leg] = self.legs[leg].inverse_kinematics(bodyikPosition, footposition)
+        self.rad_angles = rad_angles
+        self.leg_angles = angles
+        #return rad_angles
         
-    def update(self):
-        # get current position of each leg, and the gait position of each leg add with current position
-        # Do this for x,y,z positions
-        
-        '''
-            rotio = hexapod rotation (rotio)
-            RB_FeetPos = (posio)
-        ''' 
-        # initialize temp vars
-        
-        for legs in self.VALID_LEGS:
-            # Get values from legs
-            pass
-        
-    def calculate_gait(self):
-        '''
-            Calculate where each leg is during the gait and return x,y,z,rot
-            Each leg has 3 positions that a single leg can be lifted to
-        '''
-        return
-=======
-                # Send values to legs for leg kinematics
-                rad_angles[leg] = self.legs[leg].inverse_kinematics(bodyikPosition, footposition)
-            
-            return rad_angles
->>>>>>> Stashed changes
+
     
+<<<<<<< HEAD
 >>>>>>> 231e5a5 (Auto stash before checking out "HEAD")
+=======
+    def forward_kinematics(self):
+        # For each leg calculate the forward kinematics and return
+        positions = {}
+        for i, name in enumerate (self.legs):
+            if name == "LR":
+                positions[name] = self.legs[name].forward_kinematics()
+            return positions
+
+    def get_rads(self):
+        return self.rad_angles
+    
+    def get_angles(self):
+        return self.leg_angles
+
+>>>>>>> e45fea6 (6 leg sim & works)
     
 if __name__ == "__main__":
     hexapod = Hexapod(leg_configs, hexapod_configs)
@@ -399,26 +464,26 @@ if __name__ == "__main__":
     # hexapod.move_joint("LR", "femur",theta2)
     # hexapod.move_joint("LR", "tibia",theta3)
 
-    for i in range(0, 90):
-        hexapod.move_joint("LR", "tibia", i)
+    # for i in range(0, 90):
+    #     hexapod.move_joint("LR", "tibia", i)
 
-    for i in range(0, 160):
-        hexapod.move_joint("LR", "femur", i)
+    # for i in range(0, 160):
+    #     hexapod.move_joint("LR", "femur", i)
     
-    for i in range(160, 0, -1):
-        hexapod.move_joint("LR", "femur", i)
+    # for i in range(160, 0, -1):
+    #     hexapod.move_joint("LR", "femur", i)
 
-    for i in range(90, 0, -1):
-        hexapod.move_joint("LR", "tibia", i)
-    time.sleep(1)
-    time.sleep(2)
-    for i in range(0, 65):
-        hexapod.move_joint("LR", "coxa", i)
+    # for i in range(90, 0, -1):
+    #     hexapod.move_joint("LR", "tibia", i)
+    # time.sleep(1)
+    # time.sleep(2)
+    # for i in range(0, 65):
+    #     hexapod.move_joint("LR", "coxa", i)
     
-    time.sleep(1)
-    for i in range(65, -35, -1):
-        hexapod.move_joint("LR", "coxa", i)
+    # time.sleep(1)
+    # for i in range(65, -35, -1):
+    #     hexapod.move_joint("LR", "coxa", i)
 
-    time.sleep(1)
-    for i in range(-35, 0):
-        hexapod.move_joint("LR", "coxa", i)
+    # time.sleep(1)
+    # for i in range(-35, 0):
+    #     hexapod.move_joint("LR", "coxa", i)

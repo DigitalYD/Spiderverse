@@ -6,6 +6,7 @@ from src.coord import *
 
 class Leg:
 <<<<<<< HEAD
+<<<<<<< HEAD
     def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths, toe_offsets, angleoffset):
 =======
 <<<<<<< Updated upstream
@@ -14,6 +15,9 @@ class Leg:
     def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths, toe_offsets, coxa_offset, angleoffset):
 >>>>>>> Stashed changes
 >>>>>>> 231e5a5 (Auto stash before checking out "HEAD")
+=======
+    def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths, toe_offsets, coxa_offset, angleoffset):
+>>>>>>> e45fea6 (6 leg sim & works)
         '''
             Each leg is comprised of a coxa, femur, tibia
             ie: servo0: coxa (forward/back)
@@ -31,6 +35,7 @@ class Leg:
         self.cur_pos = toe_offsets # Distance from center of body to coxa
         self.angle_offset = angleoffset
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.leg_lift_height = 30 # might need moved to legs
         self.liftpos = 0 # number of positions a single leg is lefted (3)
         self.cur_angles = []
@@ -41,16 +46,21 @@ class Leg:
 <<<<<<< Updated upstream
 
 =======
+=======
+>>>>>>> e45fea6 (6 leg sim & works)
         self.leg_lift_height = 30 # might need moved to legs
         self.liftpos = 0 # number of positions a single leg is lefted (3)
         self.cur_angles = []
         self.coxa_offset = coxa_offset
         self.coxa_leg_height = 0
+<<<<<<< HEAD
         
         #print(self.base_position.x, self.base_position.y, self.base_position.z)
         
 >>>>>>> Stashed changes
 >>>>>>> 231e5a5 (Auto stash before checking out "HEAD")
+=======
+>>>>>>> e45fea6 (6 leg sim & works)
         ## Uncomment this
         # if leg_index <= 2:
         #     self.servos = {
@@ -78,17 +88,19 @@ class Leg:
         self._TibiaAngle = 0.0
 
         
+<<<<<<< HEAD
         # adjust joints to starting positions (May not need this)
         #self._joints = self.inverse_kinematics() # Calculate joint Angles for (endofactor of foot position) 
 
 
         
+=======
+>>>>>>> e45fea6 (6 leg sim & works)
     def set_joint_angles(self, joint, angle):
         '''
             Set the angles of a specific joint in the leg
         '''
         if joint in self.servos:
-
             self.servos[joint].set_angle(angle)
         else:
             raise ValueError(f"Invalid joint: {joint}")
@@ -120,6 +132,7 @@ class Leg:
             Compute foot position from joint angles
             don't forget to use offsets in calculation
         '''
+<<<<<<< HEAD
 <<<<<<< HEAD
         coxa_angle, femur_angle, tibia_angle = self.cur_angles
         
@@ -160,6 +173,8 @@ class Leg:
         value = self.normalize_angle(angle)
         return max(min_angle, min(max_angle, value))
 =======
+=======
+>>>>>>> e45fea6 (6 leg sim & works)
         leg_positions = {}
 
         theta1, theta2, theta3 = self.cur_angles[0], self.cur_angles[1], self.cur_angles[2]
@@ -200,8 +215,11 @@ class Leg:
         ])
         return leg_positions
 
+<<<<<<< HEAD
 >>>>>>> Stashed changes
 >>>>>>> 231e5a5 (Auto stash before checking out "HEAD")
+=======
+>>>>>>> e45fea6 (6 leg sim & works)
 
     def inverse_kinematics(self, bodyikposition, footpos):
         '''
@@ -219,6 +237,7 @@ class Leg:
             #  x (right/left)
 
         '''
+<<<<<<< HEAD
 <<<<<<< Updated upstream
         coxa_angle, femur_angle, tibia_angle = 0,0,0
 <<<<<<< HEAD
@@ -227,14 +246,16 @@ class Leg:
         #print("bodyikposition x,y,z",bodyikposition.x, bodyikposition.y, bodyikposition.z)
 =======
 =======
+=======
+>>>>>>> e45fea6 (6 leg sim & works)
         toepos = coord3D()
-        
-        # set leg z position
-        self.coxa_leg_height = bodyikposition.z
 
         #print("bodyikposition x,y,z",bodyikposition.x, bodyikposition.y, bodyikposition.z)
+<<<<<<< HEAD
 >>>>>>> Stashed changes
 >>>>>>> 231e5a5 (Auto stash before checking out "HEAD")
+=======
+>>>>>>> e45fea6 (6 leg sim & works)
         
         # update foot position
         footpos.x = footpos.x + bodyikposition.x
@@ -256,11 +277,19 @@ class Leg:
         # #### Variation 1
         # ##--------------------------
         
+<<<<<<< HEAD
+=======
+        #print(toepos.x, toepos.y)
+
+        coxa_rad = np.arctan2(toepos.x, toepos.y)
+
+>>>>>>> e45fea6 (6 leg sim & works)
         # stiance between coxa and toe
         coxatoeDist = np.sqrt(toepos.x**2 + toepos.y**2)
         #print("Distance between coxa and toe: ", coxatoeDist)
         
         # Angle between SW line and ground in rad
+<<<<<<< HEAD
 <<<<<<< HEAD
         hyp = np.sqrt((coxatoeDist-self._coxa_len)**2 + toepos.z**2)
         
@@ -337,47 +366,44 @@ class Leg:
         return coxa_angle, femur_angle, tibia_angle
         
 =======
+=======
+>>>>>>> e45fea6 (6 leg sim & works)
         hyp = np.sqrt((coxatoeDist-self._coxa_len)**2 + toepos.z**2)
         
        # Angle between shoulder-hip line and femur
-       ## Note: this was atan2 (3/2/25 on first work)
-        # ika1 = np.clip(np.arctan2(coxatoeDist - self._coxa_len, toepos.z),-1,1)
+        ika1 = np.clip(np.atan2(coxatoeDist - self._coxa_len, toepos.z),-1,1)
 
-        # # Compute inverse kinematics femur angle
-        # arg = (self._femur_len**2 + hyp**2 - self._tibia_len**2) / (2.0 * self._femur_len * hyp)
-        # ika2 = np.arccos(np.clip(arg, -1, 1))  # Ensure acos input is within valid range
+        # Compute inverse kinematics femur angle
+        arg = (self._femur_len**2 + hyp**2 - self._tibia_len**2) / (2.0 * self._femur_len * hyp)
+        ika2 = np.acos(np.clip(arg, -1, 1))  # Ensure acos input is within valid range
 
-        # # tibia angle
-        # arg = (self._tibia_len**2 + self._femur_len**2 - hyp**2) / (2.0 * self._femur_len * hyp)
-        # tibia_angle = np.arccos(np.clip(arg,-1,1))
+        femur_rad = (ika1 + ika2) - (np.pi / 2)
+
+        # tibia angle
+        arg = (self._tibia_len**2 + self._femur_len**2 - hyp**2) / (2.0 * self._femur_len * hyp)
+        tibia_rad = np.arccos(np.clip(arg,-1,1))
        
-        # # Set angles to solid ints for moving
-        # coxa_rad = np.arctan2(toepos.x, toepos.y)
-        # femur_rad = (ika1 + ika2) - (np.pi / 2)
-        # tibia_rad = np.rad2deg((np.pi/2) - tibia_angle)
-        
-        # self.cur_angles = [
-        #                     int(np.rad2deg((ika1 + ika2) - (np.pi / 2))), 
-        #                     int(np.rad2deg(np.arctan2(toepos.x, toepos.y))), 
-        #                     int(np.rad2deg((np.pi/2) - tibia_angle))
-        #                   ]
+        tibia_rad = (np.pi/2) - tibia_rad
+
         #print(int(np.rad2deg(coxa_angle)), int(np.rad2deg(femur_angle)), int(np.rad2deg(tibia_angle)))
-  
 
         ##--------------
         ## Variation 2
         ##--------------
-        # coxa radians
-        coxa_rad = np.arctan2(toepos.x, toepos.y)
-        # Angle between coxa-to-foot and femur
-        ika1 = np.arctan2(toepos.z, coxatoeDist - self._coxa_len)
-        ika2 = np.arccos(np.clip((self._femur_len**2 + hyp**2 - self._tibia_len**2) / (2.0 * self._femur_len * hyp), -1, 1))
-        femur_rad = ika1 + ika2 - np.pi / 2  # Convert to correct frame
+        # # coxa radians
+        # coxatoeDist = np.sqrt(toepos.x**2 + toepos.y**2)
+        # coxa_rad = np.arctan2(toepos.x, toepos.y)
+        # hyp = np.sqrt((coxatoeDist-self._coxa_len)**2 + toepos.z**2)
+        # # Angle between coxa-to-foot and femur
+        # ika1 = np.arctan2(toepos.z, coxatoeDist - self._coxa_len)
+        # ika2 = np.arccos(np.clip((self._femur_len**2 + hyp**2 - self._tibia_len**2) / (2.0 * self._femur_len * hyp), -1, 1))
+        # femur_rad = ika1 + ika2 - np.pi / 2  # Convert to correct frame
 
-        # Step 6: Compute Tibia Angle (`theta3`)
-        tibia_rad = np.arccos(np.clip((self._femur_len**2 + self._tibia_len**2 - hyp**2) / (2.0 * self._femur_len * self._tibia_len), -1, 1))
-        tibia_rad = np.pi - tibia_rad  # Convert to correct relative frame
+        # # Step 6: Compute Tibia Angle (`theta3`)
+        # tibia_rad = np.arccos(np.clip((self._femur_len**2 + self._tibia_len**2 - hyp**2) / (2.0 * self._femur_len * self._tibia_len), -1, 1))
+        # tibia_rad = np.pi - tibia_rad  # Convert to correct relative frame
 
+<<<<<<< HEAD
         self.cur_angles = [
             int(np.rad2deg(coxa_rad)), 
             int(np.rad2deg(femur_rad)), 
@@ -386,3 +412,20 @@ class Leg:
         return coxa_rad, femur_rad, tibia_rad
 >>>>>>> Stashed changes
 >>>>>>> 231e5a5 (Auto stash before checking out "HEAD")
+=======
+
+        coxa_angle = int(np.rad2deg(coxa_rad))
+        femur_angle = int(np.rad2deg(femur_rad))
+        tibia_angle = int(np.rad2deg(tibia_rad))
+
+        # print(coxa_rad, femur_rad, tibia_rad)
+        # print(coxa_angle, femur_angle, tibia_angle)
+
+        # self.set_joint_angles("coxa", coxa_angle)
+        # self.set_joint_angles("femur", femur_angle)
+        # self.set_joint_angles("tibia", tibia_angle)
+        self.rad_angles = np.array([coxa_rad,femur_rad,tibia_rad])
+        self.cur_angles = np.array([coxa_angle, femur_angle, tibia_angle])
+
+        return self.rad_angles, self.cur_angles
+>>>>>>> e45fea6 (6 leg sim & works)
