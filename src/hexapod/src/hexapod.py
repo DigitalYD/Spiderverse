@@ -1,11 +1,13 @@
 import time
 import numpy as np
 from threading import Lock
+from concurrent.futures import ThreadPoolExecutor
 from src.leg import Leg
 from src.servo import Servo
 from src.leg_configs import leg_configs
 from src.hexapod_configs import hexapod_configs
 from src.coord import *
+
 
 PI = np.pi
 DEGTORAD = np.radians(1)
@@ -38,8 +40,11 @@ class Hexapod:
         # Initialize basic variables
         self.max_speed = 1.0
         self.legs = {}
-        self.mode = "tripod"
-        
+        self.gait = "tripod"
+        self.mode = "Standing"
+        self.turning_radius = float('inf') # straight walk
+        self.angular_speed = 0.0 # turning speed
+
         self.divfactor = 0 # number of steps a leg is on the floor while walking
         self.multipler = 0 # multiplier for length of each step
         self.bezierpoints = bezier_points # bezier curve points that get rotated around for each leg
@@ -58,10 +63,21 @@ class Hexapod:
         self.leg_angles = {}
         # setup hexapod body positions in 3D space
         self.position = coord3D()
+        self.last_position = coord3D()
         self.rotation = coord3D()
+        self.last_rotation = coord3D()
+        self.step_count = 0
         
         # setup gaits
-        self.tripod_gait_groups = [["LR", "RM", "LF"], ["RF","LM","RR"]]
+        self.tripod_gait_sequence = [["LR", "RM", "LF"], ["RF","LM","RR"]]
+        #self.tripod_gait_sequence = [["LR"]]
+        self.wave_gait_sequence =  ["LR", "LM","LF","RF","RM","RR"]
+        self.ripple_gait_sequence =  ["LR", "LM","LF","RF","RM","RR"]
+        self.phase_offsets = {
+            "tripod": { "LR": 0, "RM": 1, "LF": 0, "RF": 1, "LM": 0, "RR": 1 },  # Two tripod phases
+            "wave":   { "LF": 0, "RF": 1, "RM": 2, "RR": 3, "LR": 4, "LM": 5 },  # Wave gait with 6 phases
+            "ripple": { "LF": 0, "RF": 2, "LM": 4, "RM": 6, "LR": 8, "RR": 10 }, # Ripple gait with 12 phases
+        }
         self.gait_pos = {}
         
         # setup temp vars
@@ -130,11 +146,11 @@ class Hexapod:
 
         toe_offsets = {}
         for name, values in temp_vals.items():
-            if name == "LR" or name == "LM" or name == "LF":
-                toe_offsets[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
-                self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], toe_offsets[name], coxa_offsets[name], angleoffset[name])
-            # #print(f"toe positions/offsets:", toe_offsets[name].x, toe_offsets[name].y, toe_offsets[name].z)
-        
+            # if name == "LR" or name == "LM" or name == "LF":
+            toe_offsets[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
+            self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], toe_offsets[name], coxa_offsets[name], angleoffset[name])
+        # #print(f"toe positions/offsets:", toe_offsets[name].x, toe_offsets[name].y, toe_offsets[name].z)
+        print(self.legs)
 
     def set_bezier_points(self, points:dict):
         self.bezierpoints = points
@@ -146,11 +162,29 @@ class Hexapod:
         '''
             get angles from inverse kinematics
         '''
-
-        for i, leg_id in enumerate(self.legs):
+        active_legs = self.get_active_legs_in_gait()
+        for leg_id in active_legs:
+            print(leg_id, active_legs)
             self.legs[leg_id].set_joint_angles("coxa", self.leg_angles[leg_id][0])
             self.legs[leg_id].set_joint_angles("femur", self.leg_angles[leg_id][1])
             self.legs[leg_id].set_joint_angles("tibia", self.leg_angles[leg_id][2])
+
+
+    def get_active_legs_in_gait(self):
+            """Returns a list of legs that should move at this step, with phase offsets."""
+            active_legs = []
+            if self.gait not in self.phase_offsets:
+                return list(self.legs.keys())  # Default: move all legs
+            
+            # Get the maximum cycle length
+            gait_cycle_length = max(self.phase_offsets[self.gait].values()) + 1
+
+            # Find legs whose phase offset matches the current step
+            for leg, offset in self.phase_offsets[self.gait].items():
+                if (self.step_count % gait_cycle_length) == offset:
+                    active_legs.append(leg)
+            return active_legs
+    
 
     def move_individual_leg(self, leg_id):
         '''
@@ -231,21 +265,34 @@ class Hexapod:
                          [np.sin(theta), np.cos(theta), 0],
                          [0, 0, 1]])
     
+    def update_leg_ik(leg, bodyikPosition, footposition):
+        return leg, leg.inverse_kinematics(bodyikPosition, footposition)
 
     def inverse_kinematics(self, position):
         # call leg inverse kinematics and feed it
-        footposition = coord3D()
+
         rotation = coord3D()
         body = coord3D()
         rad_angles = {}
         angles = {}
-        for i,leg in enumerate(self.legs):
+
+        footposition = {}
+        bodyikPosition = {}
+        active_legs = self.get_active_legs_in_gait()
+
+        for leg in active_legs:
             # Do some body kinematics here, send values to legs to change from global to local frame
-            
+            footposition[leg] = coord3D()
             # Setup position
-            footposition.x = self.legs[leg].cur_pos.x + self.body_position.x + position[0] # self.gait_pos[leg].x
-            footposition.y = self.legs[leg].cur_pos.y + self.body_position.y + position[1] # self.gait_pos[leg].y
-            footposition.z = self.legs[leg].cur_pos.z + self.body_position.z + position[2] # self.gait_pos[leg].z
+            if leg in ["LR", "LM", "LF"]:  # Left-side legs
+                footposition[leg].x = self.legs[leg].cur_pos.x + self.body_position.x + position[0]
+                footposition[leg].y = self.legs[leg].cur_pos.y + self.body_position.y + position[1]
+            elif leg in ["RR", "RM", "RF"]:  # Right-side legs
+                footposition[leg].x = self.legs[leg].cur_pos.x + self.body_position.x - position[0]  # Reverse X step for right legs
+                footposition[leg].y = self.legs[leg].cur_pos.y + self.body_position.y - position[1]  # Reverse Y step for right legs
+
+
+            footposition[leg].z = self.legs[leg].cur_pos.z + self.body_position.z + position[2] # self.gait_pos[leg].z
             
             #print(f'footposition: ',footposition.x, footposition.y, footposition.z)
             # Rotation
@@ -256,9 +303,9 @@ class Hexapod:
             # ------------------------
             # Body kinemtatics
             # ------------------------
-            body.x = footposition.x + self.body_coxa_offsets[leg].x
-            body.y = footposition.y + self.body_coxa_offsets[leg].y
-            body.z = footposition.z
+            body.x = footposition[leg].x + self.body_coxa_offsets[leg].x
+            body.y = footposition[leg].y + self.body_coxa_offsets[leg].y
+            body.z = footposition[leg].z
             
             # calculate position corrections using rotation matrix
             # https://en.wikipedia.org/wiki/Rotation_matrix
@@ -274,19 +321,37 @@ class Hexapod:
             temp_pos = np.array([body.x, body.y, body.z]) #body position in space
             rotated_point = R @ temp_pos
 
-            bodyikPosition = coord3D()
-            bodyikPosition.from_array(rotated_point)
+            bodyikPosition[leg] = coord3D()
+            bodyikPosition[leg].from_array(rotated_point)
             
             #print("BodyikPosition: ", bodyikPosition.x, bodyikPosition.y, bodyikPosition.z)
     
         
             # Send values to legs for leg kinematics
-            rad_angles[leg], angles[leg] = self.legs[leg].inverse_kinematics(bodyikPosition, footposition)
-        self.rad_angles = rad_angles
-        self.leg_angles = angles
-        #return rad_angles
-        
+            #self.rad_angles[leg], self.leg_angles[leg] = self.legs[leg].inverse_kinematics(bodyikPosition, footposition)
+    
+        with ThreadPoolExecutor() as executor:
+            # Submit inverse kinematics tasks for each leg
+            futures = {executor.submit(self.legs[leg].inverse_kinematics, bodyikPosition[leg], footposition[leg]): leg for leg in active_legs}
 
+            # Collect results
+
+            for future in futures:
+                leg = futures[future]
+                rad_angle, angle = future.result()
+                rad_angles[leg] = rad_angle
+                angles[leg] = angle
+                self.rad_angles[leg] = rad_angles[leg]
+                self.leg_angles[leg] = angles[leg]
+
+        for leg in self.legs:
+            if leg not in active_legs:
+                self.rad_angles[leg] = self.rad_angles.get(leg, 0) #NoneType causes errors if not all legs "exist" in move leg code
+                self.leg_angles[leg] = self.leg_angles.get(leg, 0)
+        
+        # Increment step_count and reset after a full gait cycle
+        gait_cycle_length = max(self.phase_offsets[self.gait].values()) + 1
+        self.step_count = (self.step_count + 1) % gait_cycle_length
     
     def forward_kinematics(self):
         # For each leg calculate the forward kinematics and return

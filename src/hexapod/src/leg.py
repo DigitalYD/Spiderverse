@@ -4,6 +4,7 @@ from src.servo import Servo
 import numpy as np
 from src.coord import *
 
+
 class Leg:
     def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths, toe_offsets, coxa_offset, angleoffset):
         '''
@@ -129,7 +130,6 @@ class Leg:
             [Xa + Xb, Ya + Yb, G1]  # tip of the leg
         ])
         return leg_positions
-
 
     def inverse_kinematics(self, bodyikposition, footpos):
         '''
