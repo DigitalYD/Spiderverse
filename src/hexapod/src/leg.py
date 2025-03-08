@@ -22,8 +22,7 @@ class Leg:
         # coord from hexapod
         self.base_position = toe_offsets # Starting position of legs
         self.cur_pos = toe_offsets # Distance from center of body to coxa
-        self.angle_offset = angleoffset
-        self.leg_lift_height = 30 # might need moved to legs
+        self.coxa_angle_offset = angleoffset
         self.liftpos = 0 # number of positions a single leg is lefted (3)
         self.cur_angles = []
         self.coxa_offset = coxa_offset
@@ -48,7 +47,7 @@ class Leg:
         
         self.bezier_curve = BezierCurve(self.control_points, num_pts = 100)
 
-        ## Uncomment this
+        ## Uncomment this on hexapod to run motors else error
         # if leg_index <= 2:
         #     self.servos = {
         #         "coxa" : Servo(servo_pins[0], pca=0x40, pulse_min=pulse_min, pulse_max=pulse_max),
@@ -80,7 +79,7 @@ class Leg:
             Set the angles of a specific joint in the leg
         '''
         if joint in self.servos:
-            self.servos[joint].set_angle(angle)
+            self.servos[joint].set_angle(int(angle))
         else:
             raise ValueError(f"Invalid joint: {joint}")
 
@@ -167,21 +166,28 @@ class Leg:
             #  x (right/left)
 
         '''
-        toepos = coord3D()
 
-        #print("bodyikposition x,y,z",bodyikposition.x, bodyikposition.y, bodyikposition.z)
+        # ##--------------------------
+        # #### Variation 1
+        # ##--------------------------
+        
+        toepos = coord3D()
+        print(f"BoddyIK Position {self.name}: ",bodyikposition.x, bodyikposition.y, bodyikposition.z)
+        print(f"BoddyIK Position {self.name}: ", footpos.x, footpos.y, footpos.z)
+
         
         # update foot position
         footpos.x = footpos.x + bodyikposition.x
         footpos.y = footpos.y + bodyikposition.y
-        footpos.z = footpos.z + bodyikposition.z # Ensure correct Z height
+        #footpos.z = footpos.z + bodyikposition.z # Ensure correct Z height
+
         #print(f"Leg {self.name}: Translated foot position -> X: {footpos.x}, Y: {footpos.y}, Z: {footpos.z}")
 
         # Apply rotation around the Z-axis to move to leg's local frame
-        theta = np.deg2rad(self.angle_offset)
+        theta = np.deg2rad(self.coxa_angle_offset)
         toepos.x = footpos.x * np.cos(theta) - footpos.y * np.sin(theta)
         toepos.y = footpos.x * np.sin(theta) + footpos.y * np.cos(theta)
-        toepos.z = footpos.z  # Maintain correct Z height
+        #toepos.z = footpos.z  # Maintain correct Z height
 
         #print(f"Leg {self.name}: Foot position -> X: {toepos.x}, Y: {toepos.y}, Z: {toepos.z}")
 
@@ -192,14 +198,13 @@ class Leg:
         #print(toepos.x, toepos.y)
         # Coxa rotation should be mirrored for rear legs
         if self.name in ["RF", "RM", "RR"]:
-            coxa_rad = -np.arctan2(toepos.x, toepos.y)
+            coxa_rad = -np.arctan2(toepos.y, toepos.x)
         else:
-            coxa_rad = np.arctan2(toepos.x, toepos.y)
+            coxa_rad = np.arctan2(toepos.y, toepos.x)
 
         # Correct rear legs to move with the front legs
         if self.name in ["RR", "LR"]:  
             coxa_rad = -coxa_rad 
-
 
         # distiance between coxa and toe
         coxatoeDist = np.sqrt(toepos.x**2 + toepos.y**2)
@@ -223,12 +228,64 @@ class Leg:
        
         tibia_rad = (np.pi/2) - tibia_rad
 
+        coxa_angle = np.rad2deg(coxa_rad)
+        femur_angle = np.rad2deg(femur_rad)
+        tibia_angle = np.rad2deg(tibia_rad)
+
         #print(int(np.rad2deg(coxa_angle)), int(np.rad2deg(femur_angle)), int(np.rad2deg(tibia_angle)))
 
-        coxa_angle = int(np.rad2deg(coxa_rad))
-        femur_angle = int(np.rad2deg(femur_rad))
-        tibia_angle = int(np.rad2deg(tibia_rad))
-        
+        # ##--------------------------
+        # #### Variation 2 (Remake 3-7-2025)
+        # ##--------------------------
+        # Assumed neurtral position is at 0 degrees, else zero offset is required
+
+        # Inverse kin equation 1
+        '''
+            # Pseudocode
+            
+            # Body frame
+            x = effectorTarget.x - self.coxa_body_offset.x
+            y = effectorTarget.y - self.coxa_body_offset.y
+
+            # Eq 1
+            # Calculate coxa, convert to degrees (180.0/np.pi), and apply offset,
+            coxa_angle = (180.0/np.pi)*np.atan2(y,x) + 360 - self.coxa_angle_offset
+            if coxa_angle >= 180:
+                coxa_angle = coxa_angle - 360
+
+            
+            # Moving to leg Frame
+            # Eq 2
+            dx = effectorTarget.x - self.coxa_body_offset.x
+            dy = effectorTarget.y - self.coxa_body_offset.y
+
+            L1 = np.sqrt((dx**2 + dy**2) - self._coxa_len
+            L2 = effectorTarget.z - leg.femur.z
+            L = np.sqrt(L2**2 + L1**2)
+            
+            # Eq 3
+            arg_1 = (L2/L1)
+            alpha_1 =  np.clip(np.arccos(arg_1),-1,1) # Clip result to prevent errors
+
+            # Eq 4
+            arg_2 = (self._tibia_len**2 - self._femur_len**2 - L**2)/(-2 * self._femur_len * L)
+            alpha_2 = np.clip(np.arccos(arg_2), -1,1) # Clip result to prevent errors
+
+            # Eq 5
+            alpha = alpha_1 + alpha_2
+            
+            # Eq 6
+            arg_b = (L**2 - self._tibia_len**2 - self._femur_len**2)/(-2*tibia*femur)
+            beta = np.clip(np.arccos(arg_b) ,-1,1)
+            
+            # Perform offsets for each motor, and convert to angles
+            femur_rad = 90 - (180.0/np.pi)* alpha
+            tibia_rad = (180.0/np.pi) * beta
+
+        '''
+
+
+
 
         self.rad_angles = np.array([coxa_rad,femur_rad,tibia_rad])
         self.cur_angles = np.array([coxa_angle, femur_angle, tibia_angle])

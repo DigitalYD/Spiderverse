@@ -71,12 +71,12 @@ class Hexapod:
         
         # setup gaits
         self.tripod_gait_sequence = [["LR", "RM", "LF"], ["RF","LM","RR"]]
-        self.wave_gait_sequence = [["LR","RR"],["LM","RM"],["LF","RF"]]
-        self.ripple_gait_sequence =  [["LR"], ["LM"],["LF"],["RF"],["RM"],["RR"]]
+        self.ripple_gait_sequence = [["LR","RR"],["LM","RM"],["LF","RF"]]
+        self.wave_gait_sequence =  [["LR"], ["LM"],["LF"],["RF"],["RM"],["RR"]]
         self.phase_offsets = {
             "tripod": { "LR": 0, "LM": 1, "LF": 0, "RF": 1, "RM": 0, "RR": 1 },  # Two tripod phases
-            "wave":   { "LR": 0, "LM": 1, "LF": 2, "RF": 2, "RM": 1, "RR": 0 },  # Wave gait with 6 phases
-            "ripple": { "LR": 0, "LM": 2, "LF": 4, "RF": 6, "RM": 8 , "RR": 10  }, # Ripple gait with 12 phases
+            "ripple":   { "LR": 0, "LM": 1, "LF": 2, "RF": 2, "RM": 1, "RR": 0 },  # Wave gait with 6 phases
+            "wave": { "LR": 0, "LM": 2, "LF": 4, "RF": 6, "RM": 8 , "RR": 10  }, # Ripple gait with 12 phases
         }
         self.gait_pos = {}
                 
@@ -91,9 +91,11 @@ class Hexapod:
         # Create leg class
         for leg_name, config in leg_configs.items():
 
-            self.body_coxa_offsets[leg_name] = coord2D()
+            self.body_coxa_offsets[leg_name] = coord3D()
             self.body_coxa_offsets[leg_name].x = coxa_offsets[leg_name][0] # Distance x from center of body to coxa
             self.body_coxa_offsets[leg_name].y = coxa_offsets[leg_name][1] # Distance y from center of body to coxa
+            self.body_coxa_offsets[leg_name].y = coxa_offsets[leg_name][2] # Distance z from center of height of body
+
             self.gait_pos[leg_name] = coord3D()
             
             leg_index[leg_name] = config["leg_index"]
