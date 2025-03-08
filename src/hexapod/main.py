@@ -7,16 +7,14 @@
     - etc.
 
 '''
-
+from src.anim_plot import *
 from src.hexapod import Hexapod
 from src.leg_configs import leg_configs
 from src.hexapod_configs import hexapod_configs
 from src.coord import *
-from common.bezier2d import BezierCurve
-from common.new_bezier import bezier_curve
+#from common.new_bezier import bezier_curve
 import numpy as np
 import time
-from src.anim_plot import *
 
 walk_length = coord3D() 
 
@@ -24,36 +22,14 @@ def main_loop(hexapod, hexapod_animation):
     '''
         Implement movement and loop here
     '''
-    # # Given starting position
-    # # Given starting position
-    start_position = np.array([-10,0,-80])
 
-    # Adjust control points relative to the starting position
-    control_points = [
-        start_position,  # P0: Start (Back, Grounded)
-        start_position + np.array([10, 0, 25]),  # P1: Lift up
-        start_position + np.array([20, 0, 75]),  # P2: Peak (Highest point)
-        start_position + np.array([25, 0.0, 25]),  # P3: Descend
-        start_position + np.array([25, 0.0, 0]),  # P4: grounded
-        start_position + np.array([25, 0.0, 0]),  # P4: grounded
-        start_position  # P5: Return to Start
-    ]
-    #Generate Bezier curve
-    curve_points = bezier_curve(control_points, num_points=200)
-
-    hexapod.inverse_kinematics([-10,0,-80])
-    time.sleep(2)
     #  aquire thetas and move hexapod legs 
     while True:
-        for (x,y,z) in curve_points:
-            # initialize hexapod
-            hexapod.inverse_kinematics((x,y,z))
-            #hexapod.move_legs() # move all legs according to the values from inverse kinematics
-            # hexapod.move_individual_leg(leg_id) || if needed for gaits, but it should be done internally of the hexapod class
-            # 
-            rads = hexapod.get_rads()
-            #print(rads)
-            hexapod_animation.update(rads)
+        # initialize hexapod
+        hexapod.inverse_kinematics()
+        rads = hexapod.get_rads()
+        #print(rads)
+        hexapod_animation.update(rads)
 
     # In a loop starting here
     # -----
@@ -88,31 +64,36 @@ def main_loop(hexapod, hexapod_animation):
     '''
 
 
+
+def compute_mount_positions(radius=97):
+    """ Computes the mount positions based on the given angles. """
+    mount_positions = {}
+    mount_angle_degrees = {
+        "LR": 214.309,
+        "LM": 270,
+        "LF": 325.931,
+        "RF": 34.0685,
+        "RM": 90,
+        "RR": 146.172,
+    }
+    
+    for leg, angle in mount_angle_degrees.items():
+        angle_rad = np.deg2rad(angle)  # Convert to radians
+        x = radius * np.cos(angle_rad)  # Compute X position
+        y = radius * np.sin(angle_rad)  # Compute Y position
+        mount_positions[leg] = (x, y)
+    
+    return mount_positions
+
 if __name__ == "__main__":
     # setup controller stuff here
 
     
     # Setup control points
     # # Given starting position
-    start_position = np.array([0,0,-80])
-
-    # # # # Adjust control points relative to the starting position
-    control_points = [
-        start_position,  # P0: Start (Back, Grounded)
-        start_position + np.array([10, 0, 25]),  # P1: Lift up
-        start_position + np.array([20, 0, 75]),  # P2: Peak (Highest point)
-        start_position + np.array([25, 0.0, 25]),  # P3: Descend
-        start_position + np.array([25, 0.0, 0]),  # P4: grounded
-        start_position  # P5: Return to Start
-    ]
-    #print(control_points)
-    #Generate Bezier curve
-    # time.sleep(1)
-    curve_points = bezier_curve(control_points, num_points=200)
-    
     
     # Setup hexapod rotation/movement    
-    hexapod = Hexapod(leg_configs, hexapod_configs, curve_points)
+    hexapod = Hexapod(leg_configs, hexapod_configs)
 
     leg_lengths = { #Adjust thes for the legs (Assumes all legs are the same length)
     "coxa": 45,
@@ -128,8 +109,8 @@ if __name__ == "__main__":
         "RR": 146.172,
     }
 
-    hexapod_animation = HexapodAnimator(leg_lengths, mount_angle)
+    mount_positions = compute_mount_positions()
+
+    hexapod_animation = HexapodAnimator(leg_lengths,mount_positions, mount_angle)
 
     main_loop(hexapod, hexapod_animation)
-
-    time.sleep(2)

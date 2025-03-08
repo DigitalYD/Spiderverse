@@ -19,7 +19,7 @@ class Hexapod:
     VALID_GATES = ["tripod", "wave", "ripple", "quadrupedal", "tetrapod"]
     VALID_LEGS = ["LR","LM", "LF", "RF", "RM","RR"]
     
-    def __init__(self, leg_configs, hexapod_configs, bezier_points):
+    def __init__(self, leg_configs, hexapod_configs):
         '''
             Initialize variables/controllers
             Body-Level kinematics (gait, stability, coordination)
@@ -36,18 +36,19 @@ class Hexapod:
             RR      RM       RF
 
             hook up legs 5 & 0 at pins 0 on the servoboard.
+            
+            Legs have 3 position/modes
+            - "standing" (still), "in_air" (following bezier curve), "slide" (when leg is pushing off on the ground)
         '''
         # Initialize basic variables
         self.max_speed = 1.0
         self.legs = {}
         self.gait = "tripod"
-        self.mode = "Standing"
+        self.mode = "standing"
+        self.leg_mode = "standing" # "standing" (still), "in_air" (following bezier curve), "touchdown", "slide" (when leg is moving on the ground)
         self.turning_radius = float('inf') # straight walk
         self.angular_speed = 0.0 # turning speed
-
-        self.divfactor = 0 # number of steps a leg is on the floor while walking
-        self.multipler = 0 # multiplier for length of each step
-        self.bezierpoints = bezier_points # bezier curve points that get rotated around for each leg
+        self.multipler = 0 # multiplier for length of each step (might use)
 
         # Body Position
         self.body_position = coord3D()
@@ -70,16 +71,15 @@ class Hexapod:
         
         # setup gaits
         self.tripod_gait_sequence = [["LR", "RM", "LF"], ["RF","LM","RR"]]
-        #self.tripod_gait_sequence = [["LR"]]
-        self.wave_gait_sequence =  ["LR", "LM","LF","RF","RM","RR"]
-        self.ripple_gait_sequence =  ["LR", "LM","LF","RF","RM","RR"]
+        self.wave_gait_sequence = [["LR","RR"],["LM","RM"],["LF","RF"]]
+        self.ripple_gait_sequence =  [["LR"], ["LM"],["LF"],["RF"],["RM"],["RR"]]
         self.phase_offsets = {
-            "tripod": { "LR": 0, "RM": 1, "LF": 0, "RF": 1, "LM": 0, "RR": 1 },  # Two tripod phases
-            "wave":   { "LF": 0, "RF": 1, "RM": 2, "RR": 3, "LR": 4, "LM": 5 },  # Wave gait with 6 phases
-            "ripple": { "LF": 0, "RF": 2, "LM": 4, "RM": 6, "LR": 8, "RR": 10 }, # Ripple gait with 12 phases
+            "tripod": { "LR": 0, "LM": 1, "LF": 0, "RF": 1, "RM": 0, "RR": 1 },  # Two tripod phases
+            "wave":   { "LR": 0, "LM": 1, "LF": 2, "RF": 2, "RM": 1, "RR": 0 },  # Wave gait with 6 phases
+            "ripple": { "LR": 0, "LM": 2, "LF": 4, "RF": 6, "RM": 8 , "RR": 10  }, # Ripple gait with 12 phases
         }
         self.gait_pos = {}
-        
+                
         # setup temp vars
         leg_index = {}
         servo_pins = {}
@@ -96,14 +96,12 @@ class Hexapod:
             self.body_coxa_offsets[leg_name].y = coxa_offsets[leg_name][1] # Distance y from center of body to coxa
             self.gait_pos[leg_name] = coord3D()
             
-            
             leg_index[leg_name] = config["leg_index"]
             servo_pins[leg_name] = config["servos"]  # Extract servo pins
             segment_lengths[leg_name] = config["segment_lengths"]
             pulse_min[leg_name] = config["pulsemin"]
             pulse_max[leg_name] = config["pulsemax"]
             angleoffset[leg_name] = config["angleoffset"]
-        
         
          # Initial leg positions [x,y,z] || Will need adjusting
         temp_vals = {
@@ -142,49 +140,17 @@ class Hexapod:
         leg_lengths = {}
         for leg,vals in temp_vals.items():
             leg_lengths[leg] = np.sqrt(vals['x']**2 + vals['y']**2 + vals['z']**2)
-        #print(f"leg lengths: ",leg_lengths)
 
         toe_offsets = {}
         for name, values in temp_vals.items():
             # if name == "LR" or name == "LM" or name == "LF":
             toe_offsets[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
             self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], toe_offsets[name], coxa_offsets[name], angleoffset[name])
-        # #print(f"toe positions/offsets:", toe_offsets[name].x, toe_offsets[name].y, toe_offsets[name].z)
-        print(self.legs)
-
-    def set_bezier_points(self, points:dict):
-        self.bezierpoints = points
+        
+        self.leg_states = {leg: "standing" for leg in self.legs}  # "standing", "in_air", "slide" | standing, moving along 2d bezier curve, touchdown/sliding back (could also do for different leg "heights", but later maybe)
         
     def get_legs(self):
         return self.legs
-    
-    def move_legs(self):
-        '''
-            get angles from inverse kinematics
-        '''
-        active_legs = self.get_active_legs_in_gait()
-        for leg_id in active_legs:
-            print(leg_id, active_legs)
-            self.legs[leg_id].set_joint_angles("coxa", self.leg_angles[leg_id][0])
-            self.legs[leg_id].set_joint_angles("femur", self.leg_angles[leg_id][1])
-            self.legs[leg_id].set_joint_angles("tibia", self.leg_angles[leg_id][2])
-
-
-    def get_active_legs_in_gait(self):
-            """Returns a list of legs that should move at this step, with phase offsets."""
-            active_legs = []
-            if self.gait not in self.phase_offsets:
-                return list(self.legs.keys())  # Default: move all legs
-            
-            # Get the maximum cycle length
-            gait_cycle_length = max(self.phase_offsets[self.gait].values()) + 1
-
-            # Find legs whose phase offset matches the current step
-            for leg, offset in self.phase_offsets[self.gait].items():
-                if (self.step_count % gait_cycle_length) == offset:
-                    active_legs.append(leg)
-            return active_legs
-    
 
     def move_individual_leg(self, leg_id):
         '''
@@ -194,27 +160,58 @@ class Hexapod:
         self.legs[leg_id].set_joint_angles("femur", self.leg_angles[leg_id][1])
         self.legs[leg_id].set_joint_angles("tibia", self.leg_angles[leg_id][2])
 
-
     def move_joint(self, leg, joint, amount):
+        ''' Move a specific leg and joint'''
         if leg in self.legs:
             self.legs[leg].set_joint_angles(joint, amount)
         else:
             raise ValueError(f"Invalid Leg: {leg}")
 
     def get_leg_positions(self):
+        ''' May not need this? performs kinematics, should just pull the radians or angles directly'''
         return self.forward_kinematics()
-    
-    def stand(self):
-        self.set_mode("stand")
 
     def set_mode(self, mode):
+        ''' Set hexapod's mode'''
         self.mode = mode
 
     def get_leg_lengths(self):
+        ''' Return leg length'''
         legs = {}
         for i, leg_id in enumerate(self.legs):
             legs[leg_id] = self.legs[leg_id].get_leg_lengths()
         return legs
+    
+    def rotation_2d(self, theta):
+        ''' Accepts an angle, converts it to radians and returns rotation 2d'''
+        theta = np.deg2rad(theta)
+        return np.array([[np.cos(theta), -np.sin[theta]], [np.sin(theta), np.cos(theta)]])
+    
+    def rot_mat_3d_x(self, theta):
+        ''' Pitch angle, converts it to radians and returns '''
+        theta = np.deg2rad(theta)
+        return np.array([[1, 0, 0],
+                         [0, np.cos(theta), -np.sin(theta)],
+                         [0, np.sin(theta), np.cos(theta)]])
+    
+    def rot_mat_3d_y(self, theta):
+        ''' Yaw an angle, converts it to radians and returns '''
+        theta = np.deg2rad(theta)
+        return np.array([[np.cos(theta), 0, np.sin(theta)],
+                         [0, 1, 0],
+                         [-np.sin(theta), 0, np.cos(theta)]])
+    
+    def rot_mat_3d_z(self, theta):
+        ''' Rolling angle, converts it to radians and returns '''
+        theta = np.deg2rad(theta)
+        return np.array([[np.cos(theta), -np.sin(theta), 0],
+                         [np.sin(theta), np.cos(theta), 0],
+                         [0, 0, 1]])
+    
+    def update_leg_ik(leg, bodyikPosition, footposition):
+        ''' function to perform inverse kinematics with threats'''
+        return leg, leg.inverse_kinematics(bodyikPosition, footposition)
+
 
     def generate_tripod_step_positions(self, stride_length=10, lift_height=5):
         """Generates step positions for a tripod gait."""
@@ -231,44 +228,58 @@ class Hexapod:
         
         return step_positions
 
-    def rotation_2d(self, theta):
-        '''
-            Accepts an angle, converts it to radians and returns
-        '''
-        theta = np.deg2rad(theta)
-        return np.array([[np.cos(theta), -np.sin[theta]], [np.sin(theta), np.cos(theta)]])
-    
-    def rot_mat_3d_x(self, theta):
-        '''
-            Accepts an angle, converts it to radians and returns
-        '''
-        theta = np.deg2rad(theta)
-        return np.array([[1, 0, 0],
-                         [0, np.cos(theta), -np.sin(theta)],
-                         [0, np.sin(theta), np.cos(theta)]])
-    
-    def rot_mat_3d_y(self, theta):
-        '''
-            Accepts an angle, converts it to radians and returns
-        '''
-        theta = np.deg2rad(theta)
-        return np.array([[np.cos(theta), 0, np.sin(theta)],
-                         [0, 1, 0],
-                         [-np.sin(theta), 0, np.cos(theta)]])
-    
-    def rot_mat_3d_z(self, theta):
-        '''
-            Accepts an angle, converts it to radians and returns
-        '''
-        theta = np.deg2rad(theta)
-        return np.array([[np.cos(theta), -np.sin(theta), 0],
-                         [np.sin(theta), np.cos(theta), 0],
-                         [0, 0, 1]])
-    
-    def update_leg_ik(leg, bodyikPosition, footposition):
-        return leg, leg.inverse_kinematics(bodyikPosition, footposition)
 
-    def inverse_kinematics(self, position):
+    def move_legs(self):
+        '''
+            get angles from inverse kinematics
+        '''
+        active_legs = self.get_active_legs_in_gait()
+        for leg_id in active_legs:
+            self.legs[leg_id].set_joint_angles("coxa", self.leg_angles[leg_id][0])
+            self.legs[leg_id].set_joint_angles("femur", self.leg_angles[leg_id][1])
+            self.legs[leg_id].set_joint_angles("tibia", self.leg_angles[leg_id][2])
+
+
+    def get_active_legs_in_gait(self):
+        """Returns a list of legs that should move at this step"""
+        active_legs = []
+        
+        # Select the correct gait sequence
+        if self.gait == "tripod":
+            gait_sequence = self.tripod_gait_sequence
+        elif self.gait == "wave":
+            gait_sequence = self.wave_gait_sequence
+        elif self.gait == "ripple":
+            gait_sequence = self.ripple_gait_sequence
+        else:
+            return []  # Invalid gait, return empty list
+
+        #  step_count does not exceed gait sequence length
+        gait_cycle_length = len(gait_sequence)
+        if self.step_count >= gait_cycle_length:
+            return []
+
+        # Select the legs that should move in this step
+        current_leg_group = gait_sequence[self.step_count]
+
+        for leg in current_leg_group:
+            # Ensure previous legs in the sequence have completed "sliding" before moving
+            previous_legs_completed = all(
+                self.leg_states[l] == "sliding"
+                for l in self.legs
+                if self.phase_offsets[self.gait].get(l, float('inf')) < self.phase_offsets[self.gait].get(leg, float('inf'))
+            )
+
+            if not previous_legs_completed:
+                continue  # Prevent current leg from moving until previous legs finish
+
+            active_legs.append(leg)
+
+        #print(f"Active Legs: {active_legs}")
+        return active_legs
+
+
+    def inverse_kinematics(self):
         # call leg inverse kinematics and feed it
 
         rotation = coord3D()
@@ -278,27 +289,26 @@ class Hexapod:
 
         footposition = {}
         bodyikPosition = {}
+        position = {}
+        bezier_index = {}
         active_legs = self.get_active_legs_in_gait()
+    
+        if not active_legs:
+            return self.rad_angles
 
         for leg in active_legs:
-            # Do some body kinematics here, send values to legs to change from global to local frame
+            position[leg] = self.legs[leg].get_swing_foot_position()
+
+            # get the current foot position and add the "bezier curve position to it"
             footposition[leg] = coord3D()
-            # Setup position
-            if leg in ["LR", "LM", "LF"]:  # Left-side legs
-                footposition[leg].x = self.legs[leg].cur_pos.x + self.body_position.x + position[0]
-                footposition[leg].y = self.legs[leg].cur_pos.y + self.body_position.y + position[1]
-            elif leg in ["RR", "RM", "RF"]:  # Right-side legs
-                footposition[leg].x = self.legs[leg].cur_pos.x + self.body_position.x - position[0]  # Reverse X step for right legs
-                footposition[leg].y = self.legs[leg].cur_pos.y + self.body_position.y - position[1]  # Reverse Y step for right legs
-
-
-            footposition[leg].z = self.legs[leg].cur_pos.z + self.body_position.z + position[2] # self.gait_pos[leg].z
+            footposition[leg].x = self.legs[leg].cur_pos.x + self.body_position.x + position[leg][0] # self.gait_pos[leg].x
+            footposition[leg].y = self.legs[leg].cur_pos.y + self.body_position.y + position[leg][1] # self.gait_pos[leg].y
+            footposition[leg].z = self.legs[leg].cur_pos.z + self.body_position.z + position[leg][2] # self.gait_pos[leg].z
             
-            #print(f'footposition: ',footposition.x, footposition.y, footposition.z)
             # Rotation
             rotation.x = self.body_rotation.x
-            rotation.y = self.body_rotation.y + self.gait_pos[leg].roty
-            rotation.z = self.body_rotation.z
+            rotation.y = self.body_rotation.y 
+            rotation.z = self.body_rotation.z + self.gait_pos[leg].roty
             
             # ------------------------
             # Body kinemtatics
@@ -306,14 +316,17 @@ class Hexapod:
             body.x = footposition[leg].x + self.body_coxa_offsets[leg].x
             body.y = footposition[leg].y + self.body_coxa_offsets[leg].y
             body.z = footposition[leg].z
-            
+
             # calculate position corrections using rotation matrix
             # https://en.wikipedia.org/wiki/Rotation_matrix
             Rx = self.rot_mat_3d_x(rotation.x) # pitch
             Ry = self.rot_mat_3d_y(rotation.y) # yaw
             Rz = self.rot_mat_3d_z(rotation.z) # roll
             
-            R = Rz @ Ry @ Rx
+            if leg in ["LM","RM"]:
+               R = Ry
+            else: 
+                R = Rz @ Ry @ Rx
             '''[[1. 0. 0.] no rotation
                 [0. 1. 0.]
                 [0. 0. 1.]]            
@@ -325,16 +338,16 @@ class Hexapod:
             bodyikPosition[leg].from_array(rotated_point)
             
             #print("BodyikPosition: ", bodyikPosition.x, bodyikPosition.y, bodyikPosition.z)
-    
         
             # Send values to legs for leg kinematics
             #self.rad_angles[leg], self.leg_angles[leg] = self.legs[leg].inverse_kinematics(bodyikPosition, footposition)
     
         with ThreadPoolExecutor() as executor:
             # Submit inverse kinematics tasks for each leg
-            futures = {executor.submit(self.legs[leg].inverse_kinematics, bodyikPosition[leg], footposition[leg]): leg for leg in active_legs}
-
-            # Collect results
+            futures = {
+                executor.submit(self.legs[leg].inverse_kinematics, bodyikPosition[leg], footposition[leg]): leg
+                for leg in active_legs
+            }
 
             for future in futures:
                 leg = futures[future]
@@ -344,14 +357,37 @@ class Hexapod:
                 self.rad_angles[leg] = rad_angles[leg]
                 self.leg_angles[leg] = angles[leg]
 
-        for leg in self.legs:
-            if leg not in active_legs:
-                self.rad_angles[leg] = self.rad_angles.get(leg, 0) #NoneType causes errors if not all legs "exist" in move leg code
-                self.leg_angles[leg] = self.leg_angles.get(leg, 0)
-        
-        # Increment step_count and reset after a full gait cycle
-        gait_cycle_length = max(self.phase_offsets[self.gait].values()) + 1
-        self.step_count = (self.step_count + 1) % gait_cycle_length
+                # Ensure Bezier index resets properly at "return"
+                if self.legs[leg].current_bezier_index >= self.legs[leg].bezier_curve.index_map["return"]:
+                    self.leg_states[leg] = "standing"
+                    self.legs[leg].current_bezier_index = 0  # Reset Bezier index to start new cycle
+                    #print(f"{leg} has reset to 0 index.")
+
+                elif self.legs[leg].current_bezier_index >= self.legs[leg].bezier_curve.index_map["sliding"]:
+                    self.leg_states[leg] = "sliding"
+                    #print(f" {leg} has reached 'sliding'.")
+
+                elif self.legs[leg].current_bezier_index >= self.legs[leg].bezier_curve.index_map["touchdown"]:
+                    self.leg_states[leg] = "touchdown"
+
+                # Only increment Bezier index if not completed
+                if not self.legs[leg].bezier_curve_completed():
+                    self.legs[leg].current_bezier_index += 1
+
+
+                # Retain previous angles for legs not currently active
+            for leg in self.legs:
+                if leg not in active_legs:
+                    self.rad_angles[leg] = self.rad_angles.get(leg, self.legs[leg].get_angles())  
+                    self.leg_angles[leg] = self.leg_angles.get(leg, self.legs[leg].get_angles())
+
+        # Ensure ALL Active Legs Have Reached "sliding" Before Advancing the Gait to next group
+        if all(self.leg_states[leg] == "sliding" for leg in self.get_active_legs_in_gait()):
+            gait_cycle_length = max(self.phase_offsets[self.gait].values()) + 1
+            self.step_count = (self.step_count + 1) % gait_cycle_length
+        return self.rad_angles
+
+
     
     def forward_kinematics(self):
         # For each leg calculate the forward kinematics and return

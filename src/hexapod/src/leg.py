@@ -3,7 +3,7 @@ from src.leg_configs import leg_configs
 from src.servo import Servo
 import numpy as np
 from src.coord import *
-
+from src.bezier2d import BezierCurve
 
 class Leg:
     def __init__(self, name:str, leg_index:int, servo_pins, pulse_min, pulse_max, segment_lengths, toe_offsets, coxa_offset, angleoffset):
@@ -28,6 +28,26 @@ class Leg:
         self.cur_angles = []
         self.coxa_offset = coxa_offset
         self.coxa_leg_height = 0
+        self.current_bezier_index = 0
+
+        if self.name in ["LR", "LM", "LF"]:  # Left-side legs
+            start_position = np.array([-20, 0, -80])  
+        else:  # Right-side legs ("RR", "RM", "RF")
+            start_position = np.array([20, 0, -80])
+
+        self.control_points = {
+            "start": start_position + np.array([0, 0, 0]),
+            "lift": start_position + np.array([10, 0, 25]),
+            "peak": start_position + np.array([20, 0, 75]),
+            "lower": start_position + np.array([25, 0, 25]),  # The moment before grounding
+            "touchdown": start_position + np.array([25, 0, 25]),  # The moment before grounding
+            "grounded": start_position + np.array([25, 0, 5]),    # Fully on the ground
+            "sliding": start_position+ np.array([30, 0, 0]),     # Sliding before reset
+            "return": start_position + np.array([0, 0, 0])
+        }
+        
+        self.bezier_curve = BezierCurve(self.control_points, num_pts = 100)
+
         ## Uncomment this
         # if leg_index <= 2:
         #     self.servos = {
@@ -157,8 +177,6 @@ class Leg:
         footpos.z = footpos.z + bodyikposition.z # Ensure correct Z height
         #print(f"Leg {self.name}: Translated foot position -> X: {footpos.x}, Y: {footpos.y}, Z: {footpos.z}")
 
-        # Step 2: Convert foot position to the local leg frame using the coxa's angle offset
-
         # Apply rotation around the Z-axis to move to leg's local frame
         theta = np.deg2rad(self.angle_offset)
         toepos.x = footpos.x * np.cos(theta) - footpos.y * np.sin(theta)
@@ -172,10 +190,18 @@ class Leg:
         # ##--------------------------
         
         #print(toepos.x, toepos.y)
+        # Coxa rotation should be mirrored for rear legs
+        if self.name in ["RF", "RM", "RR"]:
+            coxa_rad = -np.arctan2(toepos.x, toepos.y)
+        else:
+            coxa_rad = np.arctan2(toepos.x, toepos.y)
 
-        coxa_rad = np.arctan2(toepos.x, toepos.y)
+        # Correct rear legs to move with the front legs
+        if self.name in ["RR", "LR"]:  
+            coxa_rad = -coxa_rad 
 
-        # stiance between coxa and toe
+
+        # distiance between coxa and toe
         coxatoeDist = np.sqrt(toepos.x**2 + toepos.y**2)
         #print("Distance between coxa and toe: ", coxatoeDist)
         
@@ -199,34 +225,20 @@ class Leg:
 
         #print(int(np.rad2deg(coxa_angle)), int(np.rad2deg(femur_angle)), int(np.rad2deg(tibia_angle)))
 
-        ##--------------
-        ## Variation 2
-        ##--------------
-        # # coxa radians
-        # coxatoeDist = np.sqrt(toepos.x**2 + toepos.y**2)
-        # coxa_rad = np.arctan2(toepos.x, toepos.y)
-        # hyp = np.sqrt((coxatoeDist-self._coxa_len)**2 + toepos.z**2)
-        # # Angle between coxa-to-foot and femur
-        # ika1 = np.arctan2(toepos.z, coxatoeDist - self._coxa_len)
-        # ika2 = np.arccos(np.clip((self._femur_len**2 + hyp**2 - self._tibia_len**2) / (2.0 * self._femur_len * hyp), -1, 1))
-        # femur_rad = ika1 + ika2 - np.pi / 2  # Convert to correct frame
-
-        # # Step 6: Compute Tibia Angle (`theta3`)
-        # tibia_rad = np.arccos(np.clip((self._femur_len**2 + self._tibia_len**2 - hyp**2) / (2.0 * self._femur_len * self._tibia_len), -1, 1))
-        # tibia_rad = np.pi - tibia_rad  # Convert to correct relative frame
-
-
         coxa_angle = int(np.rad2deg(coxa_rad))
         femur_angle = int(np.rad2deg(femur_rad))
         tibia_angle = int(np.rad2deg(tibia_rad))
+        
 
-        # print(coxa_rad, femur_rad, tibia_rad)
-        # print(coxa_angle, femur_angle, tibia_angle)
-
-        # self.set_joint_angles("coxa", coxa_angle)
-        # self.set_joint_angles("femur", femur_angle)
-        # self.set_joint_angles("tibia", tibia_angle)
         self.rad_angles = np.array([coxa_rad,femur_rad,tibia_rad])
         self.cur_angles = np.array([coxa_angle, femur_angle, tibia_angle])
 
         return self.rad_angles, self.cur_angles
+
+    def bezier_curve_completed(self):
+        """Returns True if the leg's Bézier trajectory is complete."""
+        return self.current_bezier_index >= len(self.bezier_curve.cp) - 1
+
+    def get_swing_foot_position(self):
+        """Returns the foot position during the swing phase using the Bézier curve."""
+        return self.bezier_curve.get_point(self.current_bezier_index)

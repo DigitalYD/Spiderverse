@@ -3,68 +3,89 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 class HexapodAnimator:
-    def __init__(self, leg_lengths=None, mount_angle=None, rotation_radius=100):
+    def __init__(self, leg_lengths=None, mount_positions=None, mount_angle=None):
         self.leg_lengths = leg_lengths
         self.leg_names = ["LR", "LM", "LF", "RF", "RM", "RR"]
-
+        self.leg_colors = {
+            "LR": "red",
+            "LM": "blue",
+            "LF": "green",
+            "RF": "orange",
+            "RM": "purple",
+            "RR": "royalblue"
+        }
+        
         # Initialize Matplotlib figure
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111, projection='3d')
         self.ax.view_init(elev=20, azim=30)
 
         # Initialize plot elements for all legs
-        self.leg_lines = {leg: self.ax.plot([], [], [], 'o-', markersize=6)[0] for leg in self.leg_names}
-
-        # Define fixed mount position
-        self.mount_radius = rotation_radius  # Fixed radius of the circle
+        self.leg_lines = {
+            leg: self.ax.plot([], [], [], 'o-', markersize=6, color=self.leg_colors[leg])[0]
+            for leg in self.leg_names
+        }
+        
+        # Define fixed mount positions from pentagon layout
+        self.mount_positions = mount_positions
         self.mount_angle = mount_angle  # Fixed mount angle per leg
-        self.rotation_angle = 0  # Rotation of the coxa in place
 
-        # Compute initial mount positions
-        self.mountx = {}
-        self.mounty = {}
-        self.mountz = {}
-
-        for leg in self.leg_names:
-            self.mountx[leg] = self.mount_radius * np.cos(self.mount_angle[leg])
-            self.mounty[leg] = self.mount_radius * np.sin(self.mount_angle[leg])
-            self.mountz[leg] = 193  # Fixed height
+        # Convert to dictionaries for easier access
+        self.mountx = {leg: mount_positions[leg][0] for leg in self.leg_names}
+        self.mounty = {leg: mount_positions[leg][1] for leg in self.leg_names}
+        self.mountz = {leg: 193 for leg in self.leg_names}  # Fixed height
 
         # Configure 3D space limits
-        self.ax.set_xlim([-500, 500])
-        self.ax.set_ylim([-500, 500])
-        self.ax.set_zlim([0, 500])
+        self.ax.set_xlim([150, -150]) 
+        self.ax.set_ylim([-150, 150])
+        self.ax.set_zlim([0, 250]) 
         self.ax.set_xlabel("X-axis")
         self.ax.set_ylabel("Y-axis")
         self.ax.set_zlabel("Z-axis")
-        self.ax.set_title("Hexapod Leg - Fixed Mount with Proper Rotation")
+        self.ax.set_title("Hexapod Leg - Mounted on a Pentagon")
 
-        # ✅ Draw the Mount Circle
-        self.draw_mount_circle()
+        # Draw the Pentagon Mount
+        self.draw_pentagon_mount()
 
-    def draw_mount_circle(self):
-        """ Draws the circle where the hexapod legs are mounted. """
-        theta = np.linspace(0, 2 * np.pi, 100)  # 100 points around the circle
-        x_circle = self.mount_radius * np.cos(theta)
-        y_circle = self.mount_radius * np.sin(theta)
-        z_circle = np.full_like(theta, 193)  # Keep the circle at mount height
+    def draw_pentagon_mount(self):
+        """ Draws the pentagon structure where the hexapod legs are mounted and labels each leg. """
+        pentagon_points = np.array([
+            self.mount_positions["LR"],
+            self.mount_positions["LM"],
+            self.mount_positions["LF"],
+            self.mount_positions["RF"],
+            self.mount_positions["RM"],
+            self.mount_positions["RR"],
+            self.mount_positions["LR"] 
+        ])
 
-        # ✅ Plot the circle
-        self.ax.plot(x_circle, y_circle, z_circle, 'r-', linewidth=2, label="Mount Circle")
+        x_penta, y_penta = pentagon_points[:, 0], pentagon_points[:, 1]
+        z_penta = np.full_like(x_penta, 193)  # Keep the mount height
+
+        # Plot the pentagon
+        self.ax.plot(x_penta, y_penta, z_penta, 'r-', linewidth=2, label="Pentagon Mount")
+
+        # Add text labels with color information
+        for leg, pos in self.mount_positions.items():
+            x, y = pos
+            z = 210  # Place text slightly above the mount height
+            color = self.leg_colors.get(leg, "black")  # Default to black if no color is assigned
+            self.ax.text(x, y, z, f"{leg}\n({color})", color=color, fontsize=10, ha='center', va='bottom', fontweight='bold')
+
         self.ax.legend()
 
     def compute_all_legs(self, angles):
-        """ Computes joint positions for all legs, rotating at their fixed mount. """
+        """ Foward Kinematics for simulation """
         leg_positions = {}
-
+        
         for leg_name in angles.keys():
             theta1, theta2, theta3 = angles[leg_name]
             theta1 = np.deg2rad(int(np.rad2deg(theta1)))
             theta2 = np.deg2rad(int(np.rad2deg(theta2)))
             theta3 = np.deg2rad(int(np.rad2deg(theta3)))
 
-            # Rotate leg around hexapod
-            theta1 = theta1 + self.mount_angle[leg_name]
+            # Rotate leg around hexapod (adjusted for pentagon angles)
+            theta1 = theta1 + np.deg2rad(self.mount_angle[leg_name])
             coxa, femur, tibia = self.leg_lengths["coxa"], self.leg_lengths["femur"], self.leg_lengths["tibia"]
 
             # Compute Coxa Joint Position
@@ -96,9 +117,8 @@ class HexapodAnimator:
         return leg_positions
 
     def update(self, thetas):
-        """ Updates the leg positions while keeping the mount circle visible. """
+        """ Update the leg positions """
         leg_positions = self.compute_all_legs(thetas)
-
         for leg_name in leg_positions.keys():
             joint_positions = leg_positions[leg_name]
             x_data = joint_positions[:, 0]
