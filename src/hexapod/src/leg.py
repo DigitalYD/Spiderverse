@@ -150,6 +150,95 @@ class Leg:
         ])
         return leg_positions
 
+    # def inverse_kinematics(self, bodyikposition, footpos):
+    #     '''
+    #         Implement inverse kinematics for leg movement
+    #         Compute joint angles from desired foot positions
+    #         don't forget to use offsets in calculation
+
+    #         #     Z    (up)
+    #         #     |    
+    #         #     |    
+    #         #     |    
+    #         #     O------ y (forward)
+    #         #    /
+    #         #   /
+    #         #  x (right/left)
+
+    #     '''
+
+    #     # ##--------------------------
+    #     # #### Variation 1
+    #     # ##--------------------------
+        
+    #     toepos = coord3D()
+    #     print(f"BoddyIK Position {self.name}: ",bodyikposition.x, bodyikposition.y, bodyikposition.z)
+    #     print(f"BoddyIK Position {self.name}: ", footpos.x, footpos.y, footpos.z)
+
+        
+    #     # update foot position
+    #     footpos.x = footpos.x + bodyikposition.x
+    #     footpos.y = footpos.y + bodyikposition.y
+    #     #footpos.z = footpos.z + bodyikposition.z # Ensure correct Z height
+
+    #     #print(f"Leg {self.name}: Translated foot position -> X: {footpos.x}, Y: {footpos.y}, Z: {footpos.z}")
+
+    #     # Apply rotation around the Z-axis to move to leg's local frame
+    #     theta = np.deg2rad(self.coxa_angle_offset)
+    #     toepos.x = footpos.x * np.cos(theta) - footpos.y * np.sin(theta)
+    #     toepos.y = footpos.x * np.sin(theta) + footpos.y * np.cos(theta)
+    #     #toepos.z = footpos.z  # Maintain correct Z height
+
+    #     #print(f"Leg {self.name}: Foot position -> X: {toepos.x}, Y: {toepos.y}, Z: {toepos.z}")
+
+    #     # ##--------------------------
+    #     # #### Variation 1
+    #     # ##--------------------------
+        
+    #     #print(toepos.x, toepos.y)
+    #     # Coxa rotation should be mirrored for rear legs
+    #     if self.name in ["RF", "RM", "RR"]:
+    #         coxa_rad = -np.arctan2(toepos.y, toepos.x)
+    #     else:
+    #         coxa_rad = np.arctan2(toepos.y, toepos.x)
+
+    #     # Correct rear legs to move with the front legs
+    #     if self.name in ["RR", "LR"]:  
+    #         coxa_rad = -coxa_rad 
+
+    #     # distiance between coxa and toe
+    #     coxatoeDist = np.sqrt(toepos.x**2 + toepos.y**2)
+    #     #print("Distance between coxa and toe: ", coxatoeDist)
+        
+    #     # Angle between SW line and ground in rad
+    #     hyp = np.sqrt((coxatoeDist-self._coxa_len)**2 + toepos.z**2)
+        
+    #    # Angle between shoulder-hip line and femur
+    #     ika1 = np.clip(np.atan2(coxatoeDist - self._coxa_len, toepos.z),-1,1)
+
+    #     # Compute inverse kinematics femur angle
+    #     arg = (self._femur_len**2 + hyp**2 - self._tibia_len**2) / (2.0 * self._femur_len * hyp)
+    #     ika2 = np.acos(np.clip(arg, -1, 1))  # Ensure acos input is within valid range
+
+    #     femur_rad = (ika1 + ika2) - (np.pi / 2)
+
+    #     # tibia angle
+    #     arg = (self._tibia_len**2 + self._femur_len**2 - hyp**2) / (2.0 * self._femur_len * hyp)
+    #     tibia_rad = np.arccos(np.clip(arg,-1,1))
+       
+    #     tibia_rad = (np.pi/2) - tibia_rad
+
+    #     coxa_angle = np.rad2deg(coxa_rad)
+    #     femur_angle = np.rad2deg(femur_rad)
+    #     tibia_angle = np.rad2deg(tibia_rad)
+
+        #print(int(np.rad2deg(coxa_angle)), int(np.rad2deg(femur_angle)), int(np.rad2deg(tibia_angle)))
+
+        # self.rad_angles = np.array([coxa_rad,femur_rad,tibia_rad])
+        # self.cur_angles = np.array([coxa_angle, femur_angle, tibia_angle])
+
+        # return self.rad_angles, self.cur_angles
+
     def inverse_kinematics(self, bodyikposition, footpos):
         '''
             Implement inverse kinematics for leg movement
@@ -165,82 +254,6 @@ class Leg:
             #   /
             #  x (right/left)
 
-        '''
-
-        # ##--------------------------
-        # #### Variation 1
-        # ##--------------------------
-        
-        toepos = coord3D()
-        print(f"BoddyIK Position {self.name}: ",bodyikposition.x, bodyikposition.y, bodyikposition.z)
-        print(f"BoddyIK Position {self.name}: ", footpos.x, footpos.y, footpos.z)
-
-        
-        # update foot position
-        footpos.x = footpos.x + bodyikposition.x
-        footpos.y = footpos.y + bodyikposition.y
-        #footpos.z = footpos.z + bodyikposition.z # Ensure correct Z height
-
-        #print(f"Leg {self.name}: Translated foot position -> X: {footpos.x}, Y: {footpos.y}, Z: {footpos.z}")
-
-        # Apply rotation around the Z-axis to move to leg's local frame
-        theta = np.deg2rad(self.coxa_angle_offset)
-        toepos.x = footpos.x * np.cos(theta) - footpos.y * np.sin(theta)
-        toepos.y = footpos.x * np.sin(theta) + footpos.y * np.cos(theta)
-        #toepos.z = footpos.z  # Maintain correct Z height
-
-        #print(f"Leg {self.name}: Foot position -> X: {toepos.x}, Y: {toepos.y}, Z: {toepos.z}")
-
-        # ##--------------------------
-        # #### Variation 1
-        # ##--------------------------
-        
-        #print(toepos.x, toepos.y)
-        # Coxa rotation should be mirrored for rear legs
-        if self.name in ["RF", "RM", "RR"]:
-            coxa_rad = -np.arctan2(toepos.y, toepos.x)
-        else:
-            coxa_rad = np.arctan2(toepos.y, toepos.x)
-
-        # Correct rear legs to move with the front legs
-        if self.name in ["RR", "LR"]:  
-            coxa_rad = -coxa_rad 
-
-        # distiance between coxa and toe
-        coxatoeDist = np.sqrt(toepos.x**2 + toepos.y**2)
-        #print("Distance between coxa and toe: ", coxatoeDist)
-        
-        # Angle between SW line and ground in rad
-        hyp = np.sqrt((coxatoeDist-self._coxa_len)**2 + toepos.z**2)
-        
-       # Angle between shoulder-hip line and femur
-        ika1 = np.clip(np.atan2(coxatoeDist - self._coxa_len, toepos.z),-1,1)
-
-        # Compute inverse kinematics femur angle
-        arg = (self._femur_len**2 + hyp**2 - self._tibia_len**2) / (2.0 * self._femur_len * hyp)
-        ika2 = np.acos(np.clip(arg, -1, 1))  # Ensure acos input is within valid range
-
-        femur_rad = (ika1 + ika2) - (np.pi / 2)
-
-        # tibia angle
-        arg = (self._tibia_len**2 + self._femur_len**2 - hyp**2) / (2.0 * self._femur_len * hyp)
-        tibia_rad = np.arccos(np.clip(arg,-1,1))
-       
-        tibia_rad = (np.pi/2) - tibia_rad
-
-        coxa_angle = np.rad2deg(coxa_rad)
-        femur_angle = np.rad2deg(femur_rad)
-        tibia_angle = np.rad2deg(tibia_rad)
-
-        #print(int(np.rad2deg(coxa_angle)), int(np.rad2deg(femur_angle)), int(np.rad2deg(tibia_angle)))
-
-        # ##--------------------------
-        # #### Variation 2 (Remake 3-7-2025)
-        # ##--------------------------
-        # Assumed neurtral position is at 0 degrees, else zero offset is required
-
-        # Inverse kin equation 1
-        '''
             # Pseudocode
             
             # Body frame
@@ -259,7 +272,7 @@ class Leg:
             dx = effectorTarget.x - self.coxa_body_offset.x
             dy = effectorTarget.y - self.coxa_body_offset.y
 
-            L1 = np.sqrt((dx**2 + dy**2) - self._coxa_len
+            L1 = np.sqrt((dx**2 + dy**2) - self._coxa_len)
             L2 = effectorTarget.z - leg.femur.z
             L = np.sqrt(L2**2 + L1**2)
             
@@ -281,16 +294,54 @@ class Leg:
             # Perform offsets for each motor, and convert to angles
             femur_rad = 90 - (180.0/np.pi)* alpha
             tibia_rad = (180.0/np.pi) * beta
+            '''
+            # ##--------------------------
+            # #### Variation 2 (Remake 3-7-2025)
+            # ##--------------------------
+            # Assumed neurtral position is at 0 degrees, else zero offset is required
 
-        '''
+            # Inverse kin equation 1
+            # Body frame
+            # x = effectorTarget.x - self.coxa_body_offset.x
+            # y = effectorTarget.y - self.coxa_body_offset.y
 
+            # # Eq 1
+            # # Calculate coxa, convert to degrees (180.0/np.pi), and apply offset,
+            # coxa_angle = (180.0/np.pi)*np.atan2(y,x) + 360 - self.coxa_angle_offset
+            # if coxa_angle >= 180:
+            #     coxa_angle = coxa_angle - 360
 
+            
+            # # Moving to leg Frame
+            # # Eq 2
+            # dx = effectorTarget.x - self.coxa_body_offset.x
+            # dy = effectorTarget.y - self.coxa_body_offset.y
 
+            # L1 = np.sqrt((dx**2 + dy**2) - self._coxa_len)
+            # L2 = effectorTarget.z - leg.femur.z
+            # L = np.sqrt(L2**2 + L1**2)
+            
+            # # Eq 3
+            # arg_1 = (L2/L1)
+            # alpha_1 =  np.clip(np.arccos(arg_1),-1,1) # Clip result to prevent errors
 
-        self.rad_angles = np.array([coxa_rad,femur_rad,tibia_rad])
-        self.cur_angles = np.array([coxa_angle, femur_angle, tibia_angle])
+            # # Eq 4
+            # arg_2 = (self._tibia_len**2 - self._femur_len**2 - L**2)/(-2 * self._femur_len * L)
+            # alpha_2 = np.clip(np.arccos(arg_2), -1,1) # Clip result to prevent errors
 
-        return self.rad_angles, self.cur_angles
+            # # Eq 5
+            # alpha = alpha_1 + alpha_2
+            
+            # # Eq 6
+            # arg_b = (L**2 - self._tibia_len**2 - self._femur_len**2)/(-2*tibia*femur)
+            # beta = np.clip(np.arccos(arg_b) ,-1,1)
+            
+            # # Perform offsets for each motor, and convert to angles
+            # femur_rad = 90 - (180.0/np.pi)* alpha
+            # tibia_rad = (180.0/np.pi) * beta
+
+        return 
+
 
     def bezier_curve_completed(self):
         """Returns True if the leg's Bézier trajectory is complete."""

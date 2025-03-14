@@ -94,7 +94,7 @@ class Hexapod:
             self.body_coxa_offsets[leg_name] = coord3D()
             self.body_coxa_offsets[leg_name].x = coxa_offsets[leg_name][0] # Distance x from center of body to coxa
             self.body_coxa_offsets[leg_name].y = coxa_offsets[leg_name][1] # Distance y from center of body to coxa
-            self.body_coxa_offsets[leg_name].y = coxa_offsets[leg_name][2] # Distance z from center of height of body
+            self.body_coxa_offsets[leg_name].z = coxa_offsets[leg_name][2] # Distance z from center of height of body
 
             self.gait_pos[leg_name] = coord3D()
             
@@ -104,53 +104,57 @@ class Hexapod:
             pulse_min[leg_name] = config["pulsemin"]
             pulse_max[leg_name] = config["pulsemax"]
             angleoffset[leg_name] = config["angleoffset"]
-        
-         # Initial leg positions [x,y,z] || Will need adjusting
-        temp_vals = {
-            "LR": {
-                "x": -np.cos(np.deg2rad(56.172)) * (segment_lengths["LR"][0] + segment_lengths["LR"][1] - segment_lengths["LR"][2]),
-                "y": -np.sin(np.deg2rad(56.172)) * (segment_lengths["LR"][0] + segment_lengths["LR"][1] - segment_lengths["LR"][2]),
-                "z": segment_lengths["LR"][2]-30, # Adding -30 brings leg out away from hexapod
-            },
-            "LM": {
-                "x": -(segment_lengths["LM"][0] + segment_lengths["LM"][1]),
-                "y": 0,  # Middle leg should have zero Y if centered
-                "z": segment_lengths["LM"][2],
-            },
-            "LF": {
-                "x": -np.cos(np.deg2rad(55.931)) * (segment_lengths["LF"][0] + segment_lengths["LF"][1] - segment_lengths["LR"][2]),
-                "y": np.sin(np.deg2rad(55.931)) * (segment_lengths["LF"][0] + segment_lengths["LF"][1]  - segment_lengths["LR"][2]),
-                "z": segment_lengths["LF"][2],
-            },
-            "RF": {
-                "x": np.cos(np.deg2rad(55.931)) * (segment_lengths["RF"][0] + segment_lengths["RF"][1]  - segment_lengths["LR"][2]),
-                "y": np.sin(np.deg2rad(55.931)) * (segment_lengths["RF"][0] + segment_lengths["RF"][1]  - segment_lengths["LR"][2]),
-                "z": segment_lengths["RF"][2],
-            },
-            "RM": {
-                "x": (segment_lengths["RM"][0] + segment_lengths["RM"][1]),
-                "y": 0,  # Middle leg should have zero Y if centered
-                "z": segment_lengths["RM"][2],
-            },
-            "RR": {
-                "x": np.cos(np.deg2rad(56.172)) * (segment_lengths["RR"][0] + segment_lengths["RR"][1]  - segment_lengths["LR"][2]),
-                "y": -np.sin(np.deg2rad(56.172)) * (segment_lengths["RR"][0] + segment_lengths["RR"][1]  - segment_lengths["LR"][2]),
-                "z": segment_lengths["RR"][2],
-            },
-            }
-        
-        leg_lengths = {}
-        for leg,vals in temp_vals.items():
-            leg_lengths[leg] = np.sqrt(vals['x']**2 + vals['y']**2 + vals['z']**2)
+            self.legs[leg_name] = Leg(leg_name, leg_index[leg_name], servo_pins[leg_name], pulse_min[leg_name], pulse_max[leg_name], segment_lengths[leg_name], coxa_offsets[leg_name], angleoffset[leg_name])
 
-        toe_offsets = {}
-        for name, values in temp_vals.items():
-            # if name == "LR" or name == "LM" or name == "LF":
-            toe_offsets[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
-            self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], toe_offsets[name], coxa_offsets[name], angleoffset[name])
+
+        #  # Initial leg positions [x,y,z] || Will need adjusting
+        # temp_vals = {
+        #     "LR": {
+        #         "x": -np.cos(np.deg2rad(56.172)) * (segment_lengths["LR"][0] + segment_lengths["LR"][1] - segment_lengths["LR"][2]),
+        #         "y": -np.sin(np.deg2rad(56.172)) * (segment_lengths["LR"][0] + segment_lengths["LR"][1] - segment_lengths["LR"][2]),
+        #         "z": segment_lengths["LR"][2]-30, # Adding -30 brings leg out away from hexapod
+        #     },
+        #     "LM": {
+        #         "x": -(segment_lengths["LM"][0] + segment_lengths["LM"][1]),
+        #         "y": 0,  # Middle leg should have zero Y if centered
+        #         "z": segment_lengths["LM"][2],
+        #     },
+        #     "LF": {
+        #         "x": -np.cos(np.deg2rad(55.931)) * (segment_lengths["LF"][0] + segment_lengths["LF"][1] - segment_lengths["LR"][2]),
+        #         "y": np.sin(np.deg2rad(55.931)) * (segment_lengths["LF"][0] + segment_lengths["LF"][1]  - segment_lengths["LR"][2]),
+        #         "z": segment_lengths["LF"][2],
+        #     },
+        #     "RF": {
+        #         "x": np.cos(np.deg2rad(55.931)) * (segment_lengths["RF"][0] + segment_lengths["RF"][1]  - segment_lengths["LR"][2]),
+        #         "y": np.sin(np.deg2rad(55.931)) * (segment_lengths["RF"][0] + segment_lengths["RF"][1]  - segment_lengths["LR"][2]),
+        #         "z": segment_lengths["RF"][2],
+        #     },
+        #     "RM": {
+        #         "x": (segment_lengths["RM"][0] + segment_lengths["RM"][1]),
+        #         "y": 0,  # Middle leg should have zero Y if centered
+        #         "z": segment_lengths["RM"][2],
+        #     },
+        #     "RR": {
+        #         "x": np.cos(np.deg2rad(56.172)) * (segment_lengths["RR"][0] + segment_lengths["RR"][1]  - segment_lengths["LR"][2]),
+        #         "y": -np.sin(np.deg2rad(56.172)) * (segment_lengths["RR"][0] + segment_lengths["RR"][1]  - segment_lengths["LR"][2]),
+        #         "z": segment_lengths["RR"][2],
+        #     },
+        #     }
+        
+        # leg_lengths = {}
+        # for leg,vals in temp_vals.items():
+        #     leg_lengths[leg] = np.sqrt(vals['x']**2 + vals['y']**2 + vals['z']**2)
+
+        # toe_offsets = {}
+        # for name, values in temp_vals.items():
+        #     # if name == "LR" or name == "LM" or name == "LF":
+        #     toe_offsets[name] = coord3D(x=values['x'], y=values['y'], z=values['z'])
+        #     self.legs[name] = Leg(name, leg_index[name], servo_pins[name], pulse_min[name], pulse_max[name], segment_lengths[name], toe_offsets[name], coxa_offsets[name], angleoffset[name])
         
         self.leg_states = {leg: "standing" for leg in self.legs}  # "standing", "in_air", "slide" | standing, moving along 2d bezier curve, touchdown/sliding back (could also do for different leg "heights", but later maybe)
         
+        self.num_legs = len(self.legs)
+
     def get_legs(self):
         return self.legs
 
