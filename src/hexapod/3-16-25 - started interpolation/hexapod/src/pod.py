@@ -1,29 +1,15 @@
 import time
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
-from leg import *
-from hex_body import *
-from coord import *
+from leg import Leg, SegmentLengths,ServoAngles, Servo
+from hex_body import new_hexapod_body, Body
+from coord import Coordinate
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict
-from gaits import *
-
-
-# Direction constants for leg movement (forward or reverse in gait cycle)
-Forward = 1
-Reverse = -1
-
-# Set distance from base reference frame Z to end effector Z when robot is in rest/neutral
-pod_z_height:float 
-
-# Define maxheight of arc (May not be needed due to bezier curve)
-z_lift:float = 70.0
-
-# Define max height of arc by end effector when in neutral/rest pos
-revert_lift:float = 50
-
-# Odd number of interpolation steps
-interpolation_steps = 21
+from gaits import new_Gait, GaitType, Gait
+from config import Forward, Reverse, pod_z_height, INTERPOLATION_STEPS,EFFECTOR_ORIGIN_INDEX
+from inversekinematics import solve_effector_IK
+from coord import Coordinate, new_Coordinate
 
 
 @dataclass
@@ -40,33 +26,35 @@ class Pod:
     revertinglegIndex: int = 0                        # Index of the leg currently being reverted (in neutral-return process)
     revertPhase: int = 0                              # Current phase of revert process (0 = Ground phase, 1 = MoveToNeutral phase)
     direction: int = Forward                          # Current movement direction (Forward or Reverse)
-    tick: int = 0                                     # Global tick counter for movement updates
+    tick: int = 0                                     # tick counter for movement updates
     gait: Optional[Gait] = None
 
     def __post_init__(self):
         """Initialize hexapod legs with servos."""
+        
+        for i in range(self.body_def.num_legs):  # Six legs
         # Example transformation matrix (identity for now)
-        identity_matrix = np.eye(4)
-
-        # Predefined coxa angle offsets (modify as needed)
-        coxa_angle_offsets = self.body_def.coxa_offset # Angles for leg positioning
-
-        # Generate six legs
-        self.Legs = [
-            Leg(
-                Index=i,
-                Name=f"Leg {i}",
-                # Coxa=Servo(i * 3, pca=0x40 if i * 3 < 8 else 0x41),
-                # Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 8 else 0x41),
-                # Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 8 else 0x41),
-                coxa_angle_offset=coxa_angle_offsets[i],
-                offset_transformation_matrix=identity_matrix,
-                segment_length=SegmentLengths(45, 110, 193),
-                servo_angles=ServoAngles(),
-                neutral_effector_coord=Coordinate(0, 0, 0)
-            )
-            for i in range(6)  # Six legs
-        ]
+            offset_matrix = np.array([
+                [np.cos(self.body_def.coxa_offsets[i] * np.pi/180), -np.sin(self.body_def.coxa_offsets[i]*np.pi/180), 0, self.body_def.coxa_coords[i].X],  # x translation
+                [np.sin(self.body_def.coxa_offsets[i]*np.pi/180), np.cos(self.body_def.coxa_offsets[i]*np.pi/180), 0, self.body_def.coxa_coords.Y],    # y translation
+                [0, 0, 1, self.body_def.coxa_coords.Z*np.pi/360],      # z translation (none)
+                [0, 0, 0, 1]       # homogeneous row
+                ])
+            
+            # Generate six legs
+            self.Legs = [
+                Leg(
+                    Index=i,
+                    Name=f"Leg {i}",
+                    # Coxa=Servo(i * 3, pca=0x40 if i * 3 < 8 else 0x41),
+                    # Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 8 else 0x41),
+                    # Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 8 else 0x41),
+                    coxa_angle_offset=self.body_def.coxa_offsets[i],
+                    offset_transformation_matrix=offset_matrix,
+                    segment_length=self.body_def.leg_segments[i],
+                    servo_angles=self.body_def.rest_angles[i],
+                )
+            ]
         self.gait = new_Gait(GaitType.TRIPOD) # Default Gait Tripod
 
     def set_direction(self, direction:int) -> None:
@@ -157,9 +145,6 @@ class Pod:
         self.direction = Forward
         self.UpdatePodStructure()
 
-    def revert_to_neutral(self) -> None:
-        '''If in reverting state, move all legs backward to neutral stance'''
-
 
     def set_gait(self, gait_type: GaitType, speed_factor: float=0):
         ''' set the gait pattern and index to 0'''
@@ -232,13 +217,13 @@ class Pod:
             yMin = effector_origin.Y - y
 
             # For visualization
-            xstep = (xMax - xMin) / (interpolation_steps - 1)
-            ystep = (yMax - yMin) / (interpolation_steps - 1)
+            xstep = (xMax - xMin) / (INTERPOLATION_STEPS - 1)
+            ystep = (yMax - yMin) / (INTERPOLATION_STEPS - 1)
             deltaX = 0
             deltaY = 0
             
             # Calculate coordinates
-            for i in range(interpolation_steps):
+            for i in range(INTERPOLATION_STEPS):
                 swing = new_Coordinate(xMin + deltaX, yMin + deltaY, pod_z_height)
                 servoAngles = solve_effector_IK(leg, swing)
                 #revise below
@@ -263,12 +248,12 @@ class Pod:
 
             # setup radius 
             radius = np.sqrt(effector_origin.X**2 + effector_origin.Y**2)
-            stepRad = np.deg2rad(degrees) / (interpolation_steps - 1)
+            stepRad = np.deg2rad(degrees) / (INTERPOLATION_STEPS - 1)
             angle = np.atan2(effector_origin.Y, effector_origin.X) - 0.5 * np.deg2rad(degrees)
             # using atan2 shouldn't have errors
 
             delta = 0.0
-            for i in range(interpolation_steps):
+            for i in range(INTERPOLATION_STEPS):
 
                 x = radius * np.cos(angle + delta)
                 y = radius * np.sin(angle + delta)

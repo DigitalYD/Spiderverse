@@ -1,8 +1,10 @@
 import json
 from dataclasses import dataclass, field
 from typing import List, Optional
-from coord import *
-from gaits import *
+from coord import Coordinate
+from gaits import new_Gait
+from leg import SegmentLengths, ServoAngles
+from gaits import Gait
 
 @dataclass
 class Body:
@@ -38,10 +40,10 @@ class Body:
     Gait: Optional['Gait']
 
     # Base angle around the hexapod center (0 being directly in front)
-    coxa_offset: List[float] = field(default_factory=list)
+    coxa_offsets: List[float] = field(default_factory=list)
 
     # Origin coordinates of each leg's coxa (anchor point) in the robot's base reference frame
-    coxa_coord: List['Coordinate'] = field(default_factory=list)
+    coxa_coords: List['Coordinate'] = field(default_factory=list)
     # Segment lengths for each leg (list of SegmentLengths for Coxa, Femur, Tibia)
     leg_segments: List['SegmentLengths'] = field(default_factory=list)
     # Rest (neutral) angles for each leg (list of ServoAngles)
@@ -81,8 +83,8 @@ class Body:
         return cls(
             num_legs=data["NumLegs"],
             Gait=data["Gait"],  # This may need to be converted from string to an actual Gait object
-            coxa_offset=coxa_offsets,
-            coxa_coord=coxa_coords,
+            coxa_offsets=coxa_offsets,
+            coxa_coords=coxa_coords,
             leg_segments=leg_segments,
             rest_angles=rest_angles
         )
@@ -99,7 +101,7 @@ if __name__ == '__main__':
     print(type(hexapod_body))
     print(hexapod_body.num_legs)
     print(hexapod_body.Gait)
-    print(hexapod_body.coxa_offset)
-    print(hexapod_body.coxa_coord)
+    print(hexapod_body.coxa_offsets)
+    print(hexapod_body.coxa_coords)
     print(hexapod_body.leg_segments)
     print(hexapod_body.rest_angles)

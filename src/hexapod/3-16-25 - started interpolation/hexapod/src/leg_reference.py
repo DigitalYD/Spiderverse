@@ -3,22 +3,8 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Optional
 from coord import Coordinate, ServoAngles, new_Coordinate, new_servo_angles
+from config import POD_Z_HEIGHT, NUM_JOINTS, COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX, INTERPOLATION_STEPS, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX, Z_LIFT, REVERT_LIFT, Forward, Reverse
 
-
-# Constants related to leg joints and interpolation (from leg.go and pod.go)
-NUM_JOINTS = 4  # number of joints in a leg (Coxa, Femur, Tibia, End Effector)
-COXA_ORIGIN_INDEX = 0
-FEMUR_ORIGIN_INDEX = 1
-TIBIA_ORIGIN_INDEX = 2
-EFFECTOR_ORIGIN_INDEX = 3
-
-INTERPOLATION_STEPS = 21  # number of interpolation steps for leg movement (must be odd for symmetry)
-Z_LIFT = 50.0             # height of arc for end effector during swing phase
-REVERT_LIFT = 20.0        # height of arc for end effector when reverting to neutral
-
-# Direction constants for leg movement (forward or reverse in gait cycle)
-Forward = 1
-Reverse = -1
 
 @dataclass
 class SegmentLengths:
@@ -126,7 +112,7 @@ class Leg:
                                 z_current - z_lift)
         # SolveEffectorIK returns new angles for the adjusted target.
         # We ignore the error here for simplicity.
-        self.ServoAngles, _ = SolveEffectorIK(self, target, self.debugChannel)
+        self.ServoAngles, _ = SolveEffectorIK(self, target)
         self.RecalculateForwardKinematics(self.ServoAngles)  # update joint positions with corrected angles
         # Increment swing index in given direction
         self.swingInterpolationIndex += int(direction)
@@ -187,7 +173,7 @@ class Leg:
         target = new_Coordinate(self.Joints[EFFECTOR_ORIGIN_INDEX].X,
                                 self.Joints[EFFECTOR_ORIGIN_INDEX].Y,
                                 height)
-        angles, err = SolveEffectorIK(self, target, self.debugChannel)
+        angles, err = SolveEffectorIK(self, target)
         if err:
             return err  # pass the IK error upward
         self.ServoAngles = angles
@@ -258,7 +244,7 @@ class Leg:
         target = new_Coordinate(self.Joints[EFFECTOR_ORIGIN_INDEX].X,
                                 self.Joints[EFFECTOR_ORIGIN_INDEX].Y,
                                 z_current - z_lift)
-        self.ServoAngles, _ = SolveEffectorIK(self, target, self.debugChannel)
+        self.ServoAngles, _ = SolveEffectorIK(self, target)
         self.RecalculateForwardKinematics(self.ServoAngles)
         return self.Index  # continue with same leg until done
     

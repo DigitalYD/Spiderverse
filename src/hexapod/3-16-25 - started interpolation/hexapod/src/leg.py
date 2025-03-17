@@ -5,13 +5,8 @@ from typing import List, Optional, Dict
 from coord import *
 from bezier2d import BezierCurve
 from servo import Servo
-from inversekinematics import *
-
-NUM_JOINTS = 4
-COXA_ORIGIN_INDEX = 0
-FEMUR_ORIGIN_INDEX = 1
-TIBIA_ORIGIN_INDEX = 2
-EFFECTOR_ORIGIN_INDEX = 3
+from inversekinematics import solve_effector_IK
+from config import NUM_JOINTS, COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX, INTERPOLATION_STEPS
 
 
 def homogeneous_transformation_matrix(projection_matrix: np.ndarray, theta: float, length: float) -> np.ndarray:
@@ -35,22 +30,19 @@ def homogeneous_transformation_matrix(projection_matrix: np.ndarray, theta: floa
     ])
     return H
 
-interpolation_steps = 21 # steps permotion cycle Same as pod.py (KEEP THEM THE SAME)
-num_joints = 3 # coxa, Femur, Tibia
-
 @dataclass 
 class intermediateAngles:
-    num_joints: int = num_joints #should make 3 joints, coxa, femur, tibia
-    steps:int = interpolation_steps
-    jointAngle: np.ndarray = field(init=False)# = field(default_factory=lambda: np.zeros((num_joints - 1, interpolation_steps), dtype=np.float64))
+    num_joints: int = NUM_JOINTS #should make 3 joints, coxa, femur, tibia
+    steps:int = INTERPOLATION_STEPS
+    jointAngle: np.ndarray = field(init=False)# = field(default_factory=lambda: np.zeros((num_joints - 1, INTERPOLATION_STEPS), dtype=np.float64))
 
     def __post_init__(self):
         self.jointAngle = np.zeros((self.steps, self.num_joints), dtype=np.float64)
 
 @dataclass
 class intermediateeffectorCoordinates:
-    steps: int = interpolation_steps
-    coordinates: List[Coordinate] = field(default_factory=lambda: [Coordinate() for _ in range(interpolation_steps)])
+    steps: int = INTERPOLATION_STEPS
+    coordinates: List[Coordinate] = field(default_factory=lambda: [Coordinate() for _ in range(INTERPOLATION_STEPS)])
 
 @dataclass
 class Leg:
@@ -58,14 +50,14 @@ class Leg:
     Index: int                                      # leg index (0-Number of legs-1)
     Name:  str                                      # Identify which leg by position
     # Setup Servo Motors ||| UNCOMMENT ON HEXAPOD |||
-    Coxa: Servo
-    Femur: Servo
-    Tibia: Servo
+    # Coxa: Servo
+    # Femur: Servo
+    # Tibia: Servo
     coxa_angle_offset: float                        # Angle of leg around hexapod body
     offset_transformation_matrix: np.ndarray        # 4x4 Transform for coxa
     segment_length: SegmentLengths                 # Lengths of coxa, femur, tibia
     servo_angles: ServoAngles                       # Current state of servo angles
-    neutral_effector_coord: Coordinate              # Start/rest position of end effector
+    neutral_effector_coord: Coordinate = field(init=False)              # Start/rest position of end effector
     num_joints: int = NUM_JOINTS                           # Number of joints each leg has (coxa, femur, tibia, end effector)
     Joints: List[Coordinate] = field(init=False)    # Location of the reference frame origin for each joint
     effector_target: 'Coordinate' = field(default_factory=lambda: Coordinate)  # Unique instance per leg
@@ -73,7 +65,7 @@ class Leg:
     intermediate_effector_coordinates:'intermediateeffectorCoordinates' = field(default_factory=lambda: intermediateeffectorCoordinates)
     swinginterpolationIndex: int = 0                # Index for current idx of the interpolation table for the leg while in swing phase
     revertinterpolationIndex: int = 0               # current index in revert-to-neutral interpolation
-    stanceInterpolationIndex: float = 0.0           # current index in stance-phase interpolation
+    stanceinterpolationIndex: float = 0.0           # current index in stance-phase interpolation
     sliding: bool = False                           # flag indicating if leg is moving back to neutral position
     Debug: bool = False                             # Set debug mode for printing errors
     bezier_curve: "BezierCurve" = field(init=False)
@@ -89,7 +81,7 @@ class Leg:
         self.Joints = [Coordinate() for _ in range(self.num_joints)] # Setup joint positions 
         # Temporary Delete for pod class
         #print("Joints after Init : ", self.Joints)
-        self.neutral_effector_coord = Coordinate(0,0, -160)
+        self.neutral_effector_coord = self.Joints[EFFECTOR_ORIGIN_INDEX]
         self.effector_target = copy.deepcopy(self.neutral_effector_coord) # Start at neutral
         self.set_gait_control_points()
         self.servo_angles = solve_effector_IK(self, new_Coordinate(self.effector_target.X, self.effector_target.Y, self.effector_target.Z))  # Set angles
@@ -162,7 +154,6 @@ class Leg:
         self.bezier_curve = BezierCurve(self.control_points, num_pts=100)
         self.current_gait_phase = "gait"
 
-
     def set_rotation_control_points(self, theta:float = np.pi/2):
         ''' set control points for rotation'''
         r = np.sqrt(self.neutral_effector_coord.X**2 + self.neutral_effector_coord.Y**2)
@@ -201,6 +192,15 @@ class Leg:
         self.bezier_curve = BezierCurve(self.control_points)
         self.current_gait_phase = "reset"
 
+    def reset_interpolator(self):
+        '''
+            Reset both swing and stance interpolation indices.
+            # Verify that this needs -1 or not
+        '''
+        self.swinginterpolationIndex = (INTERPOLATION_STEPS-1) / 2
+        self.stanceinterpolationIndex = (INTERPOLATION_STEPS-1) / 2
+    
+    
 
     def set_joint_angles(self, joint, angle) -> None:
         '''
@@ -213,10 +213,24 @@ class Leg:
 
 
     def Zero(self) -> None:
-        self.servo_angles = ServoAngles(0,0,0)
+        '''
+            Zero out the servo angles & recalculate FK
+        '''
+        self.servo_angles.Coxa = 0
+        self.servo_angles.Femur = 0
+        self.servo_angles.Tibia = 0
         self.recalculate_forward_kinematics(self.servo_angles)
 
-
+    def ground(self, height):
+        '''
+            Ground the legs at a certain height & recalculate FK
+        '''
+        self.servo_angles = solve_effector_IK(self, new_Coordinate(self.Joints[EFFECTOR_ORIGIN_INDEX].X,
+                                                                   self.Joints[EFFECTOR_ORIGIN_INDEX].Y,
+                                                                   height))
+        self.recalculate_forward_kinematics(self.servo_angles)
+        
+        
     def get_joint_origin(self, H: np.ndarray) -> Coordinate:
         ''' Helper to extract the origin (translation part) from a homogeneous transformation matrix. '''
         # The origin is the last column (except the homogeneous 1) of the matrix.
@@ -311,6 +325,60 @@ class Leg:
             self.Femur.set_angle(angles.Femur)
             self.Tibia.set_angle(angles.Tibia)
 
+    def update_swing(self, direction):
+        ''' 
+            Moves the interpolation index to next element in the table for swing phase until it reaches end
+            & wraps back to 0.
+            1: end of swing
+            0: Interpolate the swing
+        '''
+        angles = new_servo_angles(self.intermediate_angles.jointAngle[self.swinginterpolationIndex][0], self.intermediate_angles.jointAngle[self.swinginterpolationIndex][1], self.intermediate_angles.jointAngle[self.swinginterpolationIndex][2])
+        self.servo_angles = angles
+        self.recalculate_forward_kinematics(angles)
+
+        #phase step/ lift legs in swing so modify z, when in swing find a new soln where leg is not touching ground
+        phase_step = np.pi/(INTERPOLATION_STEPS-1)
+        z = self.Joints[EFFECTOR_ORIGIN_INDEX].Z
+
+        ## Swing from 0 to pi
+        phase = phase_step * float(self.swinginterpolationIndex)
+        zNew = z * np.sin(phase)
+        
+        new_angle = solve_effector_IK(self, new_Coordinate(self.Joints[EFFECTOR_ORIGIN_INDEX].X, self.Joints[EFFECTOR_ORIGIN_INDEX].Y, z-zNew))
+        self.recalculate_forward_kinematics(new_angle)  # Update Joints with new angles
+
+        self.swinginterpolationIndex += int(direction)
+
+        if direction == 1:
+            if self.swinginterpolationIndex >= INTERPOLATION_STEPS:
+                self.swinginterpolationIndex = 0
+                self.stanceinterpolationIndex = INTERPOLATION_STEPS
+        elif direction == -1:
+            if self.swinginterpolationIndex <= 0:
+                self.swinginterpolationIndex =  INTERPOLATION_STEPS
+                self.stanceinterpolationIndex = 0
+
+    def update_stance(self, direction:int, returnFactor:float):
+        '''
+            Moves index to the previous element in the table till it reaches start. 
+            Loops back to end and counts down again
+        '''
+        angles = new_servo_angles(self.intermediate_angles.jointAngle[self.swinginterpolationIndex][0], self.intermediate_angles.jointAngle[self.swinginterpolationIndex][1], self.intermediate_angles.jointAngle[self.swinginterpolationIndex][2])
+        self.servo_angles = angles
+        self.recalculate_forward_kinematics(angles)
+        
+        self.stanceinterpolationIndex -= direction * returnFactor
+        
+        ## each leg has its own table
+        if direction == 1:
+            if self.stanceinterpolationIndex <= 0:
+                self.stanceinterpolationIndex = INTERPOLATION_STEPS
+        elif direction == -1:
+            if self.stanceinterpolationIndex >= INTERPOLATION_STEPS:
+                self.stanceinterpolationIndex = 0
+                self.swinginterpolationIndex = INTERPOLATION_STEPS
+
+
 
     def update(self, delta_t: float, direction: int, gait_pattern: List[int], gait_index: int) -> bool:
         ''' Update leg based on gait pattern '''
@@ -389,9 +457,25 @@ class Leg:
     def set_debug(self, debug:bool) -> None:
         self.Debug = debug
 
+    def toNeutral(self):
+        targetCoord = self.neutral_effector_coord
+        startCoord = self.Joints[EFFECTOR_ORIGIN_INDEX]
+        
+        stepX = (targetCoord.X - startCoord.X) / (INTERPOLATION_STEPS)
+        stepY = (targetCoord.Y - startCoord.Y) / (INTERPOLATION_STEPS)
+        stepZ = (targetCoord.Z - startCoord.Z) / (INTERPOLATION_STEPS)
 
-
-
+        for i in range(INTERPOLATION_STEPS):
+            #####
+            ## Review this, it appears it can be wrong.
+            ####
+            swing = new_Coordinate(startCoord.X + stepX * i, startCoord.Y + stepY * i, startCoord.Z + stepZ * i)
+            angles = solve_effector_IK(self, swing)
+            
+            self.intermediate_angles.jointAngle[i][0] = angles.Coxa
+            self.intermediate_angles.jointAngle[i][0] = angles.Femur
+            self.intermediate_angles.jointAngle[i][0] = angles.Tibia
+            
 ## -----------------------------------------------------
 ##  Test Cases for new leg class without bezier curve
 ## -----------------------------------------------------
@@ -434,6 +518,7 @@ def new_leg():
                 [0, 0, 1, coxaCoordinate.Z*np.pi/360],      # z translation (none)
                 [0, 0, 0, 1]       # homogeneous row
                 ])
+    
     leg = Leg(
             Index=1,
             Name=f"Leg {1}",
@@ -445,7 +530,6 @@ def new_leg():
             offset_transformation_matrix=offset_matrix, # Creates 4x4 identity matrix for an insert
             segment_length=SegmentLengths(45, 110, 193),
             servo_angles=ServoAngles(0,0,0),  # Provide default servo angles
-            neutral_effector_coord=Coordinate(0, 0, 0)
         )
 
 
@@ -587,13 +671,13 @@ def test_stride_vector_movement(leg, nrepeats, x, y, z = 50.0): # n_repeates:int
     yMin = effector_origin.Y - y
 
     # For visualization
-    xstep = (xMax - xMin) / (interpolation_steps - 1)
-    ystep = (yMax - yMin) / (interpolation_steps - 1)
+    xstep = (xMax - xMin) / (INTERPOLATION_STEPS - 1)
+    ystep = (yMax - yMin) / (INTERPOLATION_STEPS - 1)
     deltaX = 0
     deltaY = 0
 
     # Calculate coordinates
-    for i in range(interpolation_steps):
+    for i in range(INTERPOLATION_STEPS):
         swing = new_Coordinate(xMin + deltaX, yMin + deltaY, z)
         servoAngles = solve_effector_IK(leg, swing)
         #revise below
@@ -607,13 +691,13 @@ def test_stride_vector_movement(leg, nrepeats, x, y, z = 50.0): # n_repeates:int
     # moving forward
     direction = 1 # if 1 Forward, if -1 backwards
     
-    for i in range(interpolation_steps):
+    for i in range(INTERPOLATION_STEPS):
         # Simulate update swing function direction forward
         angles = new_servo_angles(leg.intermediate_angles.jointAngle[leg.swinginterpolationIndex][0], leg.intermediate_angles.jointAngle[leg.swinginterpolationIndex][1], leg.intermediate_angles.jointAngle[leg.swinginterpolationIndex][2])
         leg.recalculate_forward_kinematics(angles)
 
         #phase step/ lift legs in swing so modify z, when in swing find a new soln where leg is not touching ground
-        phase_step = np.pi/(interpolation_steps-1)
+        phase_step = np.pi/(INTERPOLATION_STEPS-1)
         z = leg.Joints[EFFECTOR_ORIGIN_INDEX].Z
 
         ## Swing from 0 to pi
@@ -624,24 +708,25 @@ def test_stride_vector_movement(leg, nrepeats, x, y, z = 50.0): # n_repeates:int
         leg.recalculate_forward_kinematics(new_angle)  # Update Joints with new angles
 
         leg.swinginterpolationIndex += int(direction)
-        
+
+
+        if direction == 1:
+            if leg.swinginterpolationIndex >= INTERPOLATION_STEPS:
+                leg.swinginterpolationIndex = 0
+                leg.stanceinterpolationIndex = INTERPOLATION_STEPS
+        elif direction == -1:
+            if leg.swinginterpolationIndex <= 0:
+                leg.swinginterpolationIndex =  INTERPOLATION_STEPS
+                leg.stanceinterpolationIndex = 0
+        #print(leg.intermediate_angles.jointAngle)
+
+
         leg.Coxa.set_angle(new_angle.Coxa)
         time.sleep(.05)
         leg.Femur.set_angle(new_angle.Femur)
         time.sleep(.05)
         leg.Tibia.set_angle(new_angle.Tibia)
         time.sleep(.05)
-
-        if direction == 1:
-            if leg.swinginterpolationIndex >= interpolation_steps:
-                leg.swinginterpolationIndex = 0
-                leg.stanceinterpolationIndex = interpolation_steps
-        elif direction == -1:
-            if leg.swinginterpolationIndex <= 0:
-                leg.swinginterpolationIndex =  interpolation_steps
-                leg.stanceinterpolationIndex = 0
-        #print(leg.intermediate_angles.jointAngle)
-
 
 if __name__ == "__main__":
     hexapod_leg = new_leg()
