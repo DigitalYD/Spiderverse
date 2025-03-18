@@ -8,19 +8,104 @@ from servo import Servo
 from inversekinematics import solve_effector_IK
 from config import NUM_JOINTS, COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX, INTERPOLATION_STEPS
 
+def homogeneous_transform_around_center(center: np.ndarray, axis: np.ndarray, theta:float)->np.ndarray:
+    '''
+        A 4x4 homogeneous transformation matrix to rotate a point around a central point in space
+        Args: 
+            center: 3D center oof rotation [cx, cy, cz]
+            axis: 3D rotation axis [ax, ay, az]
+            Theta: Rotatoin angle in radians
+        NOTE: To rotate around x, y, z axis'. axis = [1,0,0], [0,1,0], [0,0,1]. Mix and match for diagonal rotations
+        Returns:
+            np.ndarray: 4x4 homogeneous transformation matrix
+    '''
+    # Ensure points are np arrays
+    center = np.array(center, dtype=float)
+    axis = np.array(axis, dtype=float)
+
+    # normalize axis
+    axis = axis/np.linalg.norm(axis)
+    ux, uy, uz = axis
+
+    # setup vars
+    c = np.cos(theta)
+    s = np.sin(theta)
+    t = 1-c
+
+    # Rotation Matrix (3x3) around arbitrary axis (Rodrigues' Formula)
+    R = np.array([
+        [t*ux*ux + c,      t*ux*uy - uz*s, t*ux*uz + uy*s],
+        [t*ux*uy + uz*s,   t*uy*uy + c,    t*uy*uz - ux*s],
+        [t*ux*uz - uy*s,   t*uy*uz + ux*s, t*uz*uz + c]
+    ])
+    
+    ## Allows rotation around any arbitrary point
+    t_to_origin = np.eye(4)
+    t_to_origin[:3,3] = -center # moves point to origin
+    t_rotation = np.eye(4)
+    t_rotation[:3,:3] = R # Applies rotation
+    t_back = np.eye(4)
+    t_back[:3,3] = center # moves point back
+    transformation = t_back @ t_rotation @ t_to_origin
+
+    return transformation
+
+
+def get_transformation_from_matrix(transformation:np.ndarray) -> np.ndarray:
+    '''
+        Extract the translated component from a 4x4 matrix | Same as get_joint_origin() but global
+        Args:
+            transformation: 4x4 homogenous transformation matrix
+        
+        Returns:
+            3d point (tx, ty, tz) belonging to the transformed point
+    '''
+    return transformation[:3,3]
+
+def apply_transform_to_point(transformation:np.ndarray, point:np.ndarray)-> np.ndarray:
+    '''
+        Apply the transformation matrix to a specific 3d point
+        Args:
+            Transformation: 4x4 homogeneous transform matrix
+            point: 3D point
+
+        Returns:
+            np.ndarray: Transformed 3d point [x', y', z']
+    '''
+    # convert to homogenous coordinates
+    point_h = np.append(point,1)
+
+    # apply transform
+    pointt_t_h = transformation @ point_h
+
+    # Extract 3d Coord
+    return pointt_t_h[:3]
+
+
 
 def homogeneous_transformation_matrix(projection_matrix: np.ndarray, theta: float, length: float) -> np.ndarray:
-    """Create a homogeneous transformation matrix given a projection matrix, a rotation angle theta (rad), and a displacement length."""
+    ''' Create a homogeneous transformation matrix given a projection matrix, a rotation angle theta (rad), and a displacement length.
+    Args:
+        Projection_Matrix: matrix to be rotated
+        theta: rotation angle
+        length: displacement to be moved along x/y axis.
+
+    Return:
+        np.ndarray: returns the 4x4 homogeneous transformation matrix that's been rotated and displaced
+    '''
     # Rotation matrix about Z-axis by theta
     R_z = np.array([
         [np.cos(theta), -np.sin(theta), 0],
         [np.sin(theta),  np.cos(theta),  0],
         [0,               0,                1]
     ])
+
     # Final rotation = R_z * projection_matrix (3x3)
     R = R_z.dot(projection_matrix)
+
     # Displacement vector for this segment in the rotated frame
     D = np.array([[length * np.cos(theta)], [length * np.sin(theta)], [0]])
+    
     # Construct 4x4 homogeneous transformation matrix from R and D
     H = np.array([
         [R[0,0], R[0,1], R[0,2], D[0,0]],
@@ -90,8 +175,6 @@ class Leg:
         self.recalculate_forward_kinematics(self.servo_angles)  # Optional: Update Joints
         #print("Joints after FK : ", self.Joints)
 
-        
-
     def set_gait_control_points(self, stride_length:float = 25.0):
         ''' Setup the control points for a full gait cycle '''
         start = np.array([copy.deepcopy(self.neutral_effector_coord.X),copy.deepcopy(self.neutral_effector_coord.Y), copy.deepcopy(self.neutral_effector_coord.Z)])
@@ -150,9 +233,25 @@ class Leg:
         #     "sliding": np.array([slide_radius * np.cos(slide_angle), slide_radius * np.sin(slide_angle), 0]),
         #     "return": start  # Back to starting radius, not angle
         # }
-        # Initalize bezier curve with control points
+
+        # Apply transformation to all control points prior to generating curve
+        center = [0,0,0] # around center of the hexapod body
+        axis = [0,0,1] # z axis
+        theta = self.coxa_angle_offset # rotate around to match the current coxa's offset (initially setup for leg 1)
+
+        T = homogeneous_transform_around_center(center, axis, theta)
+        rotated_control_points = {key: apply_transform_to_point(T, point) for key, point in self.control_points.items()}
+        
         self.bezier_curve = BezierCurve(self.control_points, num_pts=100)
         self.current_gait_phase = "gait"
+        
+        # Rotate each bezier curve around the hexapod to fit each leg
+        temp_curve = self.bezier_curve.curve() # get curves to be rotated
+
+
+
+        
+
 
     def set_rotation_control_points(self, theta:float = np.pi/2):
         ''' set control points for rotation'''
@@ -299,10 +398,10 @@ class Leg:
 
 
     def move_leg_with_bezier(self, step_count=100):
-        """
+        '''
         Moves a leg along its Bezier curve using inverse kinematics.
         This is a test function
-        """
+        '''
         from inversekinematics import solve_effector_IK
         import time
         bezier_points = self.bezier_curve.curve()
@@ -531,7 +630,6 @@ def new_leg():
             segment_length=SegmentLengths(45, 110, 193),
             servo_angles=ServoAngles(0,0,0),  # Provide default servo angles
         )
-
 
     #print(leg)
     return leg

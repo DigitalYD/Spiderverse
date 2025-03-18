@@ -4,7 +4,7 @@ from enum import Enum
 
 # Define GaitType constants
 class GaitType(Enum):
-    """Enumeration for different gait types used in a multi-legged robot."""
+    ''' Enumeration for the gait types used in a multi-legged robot '''
     TRIPOD = 0
     WAVE = 1
     RIPPLE = 2
@@ -14,7 +14,7 @@ GaitPattern = List[List[int]]
 
 @dataclass
 class Gait:
-    """ Set gait pattern """
+    '''Set gait pattern''' 
     name: str
     pattern: GaitPattern
     indices: int

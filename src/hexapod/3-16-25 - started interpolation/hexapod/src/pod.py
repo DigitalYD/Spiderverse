@@ -227,7 +227,7 @@ class Pod:
             
             # Calculate coordinates
             for i in range(INTERPOLATION_STEPS):
-                swing = new_Coordinate(xMin + deltaX, yMin + deltaY, pod_z_height)
+                swing = new_Coordinate(xMin + deltaX, yMin + deltaY, POD_Z_HEIGHT)
                 servoAngles = solve_effector_IK(leg, swing)
                 #revise below
                 leg.intermediate_angles.JointAngle[0][leg] = servoAngles.Coxa
@@ -260,7 +260,7 @@ class Pod:
 
                 x = radius * np.cos(angle + delta)
                 y = radius * np.sin(angle + delta)
-                swing = new_Coordinate(x, y, pod_z_height)
+                swing = new_Coordinate(x, y, POD_Z_HEIGHT)
                 servoAngles = solve_effector_IK(self.leg[l], swing)
                 leg.intermediate_angles.Coxa = servoAngles.Coxa
                 leg.intermediate_angles.Femur = servoAngles.Femur

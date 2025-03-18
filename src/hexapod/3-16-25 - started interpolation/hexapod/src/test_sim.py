@@ -14,7 +14,6 @@ body = body.load("hexapod_config.json")
 hexapod = Pod(body)
 
 
-
 NUM_LEGS = hexapod.body_def.num_legs
 STEPS = hexapod.Legs[0].intermediate_angles.steps  
 
