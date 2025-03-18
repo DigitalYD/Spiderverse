@@ -7,7 +7,7 @@ from coord import Coordinate
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict
 from gaits import new_Gait, GaitType, Gait
-from config import Forward, Reverse, pod_z_height, INTERPOLATION_STEPS,EFFECTOR_ORIGIN_INDEX
+from config import FORWARD, REVERSE, POD_Z_HEIGHT, INTERPOLATION_STEPS,EFFECTOR_ORIGIN_INDEX
 from inversekinematics import solve_effector_IK
 from coord import Coordinate, new_Coordinate
 
@@ -25,36 +25,39 @@ class Pod:
     isReverting: bool = False                         # True if the robot is reverting legs to neutral stance
     revertinglegIndex: int = 0                        # Index of the leg currently being reverted (in neutral-return process)
     revertPhase: int = 0                              # Current phase of revert process (0 = Ground phase, 1 = MoveToNeutral phase)
-    direction: int = Forward                          # Current movement direction (Forward or Reverse)
+    direction: int = FORWARD                          # Current movement direction (Forward or Reverse)
     tick: int = 0                                     # tick counter for movement updates
     gait: Optional[Gait] = None
 
     def __post_init__(self):
         """Initialize hexapod legs with servos."""
-        
+        offset_matrix = []
         for i in range(self.body_def.num_legs):  # Six legs
         # Example transformation matrix (identity for now)
-            offset_matrix = np.array([
+            offset_matrix.append(np.array([
                 [np.cos(self.body_def.coxa_offsets[i] * np.pi/180), -np.sin(self.body_def.coxa_offsets[i]*np.pi/180), 0, self.body_def.coxa_coords[i].X],  # x translation
-                [np.sin(self.body_def.coxa_offsets[i]*np.pi/180), np.cos(self.body_def.coxa_offsets[i]*np.pi/180), 0, self.body_def.coxa_coords.Y],    # y translation
-                [0, 0, 1, self.body_def.coxa_coords.Z*np.pi/360],      # z translation (none)
+                [np.sin(self.body_def.coxa_offsets[i]*np.pi/180), np.cos(self.body_def.coxa_offsets[i]*np.pi/180), 0, self.body_def.coxa_coords[i].Y],    # y translation
+                [0, 0, 1, self.body_def.coxa_coords[i].Z*np.pi/360],      # z translation (none)
                 [0, 0, 0, 1]       # homogeneous row
-                ])
-            
-            # Generate six legs
-            self.Legs = [
-                Leg(
-                    Index=i,
-                    Name=f"Leg {i}",
-                    # Coxa=Servo(i * 3, pca=0x40 if i * 3 < 8 else 0x41),
-                    # Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 8 else 0x41),
-                    # Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 8 else 0x41),
-                    coxa_angle_offset=self.body_def.coxa_offsets[i],
-                    offset_transformation_matrix=offset_matrix,
-                    segment_length=self.body_def.leg_segments[i],
-                    servo_angles=self.body_def.rest_angles[i],
-                )
-            ]
+                ]))
+        
+        
+        print(f"Offset Matrix: {offset_matrix}")
+        # Generate six legs
+        self.Legs = [
+            Leg(
+                Index=i,
+                Name=f"Leg {i}",
+                # Coxa=Servo(i * 3, pca=0x40 if i * 3 < 8 else 0x41),
+                # Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 8 else 0x41),
+                # Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 8 else 0x41),
+                coxa_angle_offset=self.body_def.coxa_offsets[i],
+                offset_transformation_matrix=offset_matrix[i],
+                segment_length=self.body_def.leg_segments[i],
+                servo_angles=self.body_def.rest_angles[i],
+            )
+            for i in range(self.body_def.num_legs)
+        ]
         self.gait = new_Gait(GaitType.TRIPOD) # Default Gait Tripod
 
     def set_direction(self, direction:int) -> None:
@@ -62,7 +65,7 @@ class Pod:
         self.direction = direction
     
     def reverse_direction(self) -> None:
-        self.direction = Reverse if self.direction == Forward else Forward
+        self.direction = REVERSE if self.direction == FORWARD else FORWARD
 
     def get_current_gait_cycle(self) -> int:
         ''' Returns the number of gait cycles completed so far '''
@@ -142,7 +145,7 @@ class Pod:
 
     def load_body_def(self, body_def: Body) -> None:
         self.body_def = body_def
-        self.direction = Forward
+        self.direction = FORWARD
         self.UpdatePodStructure()
 
 

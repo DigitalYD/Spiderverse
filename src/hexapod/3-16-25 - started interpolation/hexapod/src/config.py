@@ -9,17 +9,17 @@ INTERPOLATION_STEPS = 21  # number of interpolation steps for leg movement (must
 REVERT_LIFT = 20.0        # height of arc for end effector when reverting to neutral
 
 # Direction constants for leg movement (forward or reverse in gait cycle)
-Forward = 1
-Reverse = -1
+FORWARD = 1
+REVERSE = -1
 
 # Set distance from base reference frame Z to end effector Z when robot is in rest/neutral
-POD_Z_HEIGHT:float = 50
+POD_Z_HEIGHT:float = 70
 
 # height of arc for end effector during swing phase
-z_lift:float = 70.0
+Z_LIFT:float = 70.0
 
 # Define max height of arc by end effector when in neutral/rest pos
-revert_lift:float = 50
+NeutralLIFT:float = 50
 
 # Odd number of interpolation steps
 INTERPOLATION_STEPS = 21
