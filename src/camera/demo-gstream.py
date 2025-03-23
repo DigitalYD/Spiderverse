@@ -11,6 +11,7 @@ RTP_PORT = 5000
 def measure_fps():
     """Thread to measure received FPS using gst element stats"""
     cmd = f"gst-launch-1.0 -v udpsrc port={RTP_PORT} ! fakesink"
+    # udpsrc
     try:
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         
@@ -39,7 +40,13 @@ def start_receiving():
     # Pipeline for receiving and displaying grayscale video
     pipeline = (
         f"gst-launch-1.0 udpsrc port={RTP_PORT} caps=\"application/x-rtp,encoding-name=JPEG,payload=26\" ! "
+        #f"rtpjitterbuffer latency=50 ! "  # Adjust latency as needed
         f"rtpjpegdepay ! jpegdec ! videoconvert ! "
+        f"videoscale method=lanczos ! video/x-raw,width=1280,height=720 ! "
+        f"videoconvert ! "
+        #f"gamma gamma=1.5 ! "  # Add gamma correction
+        f"videobalance saturation=1.5 ! "
+        f"videobalance brightness=0.1 contrast=1.1 ! "
         f"fpsdisplaysink video-sink=autovideosink text-overlay=true sync=false"
     )
     
