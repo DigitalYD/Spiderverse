@@ -2,7 +2,7 @@ import copy
 import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict
-from coord import (homogeneous_transform_around_center, apply_transform_to_point, 
+from coord import (Coordinate, SegmentLengths, ServoAngles, new_Coordinate, homogeneous_transform_around_center, apply_transform_to_point, 
                    get_transformation_from_matrix, homogeneous_transformation_matrix,
                    get_radial_direction, adjust_point_away_from_coxa, rotate_bezier_curve,
                     translate_point_along_leg_direction, rot_tran_3d_x, rot_tran_3d_y, rot_tran_3d_z)
@@ -37,10 +37,11 @@ class Leg:
     # Femur: Servo
     # Tibia: Servo
     coxa_angle_offset: float                        # Angle of leg around hexapod body
+    coxa_position: Coordinate
     offset_transformation_matrix: np.ndarray        # 4x4 Transform for coxa
-    segment_length: SegmentLengths                 # Lengths of coxa, femur, tibia
+    segment_length: SegmentLengths                  # Lengths of coxa, femur, tibia
     servo_angles: ServoAngles                       # Current state of servo angles
-    neutral_effector_coord: Coordinate = field(init=False)              # Start/rest position of end effector
+    neutral_effector_coord: Coordinate              # Start/rest position of end effector
     num_joints: int = NUM_JOINTS                           # Number of joints each leg has (coxa, femur, tibia, end effector)
     Joints: List[Coordinate] = field(init=False)    # Location of the reference frame origin for each joint
     effector_target: 'Coordinate' = field(default_factory=lambda: Coordinate)  # Unique instance per leg
@@ -57,61 +58,76 @@ class Leg:
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
     swing_fraction: float = 5/8                     # Hexapod swings from "start"->"grounded"
     control_points: Dict[str, np.ndarray] = field(init=False)
-
+    toe_from_coxa = 700 # distance to place bezier curve away fro the hexapod coxa
+    
     def __post_init__(self):
         ''' This post init works for Bezier Curve left rear leg'''
         from inversekinematics import solve_effector_IK
         self.Joints = [Coordinate() for _ in range(self.num_joints)] # Setup joint positions 
         # Temporary Delete for pod class
         #print("Joints after Init : ", self.Joints)
-        self.neutral_effector_coord = self.Joints[EFFECTOR_ORIGIN_INDEX]
-        self.effector_target = copy.deepcopy(self.neutral_effector_coord) # Start at neutral
         self.set_gait_control_points()
+        
+        # set effector target based off standing position of neutral effector
+        self.effector_target = copy.deepcopy(self.neutral_effector_coord) # Start at neutral
+        # print(f"Effector_Target: {self.effector_target}")
+        # Solve for IK for current coordinate of standing
         self.servo_angles = solve_effector_IK(self, new_Coordinate(self.effector_target.X, self.effector_target.Y, self.effector_target.Z))  # Set angles
-        #print("Joints after IK : ", self.Joints)
+        # print("Joints after IK : ", self.Joints)
+        # print(f'Servo angles: {self.servo_angles}')
         self.servo_indexes = [self.Index * 3, self.Index * 3 + 1, self.Index * 3 + 2]
         self.recalculate_forward_kinematics(self.servo_angles)  # Optional: Update Joints
-        #print("Joints after FK : ", self.Joints)
-
+        # print("Joints after FK : ", self.Joints)
+        print("------------------------------------")
+        
     def set_gait_control_points(self, stride_length:float = 25.0):
         ''' Setup the control points for a full gait cycle '''
-        start = np.array([copy.deepcopy(self.neutral_effector_coord.X),copy.deepcopy(self.neutral_effector_coord.Y), copy.deepcopy(self.neutral_effector_coord.Z)])
+        
         # Setup Control Points
-        self.control_points = {
-            "start": start,
-            "lift": start + np.array([50, -50, -100]),
-            "peak": start + np.array([150, -150, -200]),
-            "lower": start + np.array([200, -200, -75]),                 # The moment before grounding
-            "touchdown": start + np.array([100, -100, 0]),             # The moment before grounding
-            "grounded": start + np.array([50, -50, 0]),               # Fully on the ground
-            "sliding": start + np.array([10, -10, 0]),     # Sliding before reset
-            "return": start
-            }
+        # Get neutral affector coordinates.
+        neutral_effector_coord = np.array([copy.deepcopy(self.neutral_effector_coord.X),copy.deepcopy(self.neutral_effector_coord.Y), copy.deepcopy(self.neutral_effector_coord.Z)])
+        coxa_pos = np.array([self.coxa_position.X, self.coxa_position.Y, self.coxa_position.Z])
         
+        ####
+        # Rotate each bezier curve around the hexapod to fit each leg
+        ####
+        
+        # Start position is directly below the coxa
+        # [0,0,-X], [coxa.x, coxa.y,0]
+        start_pos = neutral_effector_coord + coxa_pos
+        print(f'Leg start position: {start_pos}')
+        
+        # reset the neutral effector toe position to be this offset away from coxa
+        self.neutral_effector_coord = Coordinate(start_pos[0], start_pos[1], start_pos[2])
+        self.current_gait_phase = "gait"
+        
+        radial_dir = get_radial_direction(coxa_pos) # get direction of the coxa
+        # get the translated start position for each individual leg based off the coxa coord & offset
+        
+        translated_start = adjust_point_away_from_coxa(start_pos, radial_dir, self.toe_from_coxa)
+        print(f"Translated_start: {translated_start}")
+        
+        # Get the adjusted curves.
+        translated_control_points = self.get_adjusted_bezier_control_points(translated_start)
+        
+        self.bezier_curve = BezierCurve(translated_control_points, num_pts=100)
+        #print(f"Translated_Bezzier: {self.bezier_curve.curve()}")
+        
+        #NOTE: To rotate the bezier curve, around its start pos: rotate_besier_curve(curve, point to rotate around, rotation angle)
+        # Old
         # self.control_points = {
         #     "start": start,
-        #     "lift": start,
-        #     "peak": start,
-        #     "lower": start, 
-        #     "touchdown": start, 
-        #     "grounded": start,
-        #     "sliding": start,
-        #     "return": start,
-        #     }
-        
-        #### this might? allow leg to around Z axis.. it should
-        # self.control_points = {
-        #     "start": start,
-        #     "lift": start + np.array([0, 0, -10]),
-        #     "peak": start + np.array([0, 0, -120]),
-        #     "lower": start + np.array([0, 0, -55]),                 # The moment before grounding
-        #     "touchdown": start + np.array([0, 0, 0]),             # The moment before grounding
-        #     "grounded": start + np.array([0, 0, 0]),               # Fully on the ground
-        #     "sliding": start + np.array([0, 0, 0]),     # Sliding before reset
+        #     "lift": start + np.array([50, -50, -100]),
+        #     "peak": start + np.array([150, -150, -200]),
+        #     "lower": start + np.array([200, -200, -75]),                 # The moment before grounding
+        #     "touchdown": start + np.array([100, -100, 0]),             # The moment before grounding
+        #     "grounded": start + np.array([50, -50, 0]),               # Fully on the ground
+        #     "sliding": start + np.array([10, -10, 0]),     # Sliding before reset
         #     "return": start
-        # }
+        #     }
 
 
+        # for interpolation. Future implementation addtion for more capabilties
         # theta = np.pi/2
         # r = np.sqrt(self.neutral_effector_coord.X**2 + self.neutral_effector_coord.Y**2)
         # psi = np.arctan2(self.neutral_effector_coord.Y, self.neutral_effector_coord.X)
@@ -132,24 +148,20 @@ class Leg:
         #     "return": start  # Back to starting radius, not angle
         # }
 
-        # Apply transformation to all control points prior to generating curve
-        center = [0,0,0] # around center of the hexapod body
-        axis = [0,0,1] # z axis
-        theta = self.coxa_angle_offset # rotate around to match the current coxa's offset (initially setup for leg 1)
 
-        T = homogeneous_transform_around_center(center, axis, theta)
-        rotated_control_points = {key: apply_transform_to_point(T, point) for key, point in self.control_points.items()}
-        
-        self.bezier_curve = BezierCurve(self.control_points, num_pts=100)
-        self.current_gait_phase = "gait"
-        
-        # Rotate each bezier curve around the hexapod to fit each leg
-        temp_curve = self.bezier_curve.curve() # get curves to be rotated
-
-
-
-        
-
+    # Define control points relative to start position
+    def get_adjusted_bezier_control_points(self, start_pos: np.ndarray) -> dict:
+        ''' Define control points for a Bézier curve. Walking forward motion '''
+        return {
+            "start": start_pos,
+            "lift": start_pos + np.array([0, 10, 25]),
+            "peak": start_pos + np.array([0, 20, 75]),
+            "lower": start_pos + np.array([0, 25, 25]),
+            "touchdown": start_pos + np.array([0, 25, 25]),
+            "grounded": start_pos + np.array([0, 25, 0]),
+            "sliding": start_pos + np.array([0, 35, 0]),
+            "return": start_pos,
+        }
 
     def set_rotation_control_points(self, theta:float = np.pi/2):
         ''' set control points for rotation'''

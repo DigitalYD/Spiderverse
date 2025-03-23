@@ -68,12 +68,12 @@ def rotate_bezier_curve(curve: np.ndarray, center: np.ndarray, theta: float) -> 
 
 # Hexapod leg data
 leg_data = {
-    "RR": {"coxa_coord": np.array([60.5, -89, 0]), "theta_offset": 147.172},
     "LR": {"coxa_coord": np.array([-60.5, -89, 0]), "theta_offset": 214.309},
-    "RF": {"coxa_coord": np.array([60.5, 89, 0]), "theta_offset": 34.0685},
-    "LF": {"coxa_coord": np.array([-60.5, 89, 0]), "theta_offset": 325.931},
     "LM": {"coxa_coord": np.array([-97, 0, 0]), "theta_offset": 270},
-    "RM": {"coxa_coord": np.array([97, 0, 0]), "theta_offset": 90}
+    "LF": {"coxa_coord": np.array([-60.5, 89, 0]), "theta_offset": 325.931},
+    "RF": {"coxa_coord": np.array([60.5, 89, 0]), "theta_offset": 34.0685},
+    "RM": {"coxa_coord": np.array([97, 0, 0]), "theta_offset": 90},
+    "RR": {"coxa_coord": np.array([60.5, -89, 0]), "theta_offset": 147.172}
 }
 
 # Neutral effector offset
@@ -104,7 +104,7 @@ rotated_curves = {}
 for leg_name, data in leg_data.items():
     coxa_pos = data["coxa_coord"]
     start_pos = coxa_pos + neutral_effector_offset
-    
+    print(f"start_pos: {start_pos}")
     # Original Bézier curve
     control_points = get_bezier_control_points(start_pos)
     bezier = BezierCurve(control_points, num_pts=100)

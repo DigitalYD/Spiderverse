@@ -40,9 +40,8 @@ class Pod:
                 [0, 0, 1, self.body_def.coxa_coords[i].Z*np.pi/360],      # z translation (none)
                 [0, 0, 0, 1]       # homogeneous row
                 ]))
-        
-        
-        print(f"Offset Matrix: {offset_matrix}")
+            # print(f"Leg {i} Coxa Offset: {self.body_def.coxa_offsets[i]}, Coxa Cord {self.body_def.coxa_coords[i]}")
+
         # Generate six legs
         self.Legs = [
             Leg(
@@ -51,10 +50,12 @@ class Pod:
                 # Coxa=Servo(i * 3, pca=0x40 if i * 3 < 8 else 0x41),
                 # Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 8 else 0x41),
                 # Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 8 else 0x41),
+                coxa_position = self.body_def.coxa_coords[i],
                 coxa_angle_offset=self.body_def.coxa_offsets[i],
                 offset_transformation_matrix=offset_matrix[i],
                 segment_length=self.body_def.leg_segments[i],
                 servo_angles=self.body_def.rest_angles[i],
+                neutral_effector_coord = Coordinate(0, 0, -100)
             )
             for i in range(self.body_def.num_legs)
         ]
@@ -139,7 +140,7 @@ class Pod:
                 offset_transformation_matrix=offset_matrix, # Creates 4x4 identity matrix for an insert
                 segment_length=self.body_def.leg_segments[i],
                 servo_angles=self.body_def.rest_angles[i],  # Provide default servo angles
-                neutral_effector_coord = Coordinate(0,0, -160) # From Leg test (May Change)
+                neutral_effector_coord = Coordinate(0,0, -70) # From Leg test (May Change)
             )
 
 
