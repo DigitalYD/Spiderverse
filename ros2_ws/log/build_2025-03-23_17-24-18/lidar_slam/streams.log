@@ -1,0 +1,18 @@
+[0.688s] Invoking command in '/home/asher/ros2_ws/build/lidar_slam': CONDA_PROMPT_MODIFIER=(base) PYTHONPATH=/home/asher/ros2_ws/build/lidar_slam/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/asher/ros2_ws/build/lidar_slam/build --no-deps symlink_data
+[0.947s] running develop
+[1.105s] running egg_info
+[1.120s] writing lidar_slam.egg-info/PKG-INFO
+[1.120s] writing dependency_links to lidar_slam.egg-info/dependency_links.txt
+[1.121s] writing entry points to lidar_slam.egg-info/entry_points.txt
+[1.121s] writing requirements to lidar_slam.egg-info/requires.txt
+[1.121s] writing top-level names to lidar_slam.egg-info/top_level.txt
+[1.155s] reading manifest file 'lidar_slam.egg-info/SOURCES.txt'
+[1.155s] writing manifest file 'lidar_slam.egg-info/SOURCES.txt'
+[1.172s] running build_ext
+[1.172s] Creating /home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages/lidar-slam.egg-link (link to .)
+[1.173s] Installing lidar_udp_receiver script to /home/asher/ros2_ws/install/lidar_slam/bin
+[1.173s] Installing test_node script to /home/asher/ros2_ws/install/lidar_slam/bin
+[1.173s] 
+[1.173s] Installed /home/asher/ros2_ws/build/lidar_slam
+[1.173s] running symlink_data
+[1.200s] Invoked command in '/home/asher/ros2_ws/build/lidar_slam' returned '0': CONDA_PROMPT_MODIFIER=(base) PYTHONPATH=/home/asher/ros2_ws/build/lidar_slam/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/asher/ros2_ws/build/lidar_slam/build --no-deps symlink_data

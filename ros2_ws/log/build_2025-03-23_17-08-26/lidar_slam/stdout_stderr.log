@@ -1,0 +1,19 @@
+running egg_info
+writing ../../build/lidar_slam/lidar_slam.egg-info/PKG-INFO
+writing dependency_links to ../../build/lidar_slam/lidar_slam.egg-info/dependency_links.txt
+writing entry points to ../../build/lidar_slam/lidar_slam.egg-info/entry_points.txt
+writing requirements to ../../build/lidar_slam/lidar_slam.egg-info/requires.txt
+writing top-level names to ../../build/lidar_slam/lidar_slam.egg-info/top_level.txt
+reading manifest file '../../build/lidar_slam/lidar_slam.egg-info/SOURCES.txt'
+writing manifest file '../../build/lidar_slam/lidar_slam.egg-info/SOURCES.txt'
+running build
+running build_py
+running install
+running install_lib
+running install_data
+running install_egg_info
+removing '/home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages/lidar_slam-1.0.0-py3.12.egg-info' (and everything under it)
+Copying ../../build/lidar_slam/lidar_slam.egg-info to /home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages/lidar_slam-1.0.0-py3.12.egg-info
+running install_scripts
+Installing lidar_udp_receiver script to /home/asher/ros2_ws/install/lidar_slam/bin
+writing list of installed files to '/home/asher/ros2_ws/build/lidar_slam/install.log'

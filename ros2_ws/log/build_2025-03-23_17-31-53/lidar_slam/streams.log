@@ -1,0 +1,39 @@
+[0.753s] Invoking command in '/home/asher/ros2_ws/src/lidar_slam': CONDA_PROMPT_MODIFIER=(base) PYTHONPATH=/home/asher/ros2_ws/build/lidar_slam/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/lidar_slam build --build-base /home/asher/ros2_ws/build/lidar_slam/build install --record /home/asher/ros2_ws/build/lidar_slam/install.log --single-version-externally-managed install_data
+[0.956s] running egg_info
+[0.956s] creating ../../build/lidar_slam/lidar_slam.egg-info
+[0.973s] writing ../../build/lidar_slam/lidar_slam.egg-info/PKG-INFO
+[0.974s] writing dependency_links to ../../build/lidar_slam/lidar_slam.egg-info/dependency_links.txt
+[0.974s] writing entry points to ../../build/lidar_slam/lidar_slam.egg-info/entry_points.txt
+[0.974s] writing requirements to ../../build/lidar_slam/lidar_slam.egg-info/requires.txt
+[0.974s] writing top-level names to ../../build/lidar_slam/lidar_slam.egg-info/top_level.txt
+[0.974s] writing manifest file '../../build/lidar_slam/lidar_slam.egg-info/SOURCES.txt'
+[1.010s] reading manifest file '../../build/lidar_slam/lidar_slam.egg-info/SOURCES.txt'
+[1.012s] writing manifest file '../../build/lidar_slam/lidar_slam.egg-info/SOURCES.txt'
+[1.012s] running build
+[1.012s] running build_py
+[1.012s] creating /home/asher/ros2_ws/build/lidar_slam/build
+[1.013s] creating /home/asher/ros2_ws/build/lidar_slam/build/lib
+[1.013s] creating /home/asher/ros2_ws/build/lidar_slam/build/lib/lidar_slam
+[1.013s] copying lidar_slam/lidar_udp_receiver.py -> /home/asher/ros2_ws/build/lidar_slam/build/lib/lidar_slam
+[1.013s] copying lidar_slam/__init__.py -> /home/asher/ros2_ws/build/lidar_slam/build/lib/lidar_slam
+[1.013s] running install
+[1.019s] running install_lib
+[1.039s] creating /home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages/lidar_slam
+[1.039s] copying /home/asher/ros2_ws/build/lidar_slam/build/lib/lidar_slam/lidar_udp_receiver.py -> /home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages/lidar_slam
+[1.039s] copying /home/asher/ros2_ws/build/lidar_slam/build/lib/lidar_slam/__init__.py -> /home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages/lidar_slam
+[1.039s] byte-compiling /home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages/lidar_slam/lidar_udp_receiver.py to lidar_udp_receiver.cpython-312.pyc
+[1.040s] byte-compiling /home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages/lidar_slam/__init__.py to __init__.cpython-312.pyc
+[1.040s] running install_data
+[1.040s] creating /home/asher/ros2_ws/install/lidar_slam/share/ament_index
+[1.041s] creating /home/asher/ros2_ws/install/lidar_slam/share/ament_index/resource_index
+[1.041s] creating /home/asher/ros2_ws/install/lidar_slam/share/ament_index/resource_index/packages
+[1.041s] copying resource/lidar_slam -> /home/asher/ros2_ws/install/lidar_slam/share/ament_index/resource_index/packages
+[1.041s] copying package.xml -> /home/asher/ros2_ws/install/lidar_slam/share/lidar_slam
+[1.041s] creating /home/asher/ros2_ws/install/lidar_slam/share/lidar_slam/launch
+[1.042s] copying launch/test.launch.py -> /home/asher/ros2_ws/install/lidar_slam/share/lidar_slam/launch
+[1.042s] running install_egg_info
+[1.059s] Copying ../../build/lidar_slam/lidar_slam.egg-info to /home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages/lidar_slam-0.0.0-py3.12.egg-info
+[1.059s] running install_scripts
+[1.161s] Installing lidar_udp_receiver script to /home/asher/ros2_ws/install/lidar_slam/bin
+[1.161s] writing list of installed files to '/home/asher/ros2_ws/build/lidar_slam/install.log'
+[1.191s] Invoked command in '/home/asher/ros2_ws/src/lidar_slam' returned '0': CONDA_PROMPT_MODIFIER=(base) PYTHONPATH=/home/asher/ros2_ws/build/lidar_slam/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/asher/ros2_ws/install/lidar_slam/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/lidar_slam build --build-base /home/asher/ros2_ws/build/lidar_slam/build install --record /home/asher/ros2_ws/build/lidar_slam/install.log --single-version-externally-managed install_data

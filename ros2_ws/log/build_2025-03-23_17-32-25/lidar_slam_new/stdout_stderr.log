@@ -1,0 +1,35 @@
+running egg_info
+creating ../../build/lidar_slam_new/lidar_slam_new.egg-info
+writing ../../build/lidar_slam_new/lidar_slam_new.egg-info/PKG-INFO
+writing dependency_links to ../../build/lidar_slam_new/lidar_slam_new.egg-info/dependency_links.txt
+writing entry points to ../../build/lidar_slam_new/lidar_slam_new.egg-info/entry_points.txt
+writing requirements to ../../build/lidar_slam_new/lidar_slam_new.egg-info/requires.txt
+writing top-level names to ../../build/lidar_slam_new/lidar_slam_new.egg-info/top_level.txt
+writing manifest file '../../build/lidar_slam_new/lidar_slam_new.egg-info/SOURCES.txt'
+reading manifest file '../../build/lidar_slam_new/lidar_slam_new.egg-info/SOURCES.txt'
+writing manifest file '../../build/lidar_slam_new/lidar_slam_new.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/asher/ros2_ws/build/lidar_slam_new/build
+creating /home/asher/ros2_ws/build/lidar_slam_new/build/lib
+creating /home/asher/ros2_ws/build/lidar_slam_new/build/lib/lidar_slam_new
+copying lidar_slam_new/lidar_udp_receiver.py -> /home/asher/ros2_ws/build/lidar_slam_new/build/lib/lidar_slam_new
+copying lidar_slam_new/__init__.py -> /home/asher/ros2_ws/build/lidar_slam_new/build/lib/lidar_slam_new
+running install
+running install_lib
+creating /home/asher/ros2_ws/install/lidar_slam_new/lib/python3.12/site-packages/lidar_slam_new
+copying /home/asher/ros2_ws/build/lidar_slam_new/build/lib/lidar_slam_new/lidar_udp_receiver.py -> /home/asher/ros2_ws/install/lidar_slam_new/lib/python3.12/site-packages/lidar_slam_new
+copying /home/asher/ros2_ws/build/lidar_slam_new/build/lib/lidar_slam_new/__init__.py -> /home/asher/ros2_ws/install/lidar_slam_new/lib/python3.12/site-packages/lidar_slam_new
+byte-compiling /home/asher/ros2_ws/install/lidar_slam_new/lib/python3.12/site-packages/lidar_slam_new/lidar_udp_receiver.py to lidar_udp_receiver.cpython-312.pyc
+byte-compiling /home/asher/ros2_ws/install/lidar_slam_new/lib/python3.12/site-packages/lidar_slam_new/__init__.py to __init__.cpython-312.pyc
+running install_data
+creating /home/asher/ros2_ws/install/lidar_slam_new/share/ament_index
+creating /home/asher/ros2_ws/install/lidar_slam_new/share/ament_index/resource_index
+creating /home/asher/ros2_ws/install/lidar_slam_new/share/ament_index/resource_index/packages
+copying resource/lidar_slam_new -> /home/asher/ros2_ws/install/lidar_slam_new/share/ament_index/resource_index/packages
+copying package.xml -> /home/asher/ros2_ws/install/lidar_slam_new/share/lidar_slam_new
+running install_egg_info
+Copying ../../build/lidar_slam_new/lidar_slam_new.egg-info to /home/asher/ros2_ws/install/lidar_slam_new/lib/python3.12/site-packages/lidar_slam_new-0.0.0-py3.12.egg-info
+running install_scripts
+Installing lidar_udp_receiver script to /home/asher/ros2_ws/install/lidar_slam_new/lib/lidar_slam_new
+writing list of installed files to '/home/asher/ros2_ws/build/lidar_slam_new/install.log'
