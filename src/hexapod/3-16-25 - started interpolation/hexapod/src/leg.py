@@ -5,7 +5,7 @@ from typing import List, Optional, Dict
 from coord import (Coordinate, SegmentLengths, ServoAngles, new_Coordinate, homogeneous_transform_around_center, apply_transform_to_point, 
                    get_transformation_from_matrix, homogeneous_transformation_matrix,
                    get_radial_direction, adjust_point_away_from_coxa, rotate_bezier_curve,
-                    translate_point_along_leg_direction, rot_tran_3d_x, rot_tran_3d_y, rot_tran_3d_z)
+                    translate_point_along_leg_direction, rot_tran_3d_x, rot_tran_3d_y, rot_tran_3d_z, new_servo_angles)
 from bezier2d import BezierCurve
 from servo import Servo
 from inversekinematics import solve_effector_IK
@@ -58,7 +58,7 @@ class Leg:
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
     swing_fraction: float = 5/8                     # Hexapod swings from "start"->"grounded"
     control_points: Dict[str, np.ndarray] = field(init=False)
-    toe_from_coxa = 700 # distance to place bezier curve away fro the hexapod coxa
+    toe_from_coxa = 175 # distance to place bezier curve away fro the hexapod coxa
     
     def __post_init__(self):
         ''' This post init works for Bezier Curve left rear leg'''
@@ -67,18 +67,22 @@ class Leg:
         # Temporary Delete for pod class
         #print("Joints after Init : ", self.Joints)
         self.set_gait_control_points()
-        
+        print(f"Joints before Forward Kinematics: {self.Name}, {self.Joints}")
+        # Initialize all joints to 0,0,0 initially
+        self.recalculate_forward_kinematics(ServoAngles(0,0,0))  # Optional: Update Joints
+        print(f"Joints After Forward Kinematics: {self.Name}, {self.Joints}")
+
         # set effector target based off standing position of neutral effector
-        self.effector_target = copy.deepcopy(self.neutral_effector_coord) # Start at neutral
+        # self.effector_target = copy.deepcopy(self.neutral_effector_coord) # Start at neutral
         # print(f"Effector_Target: {self.effector_target}")
         # Solve for IK for current coordinate of standing
-        self.servo_angles = solve_effector_IK(self, new_Coordinate(self.effector_target.X, self.effector_target.Y, self.effector_target.Z))  # Set angles
+        #self.servo_angles = solve_effector_IK(self, new_Coordinate(0,0,0))  # Set angles
         # print("Joints after IK : ", self.Joints)
         # print(f'Servo angles: {self.servo_angles}')
         self.servo_indexes = [self.Index * 3, self.Index * 3 + 1, self.Index * 3 + 2]
-        self.recalculate_forward_kinematics(self.servo_angles)  # Optional: Update Joints
+        #self.recalculate_forward_kinematics(self.servo_angles)  # Optional: Update Joints
         # print("Joints after FK : ", self.Joints)
-        print("------------------------------------")
+        #print("------------------------------------")
         
     def set_gait_control_points(self, stride_length:float = 25.0):
         ''' Setup the control points for a full gait cycle '''
@@ -95,7 +99,7 @@ class Leg:
         # Start position is directly below the coxa
         # [0,0,-X], [coxa.x, coxa.y,0]
         start_pos = neutral_effector_coord + coxa_pos
-        print(f'Leg start position: {start_pos}')
+        #print(f'Leg start position: {start_pos}')
         
         # reset the neutral effector toe position to be this offset away from coxa
         self.neutral_effector_coord = Coordinate(start_pos[0], start_pos[1], start_pos[2])
@@ -105,7 +109,7 @@ class Leg:
         # get the translated start position for each individual leg based off the coxa coord & offset
         
         translated_start = adjust_point_away_from_coxa(start_pos, radial_dir, self.toe_from_coxa)
-        print(f"Translated_start: {translated_start}")
+        #print(f"Translated_start: {translated_start}")
         
         # Get the adjusted curves.
         translated_control_points = self.get_adjusted_bezier_control_points(translated_start)
@@ -154,12 +158,12 @@ class Leg:
         ''' Define control points for a Bézier curve. Walking forward motion '''
         return {
             "start": start_pos,
-            "lift": start_pos + np.array([0, 10, 25]),
-            "peak": start_pos + np.array([0, 20, 75]),
-            "lower": start_pos + np.array([0, 25, 25]),
-            "touchdown": start_pos + np.array([0, 25, 25]),
-            "grounded": start_pos + np.array([0, 25, 0]),
-            "sliding": start_pos + np.array([0, 35, 0]),
+            "lift": start_pos + np.array([0, 75, -20]),
+            "peak": start_pos + np.array([0, 100, -35]),
+            "lower": start_pos + np.array([0, 125, -20]),
+            "touchdown": start_pos + np.array([0, 125, 0]),
+            "grounded": start_pos + np.array([0, 125, 0]),
+            "sliding": start_pos + np.array([0, 120, 0]),
             "return": start_pos,
         }
 
@@ -246,20 +250,23 @@ class Leg:
         return Coordinate(X=float(H[0,3]), Y=float(H[1,3]), Z=float(H[2,3]))
 
     def recalculate_forward_kinematics(self, angles:ServoAngles) -> None:
-        # standard P & H matrix form
-
+        '''
+            Set the leg angles to the angles aquired from inverse_kinematics
+            Aquire positions of all the joints
+        '''
         self.servo_angles = angles
 
-        p_coxa = np.array([[1,0,0], #rotate coxa around Z axis
-                        [0,0,-1], # aligns coxa to robot base plane
-                        [0,1,0]])
+        p_coxa = np.array([
+                        [1, 0, 0], #rotate coxa around Z axis
+                        [0, 0, -1], # aligns coxa to body base plane
+                        [0, 1, 0]])
         p_femur = np.eye(3) # identity (no motion)
         p_tibia = np.eye(3) # identity (no motion)
 
         # Compute matrixes. Converts angle degrees to radians
-        h_coxa = homogeneous_transformation_matrix(p_coxa, np.degrees(angles.Coxa), self.segment_length.Coxa)
-        h_femur = homogeneous_transformation_matrix(p_femur, np.degrees(angles.Femur), self.segment_length.Femur)
-        h_tibia = homogeneous_transformation_matrix(p_tibia, np.degrees(angles.Tibia), self.segment_length.Tibia)
+        h_coxa = homogeneous_transformation_matrix(p_coxa, np.deg2rad(angles.Coxa), self.segment_length.Coxa)
+        h_femur = homogeneous_transformation_matrix(p_femur, np.deg2rad(angles.Femur), self.segment_length.Femur)
+        h_tibia = homogeneous_transformation_matrix(p_tibia, np.deg2rad(angles.Tibia), self.segment_length.Tibia)
 
         # Multiply matrices to get cumulative transforms
         h0_1 = self.offset_transformation_matrix.dot(h_coxa) # coxa base to femur
@@ -318,7 +325,7 @@ class Leg:
 
         for i in range(step_count): 
             effectorTarget = Coordinate(bezier_points[i][0], bezier_points[i][1], bezier_points[i][2])
-            print(effectorTarget)
+            #print(effectorTarget)
             # Ensure the target is within the leg's reachable workspace
             max_reach = self.segment_length.Coxa + self.segment_length.Femur + self.segment_length.Tibia
             if np.linalg.norm([effectorTarget.X, effectorTarget.Y]) > max_reach:
@@ -646,10 +653,10 @@ def test_bezier_curve_movement(leg) -> None:
     leg.bezier_curve.index += 1
 
     # set the target for the toe from the coordinates
-    print(f"Bezier Curve position at t {leg.t}: {pos}")
+    #print(f"Bezier Curve position at t {leg.t}: {pos}")
     
     leg.effector_target = Coordinate(pos[0], pos[1], pos[2])
-    print(f"leg.effector_target {leg.effector_target}")
+    #print(f"leg.effector_target {leg.effector_target}")
 
     # Update Joints with current angles before IK
     # leg.recalculate_forward_kinematics(leg.servo_angles)
@@ -663,8 +670,8 @@ def test_bezier_curve_movement(leg) -> None:
 
     leg.servo_angles = angles
     leg.recalculate_forward_kinematics(angles)  # Update Joints with new angles
-    print("Forward Kinematics of Joints after IK & FK: ", leg.Joints)
-    print('-----------------------------------')
+    #print("Forward Kinematics of Joints after IK & FK: ", leg.Joints)
+    #print('-----------------------------------')
 
     if leg.t >= max_t:
         leg.t = 0

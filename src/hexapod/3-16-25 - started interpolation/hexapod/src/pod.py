@@ -31,16 +31,18 @@ class Pod:
 
     def __post_init__(self):
         """Initialize hexapod legs with servos."""
-        offset_matrix = []
+        offset_matrix = {}
         for i in range(self.body_def.num_legs):  # Six legs
         # Example transformation matrix (identity for now)
-            offset_matrix.append(np.array([
+            offset_matrix[i] = np.array([
                 [np.cos(self.body_def.coxa_offsets[i] * np.pi/180), -np.sin(self.body_def.coxa_offsets[i]*np.pi/180), 0, self.body_def.coxa_coords[i].X],  # x translation
                 [np.sin(self.body_def.coxa_offsets[i]*np.pi/180), np.cos(self.body_def.coxa_offsets[i]*np.pi/180), 0, self.body_def.coxa_coords[i].Y],    # y translation
-                [0, 0, 1, self.body_def.coxa_coords[i].Z*np.pi/360],      # z translation (none)
+                [0, 0, 1, self.body_def.coxa_coords[i].Z],      # z translation (none)
                 [0, 0, 0, 1]       # homogeneous row
-                ]))
-            # print(f"Leg {i} Coxa Offset: {self.body_def.coxa_offsets[i]}, Coxa Cord {self.body_def.coxa_coords[i]}")
+                ])
+            print(f"Leg {i} Coxa Offset: {self.body_def.coxa_offsets[i]}, Coxa Cord {self.body_def.coxa_coords[i]}, offset matrix = {offset_matrix[i]}")
+
+
 
         # Generate six legs
         self.Legs = [
@@ -55,7 +57,7 @@ class Pod:
                 offset_transformation_matrix=offset_matrix[i],
                 segment_length=self.body_def.leg_segments[i],
                 servo_angles=self.body_def.rest_angles[i],
-                neutral_effector_coord = Coordinate(0, 0, -100)
+                neutral_effector_coord = Coordinate(0, 0, 90)
             )
             for i in range(self.body_def.num_legs)
         ]
@@ -125,7 +127,7 @@ class Pod:
             offset_matrix = np.array([
                         [np.cos(self.body_def.coxa_offset[i] * np.pi/180), -np.sin(self.body_def.coxa_offset[i] * np.pi/180), 0, self.body_def.coxa_coord.X],  # x translation
                         [np.sin(self.body_def.coxa_offset[i] * np.pi/180), np.cos(self.body_def.coxa_offset[i] * np.pi/180), 0, self.body_def.coxa_coord.Y],    # y translation
-                        [0, 0, 1, self.body_def.coxa_coord.Z*np.pi/360],      # z translation (none)
+                        [0, 0, 1, self.body_def.coxa_coord.Z],      # z translation (none)
                         [0, 0, 0, 1]       # homogeneous row
                         ])
 

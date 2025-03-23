@@ -2,7 +2,14 @@ All files are on the raspi4 in the hexapod. Does not sync with this repo.
 
 
 
-
+    "coxa_angle_offset": {
+        "LR": 214.309,
+        "LM": 270,
+        "LF": 325.931,
+        "RF": 34.0685,
+        "RM": 90,
+        "RR": 147.172
+    },
 
 
 

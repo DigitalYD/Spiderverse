@@ -193,41 +193,6 @@ def homogeneous_transformation_matrix(projection_matrix: np.ndarray, theta: floa
     ])
     return H
 
-# def homogeneous_transformation_matrix(projection_matrix: np.ndarray, theta: float, length: float) -> np.ndarray:
-#     '''Create a 4x4 homogeneous transformation matrix.
-#     Args:
-#         projection_matrix: 3x3 rotation projection matrix
-#         theta: rotation angle in radians
-#         length: displacement along the rotated axis
-#     '''
-#     # Coxa: Z-axis rotation
-#     R_z = np.array([
-#         [np.cos(theta), -np.sin(theta), 0],
-#         [np.sin(theta),  np.cos(theta), 0],
-#         [0,              0,             1]
-#     ])
-#     # Femur/Tibia: Y-axis rotation
-#     R_y = np.array([
-#         [np.cos(theta),  0, np.sin(theta)],
-#         [0,              1, 0            ],
-#         [-np.sin(theta), 0, np.cos(theta)]
-#     ])
-    
-#     # Apply rotation based on joint
-#     if projection_matrix[2, 2] == 1:  # Coxa
-#         R = R_z.dot(projection_matrix)
-#         D = np.array([[length], [0], [0]])  # Along X-axis after rotation
-#     else:  # Femur/Tibia
-#         R = R_y.dot(projection_matrix)
-#         D = np.array([[length], [0], [0]])  # Along X-axis after Y-rotation
-
-#     H = np.array([
-#         [R[0,0], R[0,1], R[0,2], D[0,0]],
-#         [R[1,0], R[1,1], R[1,2], D[1,0]],
-#         [R[2,0], R[2,1], R[2,2], D[2,0]],
-#         [0,      0,      0,      1     ]
-#     ])
-#     return H
 
 def get_radial_direction(coxa_pos: np.ndarray) -> np.ndarray:
     ''' 

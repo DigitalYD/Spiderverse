@@ -84,11 +84,11 @@ def get_bezier_control_points(start_pos: np.ndarray) -> dict:
     """Define control points for a Bézier curve."""
     return {
         "start": start_pos,
-        "lift": start_pos + np.array([0, 10, 25]),
-        "peak": start_pos + np.array([0, 20, 75]),
-        "lower": start_pos + np.array([0, 25, 25]),
-        "touchdown": start_pos + np.array([0, 25, 25]),
-        "grounded": start_pos + np.array([0, 25, 0]),
+        "lift": start_pos + np.array([0, 20, 25]),
+        "peak": start_pos + np.array([0, 50, 75]),
+        "lower": start_pos + np.array([0, 75, 25]),
+        "touchdown": start_pos + np.array([0, 85, 25]),
+        "grounded": start_pos + np.array([0, 85, 0]),
         "sliding": start_pos + np.array([0, 35, 0]),
         "return": start_pos,
     }

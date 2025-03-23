@@ -7,8 +7,7 @@ import numpy as np
 from coord import new_Coordinate
 from config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX
 
-# Set the up direction to the z-axis
-scene.up = vector(0, 0, 1)
+
 
 # Create the hexapod instance
 tripod_gait = new_Gait(0, 1.0)  
@@ -20,42 +19,51 @@ NUM_LEGS = hexapod.body_def.num_legs
 STEPS = hexapod.Legs[0].intermediate_angles.steps  
 
 # VPython scene setup (Z-up mapped to VPython’s Y-up)
-scene = canvas(title="Hexapod Simulation", width=800, height=600, center=vector(0, 0, 0), background=color.white)
+scene = canvas(title="Hexapod Simulation (Z-Flipped)", width=800, height=600, center=vector(0, 0, 0), background=color.white)
+# Set the up direction to the z-axis (unchanged)
+scene.up = vector(0, 1, 0)
+scene.forward = -scene.forward
+#scene.camera.rotate(angle=90, axis=y)
 
-# Ground plane: Z-up means Z=0 is the ground, mapped to VPython Y=0
-ground = box(pos=vector(0, 0, 0), size=vector(300, 1, 300), color=color.green)
-ground.pos = vector(0, -50, 0)  # Move ground down along VPython Y-axis (maps to your Z)
+
+# Ground plane: Flip Z=0 to Z=0 but adjust position later; VPython Y maps to your Z
+ground = box(pos=vector(0, -100, 0), size=vector(300, 1, 300), color=color.green)  # Ground at Y=-100 (your Z=-100)
 
 # Hexagon dimensions
 HEXAGON_RADIUS = 50  
 HEXAGON_HEIGHT = 5  
 ANGLE_OFFSET = 60  
 
-# Store joint positions (convert Z-up to VPython Y-up)
+# Store joint positions (convert flipped Z-up to VPython Y-up)
 coxa_positions = []
 femur_positions = []
 tibia_positions = []
 end_effector_positions = []
 
-# Compute joint positions using homogeneous transformation
+# Compute initial joint positions with Z flipped
 for i in range(NUM_LEGS):
-    # Extract coordinates from your Z-up system
-    coxa_x, coxa_y, coxa_z = hexapod.Legs[i].Joints[COXA_ORIGIN_INDEX].X, hexapod.Legs[i].Joints[COXA_ORIGIN_INDEX].Y, hexapod.Legs[i].Joints[COXA_ORIGIN_INDEX].Z 
-    femur_x, femur_y, femur_z = hexapod.Legs[i].Joints[FEMUR_ORIGIN_INDEX].X, hexapod.Legs[i].Joints[FEMUR_ORIGIN_INDEX].Y, hexapod.Legs[i].Joints[FEMUR_ORIGIN_INDEX].Z
-    tibia_x, tibia_y, tibia_z = hexapod.Legs[i].Joints[TIBIA_ORIGIN_INDEX].X, hexapod.Legs[i].Joints[TIBIA_ORIGIN_INDEX].Y, hexapod.Legs[i].Joints[TIBIA_ORIGIN_INDEX].Z
-    end_x, end_y, end_z = hexapod.Legs[i].Joints[EFFECTOR_ORIGIN_INDEX].X, hexapod.Legs[i].Joints[EFFECTOR_ORIGIN_INDEX].Y, hexapod.Legs[i].Joints[EFFECTOR_ORIGIN_INDEX].Z
+    # Extract coordinates from your Z-up system and flip Z
+    coxa_x = hexapod.Legs[i].Joints[COXA_ORIGIN_INDEX].X
+    coxa_y = hexapod.Legs[i].Joints[COXA_ORIGIN_INDEX].Y
+    coxa_z = -hexapod.Legs[i].Joints[COXA_ORIGIN_INDEX].Z  # Flip Z
     
-    # Map Z-up (X, Y, Z) to VPython Y-up (X, Z, Y)
+    femur_x = hexapod.Legs[i].Joints[FEMUR_ORIGIN_INDEX].X
+    femur_y = hexapod.Legs[i].Joints[FEMUR_ORIGIN_INDEX].Y
+    femur_z = -hexapod.Legs[i].Joints[FEMUR_ORIGIN_INDEX].Z  # Flip Z
+    
+    tibia_x = hexapod.Legs[i].Joints[TIBIA_ORIGIN_INDEX].X
+    tibia_y = hexapod.Legs[i].Joints[TIBIA_ORIGIN_INDEX].Y
+    tibia_z = -hexapod.Legs[i].Joints[TIBIA_ORIGIN_INDEX].Z  # Flip Z
+    
+    end_x = hexapod.Legs[i].Joints[EFFECTOR_ORIGIN_INDEX].X
+    end_y = hexapod.Legs[i].Joints[EFFECTOR_ORIGIN_INDEX].Y
+    end_z = -hexapod.Legs[i].Joints[EFFECTOR_ORIGIN_INDEX].Z  # Flip Z
+    
+    # Map flipped Z-up (X, Y, -Z) to VPython Y-up (X, -Z, Y)
     coxa_positions.append(vector(coxa_x, coxa_z, coxa_y))
     femur_positions.append(vector(femur_x, femur_z, femur_y))
     tibia_positions.append(vector(tibia_x, tibia_z, tibia_y))
     end_effector_positions.append(vector(end_x, end_z, end_y))
-
-print("--- POST CREATION ---")
-print(f'Coxa: {coxa_positions}')
-print(f'Femur: {femur_positions}')
-print(f'Tibia: {tibia_positions}')
-print(f'End Effector: {end_effector_positions}')
 
 # Create the hexagon body using spheres and cylinders
 hexagon_joints = [sphere(pos=coxa_positions[i], radius=3, color=color.blue) for i in range(NUM_LEGS)]
@@ -82,43 +90,58 @@ for i in range(NUM_LEGS):
     
     legs_visuals.append((joints, links))
 
-# Real-time animation loop
+# Real-time animation loop with Z flipped
 index = 0
 while True:
     for frame in range(STEPS):
         rate(30)  
         
         for i, leg in enumerate(hexapod.Legs):
-            if i == 0:  # Example: animate leg 1
-                val = leg.bezier_curve.get_point(index)
-                effector_target = new_Coordinate(val[0], val[1], val[2])
-                print(f"index:{index}, New Coord: {val}")
-                angles = solve_effector_IK(leg, effector_target)
+            # Get Bezier curve point and flip Z
+            val = leg.bezier_curve.get_point(index)
+            effector_target = new_Coordinate(val[0], val[1], val[2])  # Flip Z of target
+            
+            # Compute IK and update FK
+            angles = solve_effector_IK(leg, effector_target)
+            hexapod.Legs[i].recalculate_forward_kinematics(angles)
+            
+            # Map Z-up with flipped Z (X, Y, -Z) to VPython Y-up (X, -Z, Y)
+            coxa_pos = vector(
+                leg.Joints[COXA_ORIGIN_INDEX].X,
+                -leg.Joints[COXA_ORIGIN_INDEX].Z,  # Flip Z
+                leg.Joints[COXA_ORIGIN_INDEX].Y
+            )
+            femur_pos = vector(
+                leg.Joints[FEMUR_ORIGIN_INDEX].X,
+                -leg.Joints[FEMUR_ORIGIN_INDEX].Z,  # Flip Z
+                leg.Joints[FEMUR_ORIGIN_INDEX].Y
+            )
+            tibia_pos = vector(
+                leg.Joints[TIBIA_ORIGIN_INDEX].X,
+                -leg.Joints[TIBIA_ORIGIN_INDEX].Z,  # Flip Z
+                leg.Joints[TIBIA_ORIGIN_INDEX].Y
+            )
+            end_effector_pos = vector(
+                leg.Joints[EFFECTOR_ORIGIN_INDEX].X,
+                -leg.Joints[EFFECTOR_ORIGIN_INDEX].Z,  # Flip Z
+                leg.Joints[EFFECTOR_ORIGIN_INDEX].Y
+            )
+            
+            # Update visual positions
+            legs_visuals[i][0][0].pos = coxa_pos  
+            legs_visuals[i][0][1].pos = femur_pos  
+            legs_visuals[i][0][2].pos = tibia_pos  
+            legs_visuals[i][0][3].pos = end_effector_pos  
 
-                hexapod.Legs[i].recalculate_forward_kinematics(angles)
-                print(f"Leg Joints & positions 4x4 matrix: {leg.Joints}")
-                
-                print('---------------------------')
-                # Map Z-up to VPython Y-up: (X, Y, Z) -> (X, Z, Y)
-                coxa_pos = vector(leg.Joints[COXA_ORIGIN_INDEX].X, leg.Joints[COXA_ORIGIN_INDEX].Z, leg.Joints[COXA_ORIGIN_INDEX].Y)
-                femur_pos = vector(leg.Joints[FEMUR_ORIGIN_INDEX].X, leg.Joints[FEMUR_ORIGIN_INDEX].Z, leg.Joints[FEMUR_ORIGIN_INDEX].Y)
-                tibia_pos = vector(leg.Joints[TIBIA_ORIGIN_INDEX].X, leg.Joints[TIBIA_ORIGIN_INDEX].Z, leg.Joints[TIBIA_ORIGIN_INDEX].Y)
-                end_effector_pos = vector(leg.Joints[EFFECTOR_ORIGIN_INDEX].X, leg.Joints[EFFECTOR_ORIGIN_INDEX].Z, leg.Joints[EFFECTOR_ORIGIN_INDEX].Y)  
-                
-                legs_visuals[i][0][0].pos = coxa_pos  
-                legs_visuals[i][0][1].pos = femur_pos  
-                legs_visuals[i][0][2].pos = tibia_pos  
-                legs_visuals[i][0][3].pos = end_effector_pos  
+            legs_visuals[i][1][0].pos = coxa_pos
+            legs_visuals[i][1][0].axis = femur_pos - coxa_pos
+            
+            legs_visuals[i][1][1].pos = femur_pos
+            legs_visuals[i][1][1].axis = tibia_pos - femur_pos
 
-                legs_visuals[i][1][0].pos = coxa_pos
-                legs_visuals[i][1][0].axis = femur_pos - coxa_pos
-                
-                legs_visuals[i][1][1].pos = femur_pos
-                legs_visuals[i][1][1].axis = tibia_pos - femur_pos
-
-                legs_visuals[i][1][2].pos = tibia_pos
-                legs_visuals[i][1][2].axis = end_effector_pos - tibia_pos
-                    
-                index += 1
-                if index >= 100:
-                    index = 0
+            legs_visuals[i][1][2].pos = tibia_pos
+            legs_visuals[i][1][2].axis = end_effector_pos - tibia_pos
+        
+        index += 1
+        if index >= 100:  # Assuming 100 steps in Bezier curve; adjust as needed
+            index = 0
