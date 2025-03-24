@@ -1,4 +1,4 @@
-from hexapod.src.pca9685 import PCA9685
+from src.pca9685 import PCA9685
 import time
 
 ## Reset all leg positions
@@ -9,7 +9,6 @@ import time
     Servo 2: 0
 
 '''
-
 
 class Servo(object):
     def __init__(self, index, pca = 0x40, pulse_min = 500, pulse_max = 2500, freq = 60, debug=False):

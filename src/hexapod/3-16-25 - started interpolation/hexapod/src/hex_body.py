@@ -1,10 +1,10 @@
 import json
 from dataclasses import dataclass, field
 from typing import List, Optional
-from coord import Coordinate
-from gaits import new_Gait
-from leg import SegmentLengths, ServoAngles
-from gaits import Gait
+from src.coord import Coordinate
+from src.gaits import new_Gait
+from src.leg import SegmentLengths, ServoAngles
+from src.gaits import Gait
 
 @dataclass
 class Body:
@@ -35,10 +35,9 @@ class Body:
     # Initialize basic variables
     # define the number of legs
     num_legs: int
-
     #Gait pattern
     Gait: Optional['Gait']
-
+    leg_names: list[str] = field(default_factory=list)
     # Base angle around the hexapod center (0 being directly in front)
     coxa_offsets: List[float] = field(default_factory=list)
 
@@ -70,6 +69,7 @@ class Body:
                 Tibia=data["Segments"]["Tibia"]
             ) for _ in range(data["NumLegs"])
         ]
+        leg_names = data["legNames"]
 
         # set standing/rest angles for each leg
         rest_angles = [
@@ -83,10 +83,11 @@ class Body:
         return cls(
             num_legs=data["NumLegs"],
             Gait=data["Gait"],  # This may need to be converted from string to an actual Gait object
+            leg_names=leg_names,
             coxa_offsets=coxa_offsets,
             coxa_coords=coxa_coords,
             leg_segments=leg_segments,
-            rest_angles=rest_angles
+            rest_angles=rest_angles,
         )
 
 def new_hexapod_body() -> Body:

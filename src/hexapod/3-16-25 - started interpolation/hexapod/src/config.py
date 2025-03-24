@@ -23,3 +23,6 @@ NeutralLIFT:float = 50
 
 # Odd number of interpolation steps
 INTERPOLATION_STEPS = 21
+
+# number of legs the hexapod has
+NUM_LEGS = 6

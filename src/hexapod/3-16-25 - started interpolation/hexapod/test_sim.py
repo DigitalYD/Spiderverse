@@ -1,18 +1,18 @@
 from vpython import *
-from pod import Pod
-from hex_body import Body
-from inversekinematics import solve_effector_IK
-from gaits import new_Gait
+from src.pod import Pod
+from src.hex_body import Body
+from src.inversekinematics import solve_effector_IK
+from src.gaits import new_Gait
 import numpy as np 
-from coord import new_Coordinate
-from config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX
+from src.coord import new_Coordinate
+from src.config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX
 
 
 
 # Create the hexapod instance
 tripod_gait = new_Gait(0, 1.0)  
 body = Body(6, Gait=tripod_gait)  
-body = body.load("hexapod_config.json")
+body = body.load("src/hexapod_config.json")
 hexapod = Pod(body)
 
 NUM_LEGS = hexapod.body_def.num_legs

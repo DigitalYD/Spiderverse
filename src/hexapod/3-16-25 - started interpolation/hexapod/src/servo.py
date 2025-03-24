@@ -1,4 +1,4 @@
-from pca9685 import PCA9685
+from src.pca9685 import PCA9685
 import time
 
 ## Reset all leg positions
@@ -53,11 +53,15 @@ class Servo():
         else:
             return "Invalid Index"
         
+        #print(f"Servo index: {self.servo_index} index for servo {servo_index}")
+
         kin_angle_corr = int(kin_angle) + self.offset
         ## -- Edit this?: does nothing treats it as "if reverse: at all times"
         inverse = -1 if servo_index == 1 else 1 # If femur, set inverse so it moves up w/ positive not down
+        
         pulse = self.angle2pulse(kin_angle_corr, inverse)
-        self.pca.setServoPulse(servo_index, pulse)
+        #print(f"Pulse Complete, angle {kin_angle_corr}")
+        self.pca.setServoPulse(self.servo_index, pulse)
         time.sleep(0.002)
 
 

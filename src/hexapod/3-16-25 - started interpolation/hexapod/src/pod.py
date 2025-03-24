@@ -1,15 +1,14 @@
 import time
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
-from leg import Leg, SegmentLengths,ServoAngles, Servo
-from hex_body import new_hexapod_body, Body
-from coord import Coordinate
+from src.leg import Leg, SegmentLengths,ServoAngles, Servo
+from src.hex_body import new_hexapod_body, Body
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict
-from gaits import new_Gait, GaitType, Gait
-from config import FORWARD, REVERSE, POD_Z_HEIGHT, INTERPOLATION_STEPS,EFFECTOR_ORIGIN_INDEX
-from inversekinematics import solve_effector_IK
-from coord import Coordinate, new_Coordinate
+from src.gaits import new_Gait, GaitType, Gait
+from src.config import FORWARD, REVERSE, POD_Z_HEIGHT, INTERPOLATION_STEPS,EFFECTOR_ORIGIN_INDEX, NUM_LEGS
+from src.inversekinematics import solve_effector_IK
+from src.coord import Coordinate, new_Coordinate
 
 
 @dataclass
@@ -42,16 +41,14 @@ class Pod:
                 ])
             print(f"Leg {i} Coxa Offset: {self.body_def.coxa_offsets[i]}, Coxa Cord {self.body_def.coxa_coords[i]}, offset matrix = {offset_matrix[i]}")
 
-
-
         # Generate six legs
         self.Legs = [
             Leg(
                 Index=i,
-                Name=f"Leg {i}",
-                # Coxa=Servo(i * 3, pca=0x40 if i * 3 < 8 else 0x41),
-                # Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 8 else 0x41),
-                # Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 8 else 0x41),
+                Name=self.body_def.leg_names[i],
+                Coxa=Servo(i * 3, pca=0x40 if i * 3 < 9 else 0x41),
+                Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 9 else 0x41),
+                Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 9 else 0x41),
                 coxa_position = self.body_def.coxa_coords[i],
                 coxa_angle_offset=self.body_def.coxa_offsets[i],
                 offset_transformation_matrix=offset_matrix[i],
@@ -135,9 +132,9 @@ class Pod:
                 Index=i,
                 Name=f"Leg {i}",
                 #Setup Servo Motors ||| UNCOMMENT ON HEXAPOD |||
-                Coxa=Servo(i * 3, pca=0x40 if i * 3 < 8 else 0x41),  # Assign PCA based on ID
-                Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 8 else 0x41),
-                Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 8 else 0x41),
+                Coxa=Servo(i * 3, pca=0x40 if i * 3 < 9 else 0x41),  # Assign PCA based on ID
+                Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 9 else 0x41),
+                Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 9 else 0x41),
                 coxa_angle_offset=self.body_def.coxa_offset[i],
                 offset_transformation_matrix=offset_matrix, # Creates 4x4 identity matrix for an insert
                 segment_length=self.body_def.leg_segments[i],
@@ -145,18 +142,15 @@ class Pod:
                 neutral_effector_coord = Coordinate(0,0, -70) # From Leg test (May Change)
             )
 
-
     def load_body_def(self, body_def: Body) -> None:
         self.body_def = body_def
         self.direction = FORWARD
         self.UpdatePodStructure()
 
-
     def set_gait(self, gait_type: GaitType, speed_factor: float=0):
         ''' set the gait pattern and index to 0'''
         self.gait = new_Gait(gait_type, speed_factor)
         self.currentgaitIndex = 0
-
     
     def update(self) -> None:
         ''' Main sequence to be called in a loop, advances walking movement or reverts to neutral '''
@@ -198,7 +192,6 @@ class Pod:
                     if leg.update_rotation(delta_t, self.direction):
                         all_done = False
                 time.sleep(0.02)
-
 
     def stop(self) -> None:
         ''' Starts moving all legs back to neutral position (if a stride has been set)'''
@@ -268,6 +261,58 @@ class Pod:
                 leg.intermediate_angles.Coxa = servoAngles.Coxa
                 leg.intermediate_angles.Femur = servoAngles.Femur
                 leg.intermediate_angles.Tibia = servoAngles.Tibia
+
+    def start(self):
+        ''' Allows calls to update to start cycling '''
+        if self.has_stride == False:
+            return f"no stride has been set"
+        
+        self.isWalking = True
+        return
+
+    def stop(self):
+        ''' stop the gait cycle '''
+        self.targetgaitCycles = self.currentgaitCycle
+        self.currentgaitCycle = 0
+
+    def is_swinging(self, leg_id:int):
+        ''' Returns true if the leg is currently in swing phase '''
+        return self.body_def.Gait.pattern[leg_id][self.currentgaitIndex] == 1
+    
+    def update_movement(self):
+        ''' Cycles through each set of legs, updates swing and stance indices, scan through each grouping, if a group is finished, move to next to complete a "cycle" '''
+        end_of_swing:bool
+
+        # iterate through legs
+        for i, leg in enumerate(self.Legs):
+            if (self.body_def.Gait.pattern)[i][self.currentgaitIndex] == 1:
+                end_of_swing = leg.update_stance(self.direction)
+            else:
+                leg.update_stance(self.direction, self.body_def.gait.speed_factor)
+
+        # if the end of swing and direction is forward gait index ++ else reverse -- moving hexapod backward/forward
+        if end_of_swing and self.direction == 1:
+            self.currentgaitIndex += 1
+        elif end_of_swing and self.dirction == -1:
+            self.currentgaitIndex -= 1
+
+        ## Finish program here, if gait index > number of indeces in pattern, reset current gait index, increase gait cycle
+        ## if current cycle > target cycles and target cycles != 0 walking is false
+        # do same for reverse direction
+
+    
+    def move_leg_bezier_test(self):
+        ''' Test Function to move the leg using a bezier curve'''
+        # for i,leg in enumerate(self.Legs):
+        #     print(leg)
+        #     leg.move_leg_with_bezier()
+        self.Legs[1].move_leg_with_bezier()
+        
+        # for i in range(6):
+        #     print(f"Servo Index name {i}: {self.Legs[i].Name}")
+        #     print(f"Servo Index Leg {i}: {self.Legs[i].Coxa.servo_index}, {self.Legs[i].Femur.servo_index}, {self.Legs[i].Tibia.servo_index}")
+        #     print(f"PCA Index Leg {i}: {self.Legs[i].Coxa.pca_index}, {self.Legs[i].Femur.pca_index}, {self.Legs[i].Tibia.pca_index}")
+        #     print(f"PCA Object Leg {i}: {self.Legs[i].Coxa.pca}, {self.Legs[i].Femur.pca}, {self.Legs[i].Tibia.pca}")
 
 
 def new_pod(body_def:Body) -> Pod:

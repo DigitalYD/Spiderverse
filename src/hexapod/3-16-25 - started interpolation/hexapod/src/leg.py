@@ -2,14 +2,14 @@ import copy
 import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict
-from coord import (Coordinate, SegmentLengths, ServoAngles, new_Coordinate, homogeneous_transform_around_center, apply_transform_to_point, 
+from src.coord import (Coordinate, SegmentLengths, ServoAngles, new_Coordinate, homogeneous_transform_around_center, apply_transform_to_point, 
                    get_transformation_from_matrix, homogeneous_transformation_matrix,
                    get_radial_direction, adjust_point_away_from_coxa, rotate_bezier_curve,
                     translate_point_along_leg_direction, rot_tran_3d_x, rot_tran_3d_y, rot_tran_3d_z, new_servo_angles)
-from bezier2d import BezierCurve
-from servo import Servo
-from inversekinematics import solve_effector_IK
-from config import NUM_JOINTS, COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX, INTERPOLATION_STEPS
+from src.bezier2d import BezierCurve
+from src.servo import Servo
+from src.inversekinematics import solve_effector_IK
+from src.config import NUM_JOINTS, COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX, INTERPOLATION_STEPS
 
 
 
@@ -32,10 +32,12 @@ class Leg:
     '''Represents a single robotic leg and it's kinematic state'''
     Index: int                                      # leg index (0-Number of legs-1)
     Name:  str                                      # Identify which leg by position
-    # Setup Servo Motors ||| UNCOMMENT ON HEXAPOD |||
-    # Coxa: Servo
-    # Femur: Servo
-    # Tibia: Servo
+    ###
+    ## Setup Servo Motors ||| UNCOMMENT ON HEXAPOD |||
+    ###
+    Coxa: Servo
+    Femur: Servo
+    Tibia: Servo
     coxa_angle_offset: float                        # Angle of leg around hexapod body
     coxa_position: Coordinate
     offset_transformation_matrix: np.ndarray        # 4x4 Transform for coxa
@@ -58,11 +60,11 @@ class Leg:
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
     swing_fraction: float = 5/8                     # Hexapod swings from "start"->"grounded"
     control_points: Dict[str, np.ndarray] = field(init=False)
-    toe_from_coxa = 175 # distance to place bezier curve away fro the hexapod coxa
+    toe_from_coxa = 75 # distance to place bezier curve away fro the hexapod coxa
     
     def __post_init__(self):
         ''' This post init works for Bezier Curve left rear leg'''
-        from inversekinematics import solve_effector_IK
+        from src.inversekinematics import solve_effector_IK
         self.Joints = [Coordinate() for _ in range(self.num_joints)] # Setup joint positions 
         # Temporary Delete for pod class
         #print("Joints after Init : ", self.Joints)
@@ -71,7 +73,7 @@ class Leg:
         # Initialize all joints to 0,0,0 initially
         self.recalculate_forward_kinematics(ServoAngles(0,0,0))  # Optional: Update Joints
         print(f"Joints After Forward Kinematics: {self.Name}, {self.Joints}")
-
+        self.current_gait_phase = "gait"
         # set effector target based off standing position of neutral effector
         # self.effector_target = copy.deepcopy(self.neutral_effector_coord) # Start at neutral
         # print(f"Effector_Target: {self.effector_target}")
@@ -95,7 +97,6 @@ class Leg:
         ####
         # Rotate each bezier curve around the hexapod to fit each leg
         ####
-        
         # Start position is directly below the coxa
         # [0,0,-X], [coxa.x, coxa.y,0]
         start_pos = neutral_effector_coord + coxa_pos
@@ -116,19 +117,6 @@ class Leg:
         
         self.bezier_curve = BezierCurve(translated_control_points, num_pts=100)
         #print(f"Translated_Bezzier: {self.bezier_curve.curve()}")
-        
-        #NOTE: To rotate the bezier curve, around its start pos: rotate_besier_curve(curve, point to rotate around, rotation angle)
-        # Old
-        # self.control_points = {
-        #     "start": start,
-        #     "lift": start + np.array([50, -50, -100]),
-        #     "peak": start + np.array([150, -150, -200]),
-        #     "lower": start + np.array([200, -200, -75]),                 # The moment before grounding
-        #     "touchdown": start + np.array([100, -100, 0]),             # The moment before grounding
-        #     "grounded": start + np.array([50, -50, 0]),               # Fully on the ground
-        #     "sliding": start + np.array([10, -10, 0]),     # Sliding before reset
-        #     "return": start
-        #     }
 
 
         # for interpolation. Future implementation addtion for more capabilties
@@ -156,7 +144,7 @@ class Leg:
     # Define control points relative to start position
     def get_adjusted_bezier_control_points(self, start_pos: np.ndarray) -> dict:
         ''' Define control points for a Bézier curve. Walking forward motion '''
-        return {
+        self.control_points = {
             "start": start_pos,
             "lift": start_pos + np.array([0, 75, -20]),
             "peak": start_pos + np.array([0, 100, -35]),
@@ -166,6 +154,7 @@ class Leg:
             "sliding": start_pos + np.array([0, 120, 0]),
             "return": start_pos,
         }
+        return self.control_points
 
     def set_rotation_control_points(self, theta:float = np.pi/2):
         ''' set control points for rotation'''
@@ -198,7 +187,7 @@ class Leg:
         neutral = np.array([self.neutral_effector_coord.X, self.neutral_effector_coord.Y, self.neutral_effector_coord.Z])
         self.control_points = {
             "start": current,
-            "lift": current + np.array([0, 0, 25]),
+            "lift": current + np.array([0, 0, 25]), 
             "peak": (current + neutral) /2 + np.array([0, 0, 25]),
             "touchdown": neutral
         }
@@ -319,13 +308,13 @@ class Leg:
         Moves a leg along its Bezier curve using inverse kinematics.
         This is a test function
         '''
-        from inversekinematics import solve_effector_IK
+        from src.inversekinematics import solve_effector_IK
         import time
         bezier_points = self.bezier_curve.curve()
 
         for i in range(step_count): 
             effectorTarget = Coordinate(bezier_points[i][0], bezier_points[i][1], bezier_points[i][2])
-            #print(effectorTarget)
+            print(effectorTarget)
             # Ensure the target is within the leg's reachable workspace
             max_reach = self.segment_length.Coxa + self.segment_length.Femur + self.segment_length.Tibia
             if np.linalg.norm([effectorTarget.X, effectorTarget.Y]) > max_reach:
@@ -336,7 +325,8 @@ class Leg:
             angles = solve_effector_IK(self, effectorTarget)
             self.recalculate_forward_kinematics(angles)
             self.servo_angles = angles
-            # Send angles to servos
+            # Send angles to 
+            print(f"Servo Angles: Coxa{angles.Coxa}, Femur {angles.Femur}, Tibia {angles.Tibia}")
             self.Coxa.set_angle(angles.Coxa)
             self.Femur.set_angle(angles.Femur)
             self.Tibia.set_angle(angles.Tibia)
@@ -400,8 +390,6 @@ class Leg:
         ''' Update leg based on gait pattern '''
         from inversekinematics import solve_effector_IK
         # if if neutral or rotation change the control points to gait
-        if self.current_gait_phase != "gait":
-            self.set_gait_control_points()
 
         # set gait index
         is_swinging = gait_pattern[gait_index] == 1

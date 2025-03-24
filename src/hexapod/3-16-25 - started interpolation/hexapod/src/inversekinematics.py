@@ -1,9 +1,8 @@
 
-from coord import ServoAngles, Coordinate
 import numpy as np
 import math
-
-from config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX
+from src.coord import ServoAngles, Coordinate
+from src.config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX
 
 
 
@@ -62,8 +61,13 @@ def solve_effector_IK(leg, effector_target, debug_channel=None):
 
     # Inverse kinematics equation 5: Femur angle
     servo_angles.Femur = 90 - (180.0 / np.pi) * (alpha_1 + alpha_2)
-
     # Inverse kinematics equation 6: Tibia angle
+    # Works in simulator
+    # servo_angles.Tibia = 180 - (180.0 / math.pi) * np.arccos( np.clip(
+    #     (L * L - leg.segment_length.Femur * leg.segment_length.Femur - leg.segment_length.Tibia * leg.segment_length.Tibia) /
+    #     (-2 * leg.segment_length.Tibia * leg.segment_length.Femur),-1,1)
+    # )
+
     servo_angles.Tibia = 180 - (180.0 / math.pi) * np.arccos( np.clip(
         (L * L - leg.segment_length.Femur * leg.segment_length.Femur - leg.segment_length.Tibia * leg.segment_length.Tibia) /
         (-2 * leg.segment_length.Tibia * leg.segment_length.Femur),-1,1)

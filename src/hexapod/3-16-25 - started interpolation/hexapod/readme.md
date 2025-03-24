@@ -1,6 +1,3 @@
-# DELETE AFTER COMING BACK TO THIS!
-https://x.com/i/grok/share/dorKGvHPCWMTOPhqlIUka3QFL
-
 ## Hexapod measurements
 https://matplotlib.org/stable/gallery/event_handling/poly_editor.html
 

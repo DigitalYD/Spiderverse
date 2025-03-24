@@ -1,6 +1,7 @@
 {
     "NumLegs": 6,
     "Gait": "tripod",
+    "legNames": ["LR", "LM", "LF", "RF", "RM", "RR"],
     "Coordinate": {
         "LR": [
             -60.5, -89, 0
