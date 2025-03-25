@@ -62,3 +62,7 @@ class BezierCurve:
         if len(self.cp) == 0:
             self.generate()
         return self.cp
+    
+    def bezier_curve(self, points, t):
+        n = len(points) - 1
+        return sum(comb(n, i) * (1 - t)**(n - i) * t**i * np.array(p) for i, p in enumerate(points))

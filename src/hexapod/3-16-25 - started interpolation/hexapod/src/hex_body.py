@@ -4,7 +4,7 @@ from typing import List, Optional
 from src.coord import Coordinate
 from src.gaits import new_Gait
 from src.leg import SegmentLengths, ServoAngles
-from src.gaits import Gait
+from src.gaits import Gait, GaitType
 
 @dataclass
 class Body:
@@ -36,11 +36,10 @@ class Body:
     # define the number of legs
     num_legs: int
     #Gait pattern
-    Gait: Optional['Gait']
+    Gait: Optional['GaitType']
     leg_names: list[str] = field(default_factory=list)
     # Base angle around the hexapod center (0 being directly in front)
     coxa_offsets: List[float] = field(default_factory=list)
-
     # Origin coordinates of each leg's coxa (anchor point) in the robot's base reference frame
     coxa_coords: List['Coordinate'] = field(default_factory=list)
     # Segment lengths for each leg (list of SegmentLengths for Coxa, Femur, Tibia)
@@ -90,11 +89,15 @@ class Body:
             rest_angles=rest_angles,
         )
 
+    def set_gait(self, new_gait, speed=0.0):
+        self.Gait = new_Gait(new_gait, speed)
+    
 def new_hexapod_body() -> Body:
     tripod_gait = new_Gait(0, 1.0) # Set gait and speed through bezier curve
     body = Body(6, Gait=tripod_gait) # create new hexapod body 
     body = body.load("hexapod_config.json")
     return body
+
 
 if __name__ == '__main__':
     hexapod_body = new_hexapod_body()

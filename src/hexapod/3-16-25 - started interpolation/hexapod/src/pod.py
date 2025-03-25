@@ -9,7 +9,7 @@ from src.gaits import new_Gait, GaitType, Gait
 from src.config import FORWARD, REVERSE, POD_Z_HEIGHT, INTERPOLATION_STEPS,EFFECTOR_ORIGIN_INDEX, NUM_LEGS
 from src.inversekinematics import solve_effector_IK
 from src.coord import Coordinate, new_Coordinate
-
+from src.bezier2d import BezierCurve
 
 @dataclass
 class Pod:
@@ -27,7 +27,14 @@ class Pod:
     direction: int = FORWARD                          # Current movement direction (Forward or Reverse)
     tick: int = 0                                     # tick counter for movement updates
     gait: Optional[Gait] = None
-
+    phase_shifts: list[int] = field(default_factory=lambda: [0] * NUM_LEGS)
+    body_position: list[float] = field(default_factory= lambda: [0.0, 0.0, 0.0])
+    leg_phase_offsets = [0] * NUM_LEGS  
+    leg_phase_progress = [0.0] * NUM_LEGS
+    gait_step_duration = 20  # Frames per gait phase
+    current_step = 0
+    phase_progress = 0.0
+    
     def __post_init__(self):
         """Initialize hexapod legs with servos."""
         offset_matrix = {}
@@ -39,16 +46,16 @@ class Pod:
                 [0, 0, 1, self.body_def.coxa_coords[i].Z],      # z translation (none)
                 [0, 0, 0, 1]       # homogeneous row
                 ])
-            print(f"Leg {i} Coxa Offset: {self.body_def.coxa_offsets[i]}, Coxa Cord {self.body_def.coxa_coords[i]}, offset matrix = {offset_matrix[i]}")
+            # print(f"Leg {i} Coxa Offset: {self.body_def.coxa_offsets[i]}, Coxa Cord {self.body_def.coxa_coords[i]}, offset matrix = {offset_matrix[i]}")
 
         # Generate six legs
         self.Legs = [
             Leg(
                 Index=i,
                 Name=self.body_def.leg_names[i],
-                Coxa=Servo(i * 3, pca=0x40 if i * 3 < 9 else 0x41),
-                Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 9 else 0x41),
-                Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 9 else 0x41),
+                # Coxa=Servo(i * 3, pca=0x40 if i * 3 < 9 else 0x41),
+                # Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 9 else 0x41),
+                # Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 9 else 0x41),
                 coxa_position = self.body_def.coxa_coords[i],
                 coxa_angle_offset=self.body_def.coxa_offsets[i],
                 offset_transformation_matrix=offset_matrix[i],
@@ -147,38 +154,148 @@ class Pod:
         self.direction = FORWARD
         self.UpdatePodStructure()
 
-    def set_gait(self, gait_type: GaitType, speed_factor: float=0):
-        ''' set the gait pattern and index to 0'''
+    def set_gait(self, gait_type: GaitType, speed_factor: float = 0, phase_shifts: List[int] = None):
+        """Set the gait pattern and optional phase shifts."""
         self.gait = new_Gait(gait_type, speed_factor)
+        self.body_def.set_gait = self.gait
+        
         self.currentgaitIndex = 0
+        if phase_shifts is not None and len(phase_shifts) == NUM_LEGS:
+            self.phase_shifts = phase_shifts
+        else:
+            self.phase_shifts = [0] * NUM_LEGS
     
-    def update(self) -> None:
+    def slide_hexapod_forward(self):
+        ''' Propel the hexapod's position forward using "sliding" dict and "start"
+            from bezier curve. Calculate the distance between the points and add it to hexapods
+            position
+            '''
+        start_point = self.Legs[0].bezier_curve.get_named_point("start")
+        sliding_point = self.Legs[0].bezier_curve.get_named_point("sliding")
+        
+        if start_point is not None and sliding_point is not None:
+            # Calculate the sliding vector as the difference between sliding and start points
+            sliding_vector = sliding_point - start_point
+            # Update body position based on the sliding vector and direction
+            self.body_position[0] += sliding_vector[0] * self.direction
+            self.body_position[1] += sliding_vector[1] * self.direction
+            self.body_position[2] += sliding_vector[2] * self.direction
+            print(f"Hexapod slid to {self.body_position}")
+        
+        
+    def perform_gait(self, num_cycles: int = 1):
+        '''
+            Execute gait cycle with phase shifts and forward propulsion.
+        '''
+        self.targetgaitCycles = num_cycles
+        self.isWalking = True
+        base_time = 0.75 # (time per step in seconds)
+        time_per_step = base_time / self.gait.speed_factor
+        
+        while self.isWalking and (self.targetgaitCycles == 0 or self.currentgaitCycle < self.targetgaitCycles):
+            for s in range(self.gait.indices):
+                print(f"\nStep {s}:")
+                legs_moved = False
+                for j, leg in enumerate(self.Legs):
+                    # Apply phase shift
+                    shifted_step = (s + self.phase_shifts[j]) % self.gait.indices
+                    if self.gait.pattern[j][shifted_step] == 1:
+                        # Move leg along Bezier curve until "Sliding"
+                        if leg.t < leg.swing_fraction:
+                            leg.update(time_per_step, self.direction, self.gait.pattern[j], shifted_step)
+                            legs_moved = True
+                        else:
+                            # Reset t for next swing
+                            leg.t = 0.0
+                            legs_moved = True
+                
+                # Propel forward if legs moved
+                if legs_moved:
+                    self.slide_hexapod_forward()
+                
+                time.sleep(time_per_step)
+
+                # Check if all legs have completed their step
+                all_done = all(leg.t == 0.0 or leg.t >= leg.swing_fraction for leg in self.Legs if self.gait.pattern[self.Legs.index(leg)][(s + self.phase_shifts[self.Legs.index(leg)]) % self.gait.indices] == 1)
+                if all_done:
+                    self.currentgaitIndex = (self.currentgaitIndex + 1) % self.gait.indices
+                    if self.currentgaitIndex == 0:
+                        self.currentgaitCycle += 1
+                        if self.targetgaitCycles and self.currentgaitCycle >= self.targetgaitCycles:
+                            self.isWalking = False
+                    self.tick += 1 
+        
+           
+    def update(self) -> List[Coordinate]:
         ''' Main sequence to be called in a loop, advances walking movement or reverts to neutral '''
-        if not self.gait:
-            return
-        
-        # Adjust delta for forward and backwards movement, speed factor (how fast we want to move the leg), and the direction (forward:1, back:-1)
-        delta_t = 0.05 * self.gait.speed_factor * self.direction
-        
-        if self.isWalking:
-            all_done = True
-            for i, leg in enumerate(self.Legs):
-                if leg.update(delta_t, self.direction, self.gait.pattern[i], self.currentgaitIndex):
-                    all_done = False
-            if all_done:
-                self.currentgaitIndex = (self.currentgaitIndex + 1) % self.gait.indices
-                if self.currentgaitIndex == 0:
-                    self.currentgaitCycle += 1
-                    if self.targetgaitCycles and self.currentgaitCycle >= self.targetgaitCycles:
-                        self.isWalking = False
-                self.tick += 1
-        elif self.isReverting:
+        if not self.gait or not self.isWalking:
+            return [leg.effector_target for leg in self.Legs]  # Return current positions if not walking
+
+        foot_targets = []
+        delta_t = 1.0 / self.gait_step_duration * self.gait.speed_factor * self.direction  # Adjust speed based on gait
+
+        # Update each leg's position based on its gait phase
+        all_swing_complete = True
+        for i, leg in enumerate(self.Legs):
+            # Calculate the shifted gait index for this leg
+            phase_idx = (self.currentgaitIndex + self.phase_shifts[i]) % self.gait.indices
+            is_swing = self.gait.pattern[i][phase_idx] == 1
+
+            # Update leg's t parameter based on phase
+            if is_swing:
+                # Swing phase: Move along Bezier curve from start to touchdown
+                if leg.t < leg.swing_fraction:
+                    leg.t = min(leg.t + delta_t, leg.swing_fraction)
+                    all_swing_complete = False
+                else:
+                    leg.t = leg.swing_fraction  # Hold at touchdown until stance phase
+            else:
+                # Stance phase: Move from touchdown to return
+                if leg.t < 1.0:
+                    leg.t = min(leg.t + delta_t, 1.0)
+                    all_swing_complete = False
+                else:
+                    leg.t = 1.0  # Hold at return until next swing
+
+            # Evaluate position along the Bezier curve
+            pos = leg.bezier_curve.evaluate(leg.t)
+            foot_target = new_Coordinate(pos[0], pos[1], pos[2])
+            leg.effector_target = foot_target
+            angles = solve_effector_IK(leg, foot_target)
+            leg.recalculate_forward_kinematics(angles)
+            foot_targets.append(foot_target)
+
+        # Check if all legs have completed their current phase
+        if all_swing_complete and all(leg.t >= 1.0 for leg in self.Legs if self.gait.pattern[self.Legs.index(leg)][(self.currentgaitIndex + self.phase_shifts[self.Legs.index(leg)]) % self.gait.indices] == 0):
+            # All swing legs are at touchdown, and stance legs are at return
+            self.currentgaitIndex = (self.currentgaitIndex + 1) % self.gait.indices
+            if self.currentgaitIndex == 0:
+                self.currentgaitCycle += 1
+                self.slide_hexapod_forward()  # Move body forward after full cycle
+                if self.targetgaitCycles and self.currentgaitCycle >= self.targetgaitCycles:
+                    self.isWalking = False
+                # Reset t for all legs to start next cycle
+                for leg in self.Legs:
+                    leg.t = 0.0
+            else:
+                # Reset swing legs to start for next step
+                for i, leg in enumerate(self.Legs):
+                    if self.gait.pattern[i][(self.currentgaitIndex + self.phase_shifts[i]) % self.gait.indices] == 1:
+                        leg.t = 0.0
+
+        # Handle reverting to neutral if not walking
+        if self.isReverting:
+            delta_t_revert = 0.05 * self.gait.speed_factor * self.direction
             all_done = True
             for leg in self.Legs:
-                if leg.reset_to_neutral(delta_t):
+                if leg.reset_to_neutral(delta_t_revert):
                     all_done = False
             self.isReverting = not all_done
 
+        return foot_targets
+    
+    
+    
     def rotate_in_place(self, theta: float = 2*np.pi):
         ''' rotate hexapod in place over multiple steps '''
         steps = int(theta / (np.pi / 3)) # 6 steps for 360 degrees
@@ -264,14 +381,12 @@ class Pod:
 
     def start(self):
         ''' Allows calls to update to start cycling '''
-        if self.has_stride == False:
-            return f"no stride has been set"
-        
         self.isWalking = True
-        return
+
 
     def stop(self):
-        ''' stop the gait cycle '''
+        ''' stop the gait and walking '''
+        self.isWalking = False
         self.targetgaitCycles = self.currentgaitCycle
         self.currentgaitCycle = 0
 
@@ -322,4 +437,4 @@ def new_pod(body_def:Body) -> Pod:
 
 if __name__ == '__main__':
     teset_hexapod = new_pod(new_hexapod_body())
-    print(teset_hexapod)
+    # print(teset_hexapod)

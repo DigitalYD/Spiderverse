@@ -35,9 +35,9 @@ class Leg:
     ###
     ## Setup Servo Motors ||| UNCOMMENT ON HEXAPOD |||
     ###
-    Coxa: Servo
-    Femur: Servo
-    Tibia: Servo
+    # Coxa: Servo
+    # Femur: Servo
+    # Tibia: Servo
     coxa_angle_offset: float                        # Angle of leg around hexapod body
     coxa_position: Coordinate
     offset_transformation_matrix: np.ndarray        # 4x4 Transform for coxa
@@ -69,10 +69,10 @@ class Leg:
         # Temporary Delete for pod class
         #print("Joints after Init : ", self.Joints)
         self.set_gait_control_points()
-        print(f"Joints before Forward Kinematics: {self.Name}, {self.Joints}")
+        # print(f"Joints before Forward Kinematics: {self.Name}, {self.Joints}")
         # Initialize all joints to 0,0,0 initially
         self.recalculate_forward_kinematics(ServoAngles(0,0,0))  # Optional: Update Joints
-        print(f"Joints After Forward Kinematics: {self.Name}, {self.Joints}")
+        # print(f"Joints After Forward Kinematics: {self.Name}, {self.Joints}")
         self.current_gait_phase = "gait"
         # set effector target based off standing position of neutral effector
         # self.effector_target = copy.deepcopy(self.neutral_effector_coord) # Start at neutral
@@ -314,7 +314,7 @@ class Leg:
 
         for i in range(step_count): 
             effectorTarget = Coordinate(bezier_points[i][0], bezier_points[i][1], bezier_points[i][2])
-            print(effectorTarget)
+            # print(effectorTarget)
             # Ensure the target is within the leg's reachable workspace
             max_reach = self.segment_length.Coxa + self.segment_length.Femur + self.segment_length.Tibia
             if np.linalg.norm([effectorTarget.X, effectorTarget.Y]) > max_reach:
@@ -326,7 +326,7 @@ class Leg:
             self.recalculate_forward_kinematics(angles)
             self.servo_angles = angles
             # Send angles to 
-            print(f"Servo Angles: Coxa{angles.Coxa}, Femur {angles.Femur}, Tibia {angles.Tibia}")
+            # print(f"Servo Angles: Coxa{angles.Coxa}, Femur {angles.Femur}, Tibia {angles.Tibia}")
             self.Coxa.set_angle(angles.Coxa)
             self.Femur.set_angle(angles.Femur)
             self.Tibia.set_angle(angles.Tibia)
@@ -388,7 +388,7 @@ class Leg:
 
     def update(self, delta_t: float, direction: int, gait_pattern: List[int], gait_index: int) -> bool:
         ''' Update leg based on gait pattern '''
-        from inversekinematics import solve_effector_IK
+        from src.inversekinematics import solve_effector_IK
         # if if neutral or rotation change the control points to gait
 
         # set gait index
@@ -405,7 +405,7 @@ class Leg:
         self.effector_target = Coordinate(pos[0], pos[1], pos[2])
 
         # compute the inverse kinetmatics of the new target
-        angles = solve_effector_IK(self.effector_target)
+        angles = solve_effector_IK(self, self.effector_target)
 
         # set the servo angles
         self.servo_angles = angles
@@ -470,9 +470,6 @@ class Leg:
         stepZ = (targetCoord.Z - startCoord.Z) / (INTERPOLATION_STEPS)
 
         for i in range(INTERPOLATION_STEPS):
-            #####
-            ## Review this, it appears it can be wrong.
-            ####
             swing = new_Coordinate(startCoord.X + stepX * i, startCoord.Y + stepY * i, startCoord.Z + stepZ * i)
             angles = solve_effector_IK(self, swing)
             
@@ -543,30 +540,30 @@ def new_leg():
 def test_single_leg_movement(leg):
     """ Test function to manually move each leg's servos using predefined angles. """
     import time
-    print("Starting leg movement test...")
+    #print("Starting leg movement test...")
 
     # Move Coxa to 0 degrees for each leg
-    print(leg.Coxa)
+    #print(leg.Coxa)
     leg.Coxa.set_angle(0)  # Move coxa servo to neutral position
     time.sleep(.02)
 
     time.sleep(1)
 
     # Move Femur to -120 degrees (lifting the leg)
-    print(leg.Femur)
+    #print(leg.Femur)
     leg.Femur.set_angle(-120)  # Lift femur joint
     time.sleep(.02)
 
     time.sleep(1)
 
     # Move tibia
-    print(leg.Tibia)
+    # print(leg.Tibia)
     leg.Tibia.set_angle(-50)  # Reset tibia joint
     time.sleep(.02)
 
     time.sleep(1)
     # Move Tibia back to 0 degrees
-    print(leg.Tibia)
+    # print(leg.Tibia)
     leg.Tibia.set_angle(0)  # Reset tibia joint
     time.sleep(.02)
 
@@ -578,17 +575,17 @@ def test_single_leg_movement(leg):
     leg.Femur.set_angle(0)
     leg.Tibia.set_angle(0)
     time.sleep(.02)
-    print("Leg movement test completed!")
+    # print("Leg movement test completed!")
 
 
 
 def test_legs_movement(legs):
     """Test function to manually move each leg's servos using predefined angles."""
     import time
-    print("Starting leg movement test...")
+    # print("Starting leg movement test...")
     # Move Coxa to 0 degrees for each leg
     for leg in legs:
-        print(leg.Coxa)
+        # print(leg.Coxa)
         leg.Coxa.set_angle(0)  # Move coxa servo to neutral position
         time.sleep(.02)
 
@@ -615,7 +612,7 @@ def test_legs_movement(legs):
         leg.Tibia.set_angle(0)
         time.sleep(.02)
 
-    print("Leg movement test completed!")
+    # print("Leg movement test completed!")
 
 
 def test_bezier_curve_movement(leg) -> None:

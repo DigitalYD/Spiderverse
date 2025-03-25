@@ -63,16 +63,14 @@ def solve_effector_IK(leg, effector_target, debug_channel=None):
     servo_angles.Femur = 90 - (180.0 / np.pi) * (alpha_1 + alpha_2)
     # Inverse kinematics equation 6: Tibia angle
     # Works in simulator
-    # servo_angles.Tibia = 180 - (180.0 / math.pi) * np.arccos( np.clip(
-    #     (L * L - leg.segment_length.Femur * leg.segment_length.Femur - leg.segment_length.Tibia * leg.segment_length.Tibia) /
-    #     (-2 * leg.segment_length.Tibia * leg.segment_length.Femur),-1,1)
-    # )
-
     servo_angles.Tibia = 180 - (180.0 / math.pi) * np.arccos( np.clip(
         (L * L - leg.segment_length.Femur * leg.segment_length.Femur - leg.segment_length.Tibia * leg.segment_length.Tibia) /
         (-2 * leg.segment_length.Tibia * leg.segment_length.Femur),-1,1)
     )
-
+    
+    ## Test more on the middle leg, may need to make an exception for it, or rotate motor on leg manually
+        
+    
     return servo_angles
 
 

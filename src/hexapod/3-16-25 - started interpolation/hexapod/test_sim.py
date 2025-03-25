@@ -6,15 +6,35 @@ from src.gaits import new_Gait
 import numpy as np 
 from src.coord import new_Coordinate
 from src.config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX
+from src.gaits import GaitType
+from src.bezier2d import BezierCurve
 
 
 
 # Create the hexapod instance
-tripod_gait = new_Gait(0, 1.0)  
+
+# gaits_to_test = [
+#     (GaitType.TRIPOD, 1.0, [0, 0, 0, 0, 0, 0]),  # No phase shift
+#     (GaitType.WAVE, 0.19, [0, 1, 2, 3, 4, 5]),   # Sequential phase shift
+#     (GaitType.TETRAPOD, 0.4, [0, 0, 0, 1, 1, 1]),# Half shifted
+#     (GaitType.RIPPLE, 0.4, [0, 0, 0, 0, 0, 0])   # No phase shift
+# ]
+tripod_gait, tripod_phase = GaitType.TRIPOD, [0, 0, 0, 0, 0, 0]
+wave_gate, wave_phase = GaitType.WAVE, [0, 1, 2, 3, 4, 5]
+ripple_gate, ripple_phase =  GaitType.RIPPLE,  [0, 0, 0, 0, 0, 0]
+tetrapod_gate, tetrapod_phase = GaitType.TETRAPOD,  [0, 0, 0, 1, 1, 1]
+
 body = Body(6, Gait=tripod_gait)  
-body = body.load("src/hexapod_config.json")
+body = body.load("src/hexapod_config.json") # Overwrites gait set
 hexapod = Pod(body)
 
+body.set_gait(tripod_gait)
+hexapod.set_gait(tripod_gait)
+hexapod.phase_shifts = tripod_phase
+print(body.Gait)
+print(hexapod.gait)
+
+    
 NUM_LEGS = hexapod.body_def.num_legs
 STEPS = hexapod.Legs[0].intermediate_angles.steps  
 
@@ -92,18 +112,20 @@ for i in range(NUM_LEGS):
 
 # Real-time animation loop with Z flipped
 index = 0
+
+current_step = 0
+phase_progress = 0.0  # Goes from 0 → 1 in each gait step
+gait_step_duration = 20  # Number of frames per gait phase (adjust as needed)
+
 while True:
     for frame in range(STEPS):
         rate(30)  
         
+        
+        foot_targets = hexapod.update()  # Get new foot targets from gait manager
         for i, leg in enumerate(hexapod.Legs):
-            # Get Bezier curve point and flip Z
-            val = leg.bezier_curve.get_point(index)
-            effector_target = new_Coordinate(val[0], val[1], val[2])  # Flip Z of target
-            
-            # Compute IK and update FK
-            angles = solve_effector_IK(leg, effector_target)
-            hexapod.Legs[i].recalculate_forward_kinematics(angles)
+            angles = solve_effector_IK(leg, foot_targets[i])
+            leg.recalculate_forward_kinematics(angles)
             
             # Map Z-up with flipped Z (X, Y, -Z) to VPython Y-up (X, -Z, Y)
             coxa_pos = vector(
@@ -142,6 +164,7 @@ while True:
             legs_visuals[i][1][2].pos = tibia_pos
             legs_visuals[i][1][2].axis = end_effector_pos - tibia_pos
         
-        index += 1
-        if index >= 100:  # Assuming 100 steps in Bezier curve; adjust as needed
-            index = 0
+        phase_progress += 1.0 / gait_step_duration
+        if phase_progress >= 1.0:
+            phase_progress = 0.0
+            current_step = (current_step + 1) % hexapod.gait.indices

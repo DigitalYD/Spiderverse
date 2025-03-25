@@ -10,7 +10,7 @@
 from src.pod import Pod
 from src.hex_body import Body
 from src.inversekinematics import solve_effector_IK
-from src.gaits import new_Gait
+from src.gaits import new_Gait, GaitType
 import numpy as np 
 from src.coord import new_Coordinate
 from src.config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX
@@ -20,7 +20,18 @@ def main_loop(hexapod):
     '''
         Implement movement and loop here
     '''
+    # Test gaits with phase shifts
+    gaits_to_test = [
+        (GaitType.TRIPOD, 1.0, [0, 0, 0, 0, 0, 0]),  # No phase shift
+        (GaitType.WAVE, 0.19, [0, 1, 2, 3, 4, 5]),   # Sequential phase shift
+        (GaitType.TETRAPOD, 0.4, [0, 0, 0, 1, 1, 1]),# Half shifted
+        (GaitType.RIPPLE, 0.4, [0, 0, 0, 0, 0, 0])   # No phase shift
+    ]
 
+    for gait_type, speed_factor, phase_shifts in gaits_to_test:
+        hexapod.set_gait(gait_type, speed_factor, phase_shifts)
+        hexapod.perform_gait(num_cycles=1)
+    
     #  aquire thetas and move hexapod legs 
     while True:
         hexapod.move_leg_bezier_test()
