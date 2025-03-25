@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Raspberry Pi 5 WebRTC Stream</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        margin: 0;
+        padding: 20px;
+    }
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+        color: #333;
+        text-align: center;
+    }
+    video {
+        width: 100%;
+        max-width: 640px;
+        display: block;
+        margin: 0 auto;
+        background-color: #222;
+        border-radius: 5px;
+    }
+    button {
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 10px 0;
+        cursor: pointer;
+        border-radius: 3px;
+    }
+    #stats {
+        margin-top: 20px;
+        font-family: monospace;
+        white-space: pre-wrap;
+        background-color: #f8f8f8;
+        padding: 10px;
+        border-radius: 3px;
+        height: 150px;
+        overflow-y: auto;
+    }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Raspberry Pi 5 WebRTC Stream</h1>
+        
+        <video id="video" autoplay playsinline muted></video>
+        <button id="start" onclick="start()">Start</button>
+        <button id="stop" onclick="stop()" disabled>Stop</button>
+        
+        <div id="stats"></div>
+    </div>
+
+    <script src="client.js"></script>
+</body>
+</html>
