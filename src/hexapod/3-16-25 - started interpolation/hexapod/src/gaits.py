@@ -15,7 +15,7 @@ GaitPattern = List[List[int]]
 
 @dataclass
 class Gait:
-    '''Set gait pattern''' 
+    ''' Set gait pattern ''' 
     name: str
     pattern: GaitPattern
     indices: int
@@ -53,11 +53,11 @@ def new_Gait(gait_type: GaitType, speed_factor: float = 0) -> Gait:
         if speed_factor == 0:
             speed_factor = 0.4
         tetrapod_pattern = [
-            [1, 0, 0],  # Leg 0 swings at step 0
-            [0, 0, 1],  # Leg 1 swings at step 2
-            [0, 1, 0],  # Leg 2 swings at step 1
-            [1, 0, 0],  # Leg 3 swings at step 0
-            [0, 0, 1],  # Leg 4 swings at step 2
+            [0, 0, 1],  # Leg 0 swings at step 0
+            [0, 1, 0],  # Leg 1 swings at step 2
+            [1, 0, 0],  # Leg 2 swings at step 1
+            [0, 0, 1],  # Leg 3 swings at step 0
+            [1, 0, 0],  # Leg 4 swings at step 2
             [0, 1, 0]   # Leg 5 swings at step 1
         ]
         return Gait(name="Tetrapod", pattern=tetrapod_pattern, indices=3, speed_factor=speed_factor)

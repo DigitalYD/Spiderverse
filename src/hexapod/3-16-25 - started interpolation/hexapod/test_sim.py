@@ -16,23 +16,23 @@ from src.bezier2d import BezierCurve
 # gaits_to_test = [
 #     (GaitType.TRIPOD, 1.0, [0, 0, 0, 0, 0, 0]),  # No phase shift
 #     (GaitType.WAVE, 0.19, [0, 1, 2, 3, 4, 5]),   # Sequential phase shift
-#     (GaitType.TETRAPOD, 0.4, [0, 0, 0, 1, 1, 1]),# Half shifted
+####    (GaitType.TETRAPOD, 0.4, [0, 0, 0, 1, 1, 1]),# Half shifted Not using, requires offset calculation
 #     (GaitType.RIPPLE, 0.4, [0, 0, 0, 0, 0, 0])   # No phase shift
 # ]
-tripod_gait, tripod_phase = GaitType.TRIPOD, [0, 0, 0, 0, 0, 0]
-wave_gate, wave_phase = GaitType.WAVE, [0, 1, 2, 3, 4, 5]
-ripple_gate, ripple_phase =  GaitType.RIPPLE,  [0, 0, 0, 0, 0, 0]
-tetrapod_gate, tetrapod_phase = GaitType.TETRAPOD,  [0, 0, 0, 1, 1, 1]
+tripod_gait, tripod_phase = GaitType.TRIPOD, [0, 1, 0, 1, 0, 1]
+wave_gait, wave_phase = GaitType.WAVE, [0, 1, 2, 3, 4, 5]
+ripple_gait, ripple_phase =  GaitType.RIPPLE,  [0, 1, 2, 3, 0, 1]
+# tetrapod_gait, tetrapod_phase = GaitType.TETRAPOD,  [0, 0, 0, 1, 1, 1]
 
-body = Body(6, Gait=tripod_gait)  
+body = Body(6, Gait=wave_gait)  
 body = body.load("src/hexapod_config.json") # Overwrites gait set
 hexapod = Pod(body)
 
-body.set_gait(tripod_gait)
-hexapod.set_gait(tripod_gait)
-hexapod.phase_shifts = tripod_phase
-print(body.Gait)
-print(hexapod.gait)
+body.set_gait(wave_gait)
+hexapod.set_gait(wave_gait, 1.0, tripod_phase)
+
+# print(body.Gait)
+# print(hexapod.gait)
 
     
 NUM_LEGS = hexapod.body_def.num_legs
@@ -112,10 +112,11 @@ for i in range(NUM_LEGS):
 
 # Real-time animation loop with Z flipped
 index = 0
-
 current_step = 0
 phase_progress = 0.0  # Goes from 0 → 1 in each gait step
 gait_step_duration = 20  # Number of frames per gait phase (adjust as needed)
+
+hexapod.start() # initialize walking
 
 while True:
     for frame in range(STEPS):

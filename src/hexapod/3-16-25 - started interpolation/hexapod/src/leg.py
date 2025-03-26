@@ -58,10 +58,12 @@ class Leg:
     current_gait_phase: str = "neutral"                  # gait(walking), rotation, reset(neutral)
     current_leg_phase: str = "swinging"
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
-    swing_fraction: float = 5/8                     # Hexapod swings from "start"->"grounded"
+    swing_fraction: float = 7/8                     # Hexapod swings from "start"->"grounded"
     control_points: Dict[str, np.ndarray] = field(init=False)
     toe_from_coxa = 75 # distance to place bezier curve away fro the hexapod coxa
-    
+    step_idx:int = 0
+    current_phase:bool = False
+
     def __post_init__(self):
         ''' This post init works for Bezier Curve left rear leg'''
         from src.inversekinematics import solve_effector_IK
