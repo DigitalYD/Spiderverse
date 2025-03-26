@@ -1,0 +1,39 @@
+running egg_info
+creating ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info
+writing ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/PKG-INFO
+writing dependency_links to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/dependency_links.txt
+writing entry points to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/entry_points.txt
+writing requirements to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/requires.txt
+writing top-level names to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/top_level.txt
+writing manifest file '../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/SOURCES.txt'
+reading manifest file '../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/SOURCES.txt'
+writing manifest file '../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/asher/lidar_ws/build/lidar_udp_receiver/build
+creating /home/asher/lidar_ws/build/lidar_udp_receiver/build/lib
+creating /home/asher/lidar_ws/build/lidar_udp_receiver/build/lib/lidar_udp_receiver
+copying lidar_udp_receiver/lidar_udp_receiver.py -> /home/asher/lidar_ws/build/lidar_udp_receiver/build/lib/lidar_udp_receiver
+copying lidar_udp_receiver/__init__.py -> /home/asher/lidar_ws/build/lidar_udp_receiver/build/lib/lidar_udp_receiver
+running install
+running install_lib
+creating /home/asher/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver
+copying /home/asher/lidar_ws/build/lidar_udp_receiver/build/lib/lidar_udp_receiver/lidar_udp_receiver.py -> /home/asher/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver
+copying /home/asher/lidar_ws/build/lidar_udp_receiver/build/lib/lidar_udp_receiver/__init__.py -> /home/asher/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver
+byte-compiling /home/asher/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver/lidar_udp_receiver.py to lidar_udp_receiver.cpython-310.pyc
+byte-compiling /home/asher/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver/__init__.py to __init__.cpython-310.pyc
+running install_data
+creating /home/asher/lidar_ws/install/lidar_udp_receiver/share/ament_index
+creating /home/asher/lidar_ws/install/lidar_udp_receiver/share/ament_index/resource_index
+creating /home/asher/lidar_ws/install/lidar_udp_receiver/share/ament_index/resource_index/packages
+copying resource/lidar_udp_receiver -> /home/asher/lidar_ws/install/lidar_udp_receiver/share/ament_index/resource_index/packages
+copying package.xml -> /home/asher/lidar_ws/install/lidar_udp_receiver/share/lidar_udp_receiver
+creating /home/asher/lidar_ws/install/lidar_udp_receiver/share/lidar_udp_receiver/launch
+copying launch/lidar_receiver.launch.py -> /home/asher/lidar_ws/install/lidar_udp_receiver/share/lidar_udp_receiver/launch
+creating /home/asher/lidar_ws/install/lidar_udp_receiver/share/lidar_udp_receiver/config
+copying config/lidar.rviz -> /home/asher/lidar_ws/install/lidar_udp_receiver/share/lidar_udp_receiver/config
+running install_egg_info
+Copying ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info to /home/asher/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver-0.0.1-py3.10.egg-info
+running install_scripts
+Installing lidar_udp_receiver script to /home/asher/lidar_ws/install/lidar_udp_receiver/lib/lidar_udp_receiver
+writing list of installed files to '/home/asher/lidar_ws/build/lidar_udp_receiver/install.log'
