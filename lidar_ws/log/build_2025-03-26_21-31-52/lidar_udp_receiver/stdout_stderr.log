@@ -1,0 +1,23 @@
+running egg_info
+writing ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/PKG-INFO
+writing dependency_links to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/dependency_links.txt
+writing entry points to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/entry_points.txt
+writing requirements to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/requires.txt
+writing top-level names to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/top_level.txt
+reading manifest file '../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/SOURCES.txt'
+writing manifest file '../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/SOURCES.txt'
+running build
+running build_py
+copying lidar_udp_receiver/tf_broadcaster.py -> /home/asher/Documents/Spiderverse/lidar_ws/build/lidar_udp_receiver/build/lib/lidar_udp_receiver
+running install
+running install_lib
+copying /home/asher/Documents/Spiderverse/lidar_ws/build/lidar_udp_receiver/build/lib/lidar_udp_receiver/tf_broadcaster.py -> /home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver
+byte-compiling /home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver/tf_broadcaster.py to tf_broadcaster.cpython-310.pyc
+running install_data
+running install_egg_info
+removing '/home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver-0.0.1-py3.10.egg-info' (and everything under it)
+Copying ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info to /home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver-0.0.1-py3.10.egg-info
+running install_scripts
+Installing lidar_udp_receiver script to /home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/lidar_udp_receiver
+Installing tf_broadcaster script to /home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/lidar_udp_receiver
+writing list of installed files to '/home/asher/Documents/Spiderverse/lidar_ws/build/lidar_udp_receiver/install.log'

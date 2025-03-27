@@ -1,0 +1,6 @@
+image: /home/asher/Documents/Spiderverse/maps/map_20250326_213900.pgm
+resolution: 0.050000
+origin: [-3.580032, -1.088857, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
