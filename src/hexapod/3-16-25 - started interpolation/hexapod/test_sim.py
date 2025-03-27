@@ -24,12 +24,12 @@ wave_gait, wave_phase = GaitType.WAVE, [0, 1, 2, 3, 4, 5]
 ripple_gait, ripple_phase =  GaitType.RIPPLE,  [0, 1, 2, 3, 0, 1]
 # tetrapod_gait, tetrapod_phase = GaitType.TETRAPOD,  [0, 0, 0, 1, 1, 1]
 
-body = Body(6, Gait=wave_gait)  
+body = Body(6, Gait=tripod_gait)  
 body = body.load("src/hexapod_config.json") # Overwrites gait set
 hexapod = Pod(body)
 
-body.set_gait(wave_gait)
-hexapod.set_gait(wave_gait, 1.0, wave_phase)
+body.set_gait(tripod_gait)
+hexapod.set_gait(tripod_gait, 1.0, tripod_phase)
 
 # print(body.Gait)
 # print(hexapod.gait)
@@ -135,7 +135,13 @@ while True:
             ###---------- 
             # <- Here
             # -----------
-            
+            if index == 150:
+                print("Hexapod has stopped")
+                hexapod.stop()
+                
+            if index == 200:
+                hexapod.setMode = "resetting"
+                
             
             # Map Z-up with flipped Z (X, Y, -Z) to VPython Y-up (X, -Z, Y)
             coxa_pos = vector(
@@ -174,6 +180,8 @@ while True:
             legs_visuals[i][1][2].pos = tibia_pos
             legs_visuals[i][1][2].axis = end_effector_pos - tibia_pos
         
+        index+=1
+    
         phase_progress += 1.0 / gait_step_duration
         if phase_progress >= 1.0:
             phase_progress = 0.0

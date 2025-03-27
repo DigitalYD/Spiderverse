@@ -19,22 +19,28 @@ from src.config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX
 def main_loop(hexapod):
     '''
         Implement movement and loop here
+        Code for motion goes here.
+        - Controller Code
+        - Add in a timer for ~3 seconds. If no additional movement, Adjust legs back to neutral position (if necessary)
+            - call hexapod.setMode = "resetting" to initialize resetting. (returns legs back to "start" position)
     '''
     # Test gaits with phase shifts
-    gaits_to_test = [
-        (GaitType.TRIPOD, 1.0),  # No phase shift
-        (GaitType.WAVE, 0.19),   # Sequential phase shift
-        (GaitType.TETRAPOD, 0.4),# Half shifted
-        (GaitType.RIPPLE, 0.4)   # No phase shift
-    ]
+    # gaits_to_test = [
+    #     (GaitType.TRIPOD, 1.0),  # No phase shift
+    #     (GaitType.WAVE, 0.19),   # Sequential phase shift
+    #     (GaitType.TETRAPOD, 0.4),# Half shifted
+    #     (GaitType.RIPPLE, 0.4)   # No phase shift
+    # ]
 
-    for gait_type, speed_factor, phase_shifts in gaits_to_test:
-        hexapod.set_gait(gait_type, speed_factor, phase_shifts)
-        hexapod.perform_gait(num_cycles=1)
+    # for gait_type, speed_factor, phase_shifts in gaits_to_test:
+    #     hexapod.set_gait(gait_type, speed_factor, phase_shifts)
+    #     hexapod.perform_gait(num_cycles=1)
     
     #  aquire thetas and move hexapod legs 
     while True:
         hexapod.move_leg_bezier_test()
+        
+        
     # In a loop starting here
     # -----
     # receive new message from controller

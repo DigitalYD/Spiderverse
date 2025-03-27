@@ -207,7 +207,7 @@ class Pod:
             self.body_position[0] += sliding_vector[0] * self.direction
             self.body_position[1] += sliding_vector[1] * self.direction
             self.body_position[2] += sliding_vector[2] * self.direction
-            print(f"Hexapod slid to {self.body_position}")
+            # print(f"Hexapod slid to {self.body_position}")
         
         
     def perform_gait(self, num_cycles: int = 1):
@@ -254,13 +254,10 @@ class Pod:
 
     def update(self) -> List[Coordinate]:
         ''' Advance walking movement with proper gait '''
-        # if no gait or not walking
-        if not self.gait or not self.isWalking:
-            return [leg.effector_target for leg in self.Legs]
 
         foot_targets = []
         step_complete = True
-        delta_idx = 1
+        delta_idx = 1 if self.direction == 1 else -1
         
         # print(f"Gait Pattern: {self.gait.pattern}")  # Debug gait pattern
         # print(f"Current Gait Index: {self.currentgaitIndex}")
@@ -271,43 +268,90 @@ class Pod:
             #phase_idx = self.currentgaitIndex
             
             # Add in extra code for "if starting position"
-            if self.currentMode == "standing" and leg.currentlegPhase == "neutral": # if starting from standing position
+            if self.currentMode == "neutral" and all(leg.currentlegPhase == "neutral" for leg in self.Legs): # if starting from standing position
+                print("STANDING AND ALL LEGS ARE NEUTRAL")
+                for i, leg in enumerate(self.Legs):
+                    print(f"Leg {i} phase: {leg.currentlegPhase}", end="")
+                    if leg.currentlegPhase == "neutral":
+                        print(f"Leg {i} neutral: ✅")
+                    else:
+                        print(f"Leg {i}, walking")
+                self.standing()
                 return [leg.effector_target for leg in self.Legs]
             else:
-                # cp = leg.bezier_curve.control_points_dict
-                if not hasattr(leg, 'step_idx'):
-                    leg.step_idx = 0
-                if not hasattr(leg, 'current_phase'):
-                    leg.current_phase = is_swing
+                if self.currentMode == "walking":
+                    print("Is walking")
+                    # cp = leg.bezier_curve.control_points_dict
+                    if not hasattr(leg, 'step_idx'):
+                        leg.step_idx = 0
+                    if not hasattr(leg, 'current_phase'):
+                        leg.current_phase = is_swing
 
-                # If the phase changes, reset step_idx and update the flag
-                if leg.current_phase != is_swing:
-                    leg.step_idx = 0
-                    leg.current_phase = is_swing
+                    # If the phase changes, reset step_idx and update the flag
+                    if leg.current_phase != is_swing:
+                        leg.step_idx = 0
+                        leg.current_phase = is_swing
 
-                if is_swing:
-                    leg.currentlegPhase = "swinging"
-                    swing_curve = leg.bezier_curve.get_points_between("start", "touchdown")
-                    total_points = len(swing_curve)
-                    pos = swing_curve[min(leg.step_idx, total_points - 1)]
-                else:
-                    stance_curve = leg.bezier_curve.get_points_between("touchdown", "return")
-                    total_points = len(stance_curve)
-                    pos = stance_curve[min(leg.step_idx, total_points - 1)]
-                    neutral = leg.bezier_curve.get_point(leg.bezier_curve.num_points)
-                    if np.allclose(pos, neutral, atol=1e-3):
-                        leg.currentlegPhase = "neutral"
-                        print(f"leg {i} neutral")
+                    if is_swing:
+                        leg.currentlegPhase = "swinging"
+                        swing_curve = leg.bezier_curve.get_points_between("start", "touchdown")
+                        total_points = len(swing_curve)
+                        pos = swing_curve[min(leg.step_idx, total_points - 1)]
                     else:
-                        leg.currentlegPhase = "returning"
-                        print(f"leg {i} returning")
-            # Only advance if not at the end of the curve
-            if leg.step_idx < total_points - 1:
-                leg.step_idx += delta_idx
-                step_complete = False
-            else:
-                # Hold position until next phase triggers a reset
-                leg.step_idx = total_points - 1
+                        stance_curve = leg.bezier_curve.get_points_between("touchdown", "return")
+                        total_points = len(stance_curve)
+                        pos = stance_curve[min(leg.step_idx, total_points - 1)]
+                        neutral = leg.bezier_curve.get_point(leg.bezier_curve.num_points)
+                        if np.allclose(pos, neutral, atol=1e-3):
+                            leg.currentlegPhase = "neutral"
+                            print(f"Leg {i} Neutral")
+                        else:
+                            leg.currentlegPhase = "returning"
+                elif self.currentMode == "neutral": # if walking != True. hold legs still. Wait for timer to reset the legs to neutral.
+                    
+                    return [leg.effector_target for leg in self.Legs]
+                
+                elif self.currentMode == "resetting":
+                    # Determine if this leg should move this tick
+                    phase_idx = self.currentgaitIndex % self.gait.indices
+                    is_resetting_leg = self.gait.pattern[i][phase_idx] == 1
+
+                    reset_curve = leg.bezier_curve.curve()
+                    total_points = len(reset_curve)
+
+                    if not hasattr(leg, 'step_idx'):
+                        leg.step_idx = total_points - 1  # Start from wherever it was or end of path
+
+                    if is_resetting_leg and leg.currentlegPhase != "neutral":
+                        # Move leg one step toward neutral
+                        idx = max(0, leg.step_idx - 1)
+                        pos = reset_curve[idx]
+                        leg.step_idx = idx
+
+                        neutral = leg.bezier_curve.get_point(leg.bezier_curve.num_points)
+
+                        if np.allclose(pos, neutral, atol=1e-3) or leg.step_idx == 0:
+                            leg.currentlegPhase = "neutral"
+                            print(f"Leg {i} finished resetting")
+                        else:
+                            leg.currentlegPhase = "resetting"
+                            step_complete = False
+                            print(f"Leg {i} resetting: step_idx={leg.step_idx}")
+                    else:
+                        # Keep leg still if not in resetting phase
+                        idx = leg.step_idx
+                        pos = reset_curve[idx]
+                else: #freeze legs if error
+                    return [leg.effector_target for leg in self.Legs]
+            
+            if self.currentMode != "resetting":
+                # Only advance if not at the end of the curve
+                if leg.step_idx < total_points - 1:
+                    leg.step_idx += delta_idx
+                    step_complete = False
+                else:
+                    # Hold position until next phase triggers a reset
+                    leg.step_idx = total_points - 1
 
             foot_target = new_Coordinate(pos[0], pos[1], pos[2])
             leg.effector_target = foot_target
@@ -343,9 +387,6 @@ class Pod:
                         all_done = False
                 time.sleep(0.02)
 
-    def stop(self) -> None:
-        ''' Starts moving all legs back to neutral position (if a stride has been set)'''
-        self.targetgaitCycles = self.currentgaitCycle
 
     def Zero(self) -> None:
         ''' Set all legs to zero angles (straight out) for the entire pod'''
@@ -417,12 +458,24 @@ class Pod:
         self.isWalking = True
         self.currentMode = "walking"
 
-
     def stop(self):
         ''' stop the gait and walking '''
         self.isWalking = False
+        self.currentMode = "neutral"
+        
+    def standing(self):
         self.targetgaitCycles = self.currentgaitCycle
         self.currentgaitCycle = 0
+        self.isWalking = False
+        self.currentMode = "neutral"
+
+    @property
+    def setMode(self):
+        return self.currentMode
+    
+    @setMode.setter
+    def setMode(self, new_mode):
+        self.currentMode = new_mode
 
     def is_swinging(self, leg_id:int):
         ''' Returns true if the leg is currently in swing phase '''
