@@ -62,7 +62,7 @@ class Pod:
                 offset_transformation_matrix=offset_matrix[i],
                 segment_length=self.body_def.leg_segments[i],
                 servo_angles=self.body_def.rest_angles[i],
-                neutral_effector_coord = Coordinate(0, 0, 120)
+                neutral_effector_coord = Coordinate(0, 0, self.pod_height)
             )
             for i in range(self.body_def.num_legs)
         ]
@@ -84,10 +84,6 @@ class Pod:
     
     def reverse_direction(self) -> None:
         self.direction = REVERSE if self.direction == FORWARD else FORWARD
-
-    def get_current_gait_cycle(self) -> int:
-        ''' Returns the number of gait cycles completed so far '''
-        return self.currentGaitCycle
     
     def set_coxa_length(self, leg_num:int, length:float) -> None:
         ''' Dynamically change length of coxa for given leg '''
@@ -157,7 +153,7 @@ class Pod:
                 offset_transformation_matrix=offset_matrix, # Creates 4x4 identity matrix for an insert
                 segment_length=self.body_def.leg_segments[i],
                 servo_angles=self.body_def.rest_angles[i],  # Provide default servo angles
-                neutral_effector_coord = Coordinate(0,0, -POD_Z_HEIGHT) # From Leg test (May Change)
+                neutral_effector_coord = Coordinate(0,0, self.pod_height) # From Leg test (May Change)
             )
 
     def load_body_def(self, body_def: Body) -> None:
@@ -205,7 +201,7 @@ class Pod:
             self.body_position[0] += sliding_vector[0] * self.direction
             self.body_position[1] += sliding_vector[1] * self.direction
             self.body_position[2] += sliding_vector[2] * self.direction
-            #print(f"Hexapod slid to {self.body_position}")
+            print(f"Hexapod slid to {self.body_position}")
         
         
     def perform_gait(self, num_cycles: int = 1):
@@ -265,7 +261,8 @@ class Pod:
         for i, leg in enumerate(self.Legs):
             phase_idx = self.currentgaitIndex % self.gait.indices
             is_swing = self.gait.pattern[i][phase_idx] == 1
-            phase_idx = self.currentgaitIndex
+            #phase_idx = self.currentgaitIndex
+            
             # cp = leg.bezier_curve.control_points_dict
 
             if not hasattr(leg, 'step_idx'):
@@ -300,22 +297,21 @@ class Pod:
             angles = solve_effector_IK(leg, foot_target)
             leg.recalculate_forward_kinematics(angles)
             foot_targets.append(foot_target)
-
             # print(f"Leg {i}: step_idx={leg.step_idx}, Swing={is_swing}, PhaseIdx={phase_idx}, Pos={pos}, CurveLen={total_points}")
 
         # Advance gait index only when all legs finished their motion
-        if step_complete:
+        if step_complete: 
+            self.slide_hexapod_forward() # Updates hexapod position in code may not be needed or change how this works.
             self.currentgaitIndex = (self.currentgaitIndex + 1) % self.gait.indices
             # print(f"Advanced gait index to {self.currentgaitIndex}")
             if self.currentgaitIndex == 0:
                 self.currentgaitCycle += 1
-                self.slide_hexapod_forward()
                 if self.targetgaitCycles and self.currentgaitCycle >= self.targetgaitCycles:
                     self.isWalking = False
 
         return foot_targets
     
-    
+
     def rotate_in_place(self, theta: float = 2*np.pi):
         ''' rotate hexapod in place over multiple steps '''
         steps = int(theta / (np.pi / 3)) # 6 steps for 360 degrees

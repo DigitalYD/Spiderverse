@@ -13,9 +13,12 @@ FORWARD = 1
 REVERSE = -1
 
 # Set distance from base reference frame Z to end effector Z when robot is in rest/neutral
-POD_Z_HEIGHT:float = 70
+# Anything Under 90 may cause problems with the legs. Basic height
+# Pod height 193 is horizontal
+# Notes: I do not suggest further than 250 (Requires testing on physical robot)
+POD_Z_HEIGHT:float = 90
 
-# height of arc for end effector during swing phase
+# height of arc for end effector during swing phase.
 Z_LIFT:float = 70.0
 
 # Define max height of arc by end effector when in neutral/rest pos

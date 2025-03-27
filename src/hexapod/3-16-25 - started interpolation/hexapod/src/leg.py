@@ -63,7 +63,8 @@ class Leg:
     toe_from_coxa = 150 # distance to place bezier curve away fro the hexapod coxa
     step_idx:int = 0
     current_phase:bool = False
-
+    duty_cycle: float = 0.75 # % of time leg is in "Stance"/"swinging"
+    
     def __post_init__(self):
         ''' This post init works for Bezier Curve left rear leg'''
         from src.inversekinematics import solve_effector_IK
@@ -118,6 +119,8 @@ class Leg:
             radial_dir = get_radial_direction(coxa_pos)
         # get the translated start position for each individual leg based off the coxa coord & offset
         
+        # NOTE: If needed each leg may need a further distance from coxa to the end effector
+        # Do not change "neutral_effector_cord", but offset it using self.toe_coxa, and radial direction if needed
         translated_start = adjust_point_away_from_coxa(start_pos, radial_dir, self.toe_from_coxa)
         #print(f"Translated_start: {translated_start}")
         

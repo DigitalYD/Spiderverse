@@ -22,10 +22,10 @@ def main_loop(hexapod):
     '''
     # Test gaits with phase shifts
     gaits_to_test = [
-        (GaitType.TRIPOD, 1.0, [0, 0, 0, 0, 0, 0]),  # No phase shift
-        (GaitType.WAVE, 0.19, [0, 1, 2, 3, 4, 5]),   # Sequential phase shift
-        (GaitType.TETRAPOD, 0.4, [0, 0, 0, 1, 1, 1]),# Half shifted
-        (GaitType.RIPPLE, 0.4, [0, 0, 0, 0, 0, 0])   # No phase shift
+        (GaitType.TRIPOD, 1.0),  # No phase shift
+        (GaitType.WAVE, 0.19),   # Sequential phase shift
+        (GaitType.TETRAPOD, 0.4),# Half shifted
+        (GaitType.RIPPLE, 0.4)   # No phase shift
     ]
 
     for gait_type, speed_factor, phase_shifts in gaits_to_test:
