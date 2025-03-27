@@ -34,6 +34,7 @@ class Pod:
     gait_step_duration = 20  # Frames per gait phase
     current_step = 0
     phase_progress = 0.0
+    pod_height: int = POD_Z_HEIGHT
     
     def __post_init__(self):
         """Initialize hexapod legs with servos."""
@@ -61,11 +62,21 @@ class Pod:
                 offset_transformation_matrix=offset_matrix[i],
                 segment_length=self.body_def.leg_segments[i],
                 servo_angles=self.body_def.rest_angles[i],
-                neutral_effector_coord = Coordinate(0, 0, 90)
+                neutral_effector_coord = Coordinate(0, 0, 120)
             )
             for i in range(self.body_def.num_legs)
         ]
         self.gait = new_Gait(GaitType.TRIPOD) # Default Gait Tripod
+
+    # Property & Setter Allows the height of the hexapod to be adjusted!
+    # Note the further you set this down below ~70, the futher you need to put the leg tips out.
+    @property
+    def height(self):
+        return self.pod_height
+    
+    @height.setter
+    def height(self, new_height):
+        self.pod_height = new_height
 
     def set_direction(self, direction:int) -> None:
         ''' Set the movement direction '''
@@ -146,7 +157,7 @@ class Pod:
                 offset_transformation_matrix=offset_matrix, # Creates 4x4 identity matrix for an insert
                 segment_length=self.body_def.leg_segments[i],
                 servo_angles=self.body_def.rest_angles[i],  # Provide default servo angles
-                neutral_effector_coord = Coordinate(0,0, -70) # From Leg test (May Change)
+                neutral_effector_coord = Coordinate(0,0, -POD_Z_HEIGHT) # From Leg test (May Change)
             )
 
     def load_body_def(self, body_def: Body) -> None:

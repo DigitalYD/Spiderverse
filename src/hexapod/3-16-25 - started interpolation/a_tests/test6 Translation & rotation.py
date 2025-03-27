@@ -21,10 +21,12 @@ class BezierCurve:
             curve_points[i] = point
         return curve_points
 
-def get_radial_direction(coxa_pos: np.ndarray) -> np.ndarray:
-    """Compute the radial direction unit vector from center [0, 0, 0] to Coxa in XY-plane."""
+def get_radial_direction(coxa_pos: np.ndarray, angle_offset: float = 0.0) -> np.ndarray:
+    """Compute radial direction with an optional angular offset in XY-plane."""
     direction = np.array([coxa_pos[0], coxa_pos[1], 0])
-    return direction / np.linalg.norm(direction)
+    radial = direction / np.linalg.norm(direction)
+    theta = np.arctan2(radial[1], radial[0]) + np.radians(angle_offset)
+    return np.array([np.cos(theta), np.sin(theta), 0])
 
 
 def adjust_point_away_from_coxa(point: np.ndarray, direction: np.ndarray, distance: float) -> np.ndarray:
@@ -111,7 +113,13 @@ for leg_name, data in leg_data.items():
     original_curves[leg_name] = bezier.curve()
     
     # Translated Bézier curve (shifted away from Coxa)
-    radial_dir = get_radial_direction(coxa_pos)
+    if leg_name == "LR":
+        radial_dir = get_radial_direction(coxa_pos, -40)
+    elif leg_name == "RR":
+        radial_dir = get_radial_direction(coxa_pos, 40)
+    else:
+        radial_dir = get_radial_direction(coxa_pos)
+        
     translated_start = adjust_point_away_from_coxa(start_pos, radial_dir, distance_away)
     translated_control_points = get_bezier_control_points(translated_start)
     translated_bezier = BezierCurve(translated_control_points, num_pts=100)

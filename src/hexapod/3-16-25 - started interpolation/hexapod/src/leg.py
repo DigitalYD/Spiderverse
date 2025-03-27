@@ -60,7 +60,7 @@ class Leg:
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
     swing_fraction: float = 7/8                     # Hexapod swings from "start"->"grounded"
     control_points: Dict[str, np.ndarray] = field(init=False)
-    toe_from_coxa = 75 # distance to place bezier curve away fro the hexapod coxa
+    toe_from_coxa = 150 # distance to place bezier curve away fro the hexapod coxa
     step_idx:int = 0
     current_phase:bool = False
 
@@ -102,13 +102,20 @@ class Leg:
         # Start position is directly below the coxa
         # [0,0,-X], [coxa.x, coxa.y,0]
         start_pos = neutral_effector_coord + coxa_pos
-        #print(f'Leg start position: {start_pos}')
+        print(f'Leg start position: {start_pos}')
         
         # reset the neutral effector toe position to be this offset away from coxa
         self.neutral_effector_coord = Coordinate(start_pos[0], start_pos[1], start_pos[2])
         self.current_gait_phase = "gait"
         
-        radial_dir = get_radial_direction(coxa_pos) # get direction of the coxa
+        # Provide angle offset from coxa for rear legs
+        # NOTE: Ensure the legs don't hit the middle legs!
+        if self.Name == "LR":
+            radial_dir = get_radial_direction(coxa_pos, -10) # get direction of the coxa
+        elif self.Name == "RR":
+            radial_dir = get_radial_direction(coxa_pos, 10)
+        else:
+            radial_dir = get_radial_direction(coxa_pos)
         # get the translated start position for each individual leg based off the coxa coord & offset
         
         translated_start = adjust_point_away_from_coxa(start_pos, radial_dir, self.toe_from_coxa)

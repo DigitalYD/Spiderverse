@@ -24,12 +24,12 @@ wave_gait, wave_phase = GaitType.WAVE, [0, 1, 2, 3, 4, 5]
 ripple_gait, ripple_phase =  GaitType.RIPPLE,  [0, 1, 2, 3, 0, 1]
 # tetrapod_gait, tetrapod_phase = GaitType.TETRAPOD,  [0, 0, 0, 1, 1, 1]
 
-body = Body(6, Gait=wave_gait)  
+body = Body(6, Gait=ripple_gait)  
 body = body.load("src/hexapod_config.json") # Overwrites gait set
 hexapod = Pod(body)
 
-body.set_gait(wave_gait)
-hexapod.set_gait(wave_gait, 1.0, tripod_phase)
+body.set_gait(ripple_gait)
+hexapod.set_gait(ripple_gait, 1.0, ripple_phase)
 
 # print(body.Gait)
 # print(hexapod.gait)

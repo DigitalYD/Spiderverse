@@ -194,14 +194,18 @@ def homogeneous_transformation_matrix(projection_matrix: np.ndarray, theta: floa
     return H
 
 
-def get_radial_direction(coxa_pos: np.ndarray) -> np.ndarray:
-    ''' 
-        Computes the radial direction unit vector from center [0, 0, 0] to Coxa in XY-plane
-    
-    '''    
+def get_radial_direction(coxa_pos: np.ndarray, angle_offset: float = 0.0) -> np.ndarray:
+    ''' Compute the radial direction with an optional angular offset in XY-plane
+        This allows an extra offset for front or rear legs if needed.
+        From testing to move each leg closer to the center leg..
+            left rear:  (- theta)
+            right rear: (+ theta)
+        Reverse +/- to bring legs closer together to rear of hexapod
+    '''
     direction = np.array([coxa_pos[0], coxa_pos[1], 0])
-    return direction / np.linalg.norm(direction)
-
+    radial = direction / np.linalg.norm(direction)
+    theta = np.arctan2(radial[1], radial[0]) + np.radians(angle_offset)
+    return np.array([np.cos(theta), np.sin(theta), 0])
 
 def adjust_point_away_from_coxa(point: np.ndarray, direction: np.ndarray, distance: float) -> np.ndarray:
     ''' Adjust a point away from the Coxa along the radial direction '''
