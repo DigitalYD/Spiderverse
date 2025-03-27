@@ -39,7 +39,7 @@ class Leg:
     # Femur: Servo
     # Tibia: Servo
     coxa_angle_offset: float                        # Angle of leg around hexapod body
-    coxa_position: Coordinate
+    coxa_position: Coordinate                       # Positions of coxa from the hexapod center.
     offset_transformation_matrix: np.ndarray        # 4x4 Transform for coxa
     segment_length: SegmentLengths                  # Lengths of coxa, femur, tibia
     servo_angles: ServoAngles                       # Current state of servo angles
@@ -54,9 +54,8 @@ class Leg:
     stanceinterpolationIndex: float = 0.0           # current index in stance-phase interpolation
     sliding: bool = False                           # flag indicating if leg is moving back to neutral position
     Debug: bool = False                             # Set debug mode for printing errors
-    bezier_curve: "BezierCurve" = field(init=False)
-    current_gait_phase: str = "neutral"                  # gait(walking), rotation, reset(neutral)
-    current_leg_phase: str = "swinging"
+    bezier_curve: "BezierCurve" = field(init=False) # Bezier curve which is used for walking
+    current_leg_phase: str = "neutral"              # neutral, swinging, 
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
     swing_fraction: float = 7/8                     # Hexapod swings from "start"->"grounded"
     control_points: Dict[str, np.ndarray] = field(init=False)
@@ -74,9 +73,10 @@ class Leg:
         self.set_gait_control_points()
         # print(f"Joints before Forward Kinematics: {self.Name}, {self.Joints}")
         # Initialize all joints to 0,0,0 initially
+        
         self.recalculate_forward_kinematics(ServoAngles(0,0,0))  # Optional: Update Joints
         # print(f"Joints After Forward Kinematics: {self.Name}, {self.Joints}")
-        self.current_gait_phase = "gait"
+        self.current_leg_phase = "Neutral"
         # set effector target based off standing position of neutral effector
         # self.effector_target = copy.deepcopy(self.neutral_effector_coord) # Start at neutral
         # print(f"Effector_Target: {self.effector_target}")
@@ -107,8 +107,7 @@ class Leg:
         
         # reset the neutral effector toe position to be this offset away from coxa
         self.neutral_effector_coord = Coordinate(start_pos[0], start_pos[1], start_pos[2])
-        self.current_gait_phase = "gait"
-        
+                
         # Provide angle offset from coxa for rear legs
         # NOTE: Ensure the legs don't hit the middle legs!
         if self.Name == "LR":
@@ -189,7 +188,6 @@ class Leg:
             "return": start  # Back to starting radius, not angle
         }
         self.bezier_curve = BezierCurve(self.control_points)
-        self.current_gait_phase = "rotation"
         self.swing_fraction = 5/8 # same as gait for constistancy
 
 
@@ -204,7 +202,7 @@ class Leg:
             "touchdown": neutral
         }
         self.bezier_curve = BezierCurve(self.control_points)
-        self.current_gait_phase = "reset"
+        self.current_leg_phase = "reset"
 
     def reset_interpolator(self):
         '''
@@ -430,12 +428,21 @@ class Leg:
         self.t = 0.0 if is_swinging else self.swing_fraction  # Reset or hold
         return False
 
+    @property
+    def currentlegPhase(self):
+        return self.current_leg_phase
+    
+    @currentlegPhase.setter
+    def currentlegPhase(self, new_phase:str = None):
+        if new_phase != None:
+            self.current_leg_phase = new_phase
+
     def update_rotation(self, delta_t: float, direction: int) -> bool:
         ''' Advance rotation phase '''
         from inversekinematics import solve_effector_IK
 
         # set the current phase to rotation bezier curve
-        if self.current_gait_phase != "rotation":
+        if self.current_leg_phase != "rotation":
             self.set_rotation_control_points()
 
         # set current time index, target, and invese kinematics
@@ -454,7 +461,7 @@ class Leg:
         from inversekinematics import solve_effector_IK
 
         # set new bezier curve to set legs to the reset/neutral position 
-        if self.current_gait_phase != "reset":
+        if self.current_leg_phase != "reset":
             self.set_reset_control_points()
         
         # increase t till end of the movement
@@ -633,7 +640,7 @@ def test_bezier_curve_movement(leg) -> None:
     # print(leg.bezier_curve.curve())
     from inversekinematics import solve_effector_IK
     import time
-    if leg.current_gait_phase != "gait":
+    if leg.current_leg_phase != "gait":
         leg.set_gait_control_points()
 
     max_t = 100

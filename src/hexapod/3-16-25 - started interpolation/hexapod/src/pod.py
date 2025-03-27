@@ -18,6 +18,7 @@ class Pod:
     Legs: List[Leg] = field(default_factory=list)     # List of legs composing the robot
     has_stride: bool = False                          # True if a movement vector or rotation is defined (stride planning)
     isWalking: bool = False                           # True if the robot is currently walking
+    currentMode:str = "standing"                       # Current Mode. "Neutral", "Walking", "changeElevation"
     targetgaitCycles: int = 0                         # Target number of gait cycles to execute (0 for infinite until stopped)
     currentgaitCycle: int = 0                         # Counter for how many gait cycles have been completed
     currentgaitIndex: int = 0                         # Current index in the gait pattern cycle
@@ -164,6 +165,8 @@ class Pod:
     def set_gait(self, gait_type: GaitType, speed_factor: float = 0, phase_shifts: List[int] = None):
         """Set the gait pattern and optional phase shifts."""
         self.gait = new_Gait(gait_type, speed_factor)
+        if phase_shifts is not None:
+            self.phase_shifts = phase_shifts
         self.body_def.set_gait = self.gait
         self.currentgaitIndex = 0
         self.currentgaitCycle = 0
@@ -184,7 +187,10 @@ class Pod:
                 self.phase_shifts = [0, 2, 1, 0, 2, 1]  # Custom shift for tetrapod
             else:
                 self.phase_shifts = [0] * NUM_LEGS  # fallback
-
+        
+        for i, leg in enumerate(self.Legs):
+            leg.servo_angles = solve_effector_IK(leg, new_Coordinate(leg.neutral_effector_coord.X, leg.neutral_effector_coord.Y, leg.neutral_effector_coord.Z))
+            leg.recalculate_forward_kinematics(leg.servo_angles)
 
     def slide_hexapod_forward(self):
         ''' Propel the hexapod's position forward using "sliding" dict and "start"
@@ -248,13 +254,14 @@ class Pod:
 
     def update(self) -> List[Coordinate]:
         ''' Advance walking movement with proper gait '''
+        # if no gait or not walking
         if not self.gait or not self.isWalking:
             return [leg.effector_target for leg in self.Legs]
 
         foot_targets = []
         step_complete = True
         delta_idx = 1
-
+        
         # print(f"Gait Pattern: {self.gait.pattern}")  # Debug gait pattern
         # print(f"Current Gait Index: {self.currentgaitIndex}")
 
@@ -263,27 +270,37 @@ class Pod:
             is_swing = self.gait.pattern[i][phase_idx] == 1
             #phase_idx = self.currentgaitIndex
             
-            # cp = leg.bezier_curve.control_points_dict
-
-            if not hasattr(leg, 'step_idx'):
-                leg.step_idx = 0
-            if not hasattr(leg, 'current_phase'):
-                leg.current_phase = is_swing
-
-            # If the phase changes, reset step_idx and update the flag
-            if leg.current_phase != is_swing:
-                leg.step_idx = 0
-                leg.current_phase = is_swing
-
-            if is_swing:
-                swing_curve = leg.bezier_curve.get_points_between("start", "touchdown")
-                total_points = len(swing_curve)
-                pos = swing_curve[min(leg.step_idx, total_points - 1)]
+            # Add in extra code for "if starting position"
+            if self.currentMode == "standing" and leg.currentlegPhase == "neutral": # if starting from standing position
+                return [leg.effector_target for leg in self.Legs]
             else:
-                stance_curve = leg.bezier_curve.get_points_between("touchdown", "return")
-                total_points = len(stance_curve)
-                pos = stance_curve[min(leg.step_idx, total_points - 1)]
+                # cp = leg.bezier_curve.control_points_dict
+                if not hasattr(leg, 'step_idx'):
+                    leg.step_idx = 0
+                if not hasattr(leg, 'current_phase'):
+                    leg.current_phase = is_swing
 
+                # If the phase changes, reset step_idx and update the flag
+                if leg.current_phase != is_swing:
+                    leg.step_idx = 0
+                    leg.current_phase = is_swing
+
+                if is_swing:
+                    leg.currentlegPhase = "swinging"
+                    swing_curve = leg.bezier_curve.get_points_between("start", "touchdown")
+                    total_points = len(swing_curve)
+                    pos = swing_curve[min(leg.step_idx, total_points - 1)]
+                else:
+                    stance_curve = leg.bezier_curve.get_points_between("touchdown", "return")
+                    total_points = len(stance_curve)
+                    pos = stance_curve[min(leg.step_idx, total_points - 1)]
+                    neutral = leg.bezier_curve.get_point(leg.bezier_curve.num_points)
+                    if np.allclose(pos, neutral, atol=1e-3):
+                        leg.currentlegPhase = "neutral"
+                        print(f"leg {i} neutral")
+                    else:
+                        leg.currentlegPhase = "returning"
+                        print(f"leg {i} returning")
             # Only advance if not at the end of the curve
             if leg.step_idx < total_points - 1:
                 leg.step_idx += delta_idx
@@ -398,6 +415,7 @@ class Pod:
     def start(self):
         ''' Allows calls to update to start cycling '''
         self.isWalking = True
+        self.currentMode = "walking"
 
 
     def stop(self):

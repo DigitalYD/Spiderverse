@@ -68,9 +68,7 @@ def solve_effector_IK(leg, effector_target, debug_channel=None):
         (-2 * leg.segment_length.Tibia * leg.segment_length.Femur),-1,1)
     )
     
-    ## Test more on the middle leg, may need to make an exception for it, or rotate motor on leg manually
-        
-    
+    ## Test more on the middle leg, may need to make an exception for it, or rotate motor on leg manually    
     return servo_angles
 
 

@@ -122,11 +122,20 @@ while True:
     for frame in range(STEPS):
         rate(30)  
         
-        
+        ## Code to update bezier curve based on controller goes here
         foot_targets = hexapod.update()  # Get new foot targets from gait manager
         for i, leg in enumerate(hexapod.Legs):
-            angles = solve_effector_IK(leg, foot_targets[i])
-            leg.recalculate_forward_kinematics(angles)
+            # Get IK values from the targets
+            if foot_targets != None:
+                angles = solve_effector_IK(leg, foot_targets[i])
+                # Calculate new positions
+                leg.recalculate_forward_kinematics(angles)
+            ###---------- 
+            # Move leg positions based on new theta angles here
+            ###---------- 
+            # <- Here
+            # -----------
+            
             
             # Map Z-up with flipped Z (X, Y, -Z) to VPython Y-up (X, -Z, Y)
             coxa_pos = vector(
