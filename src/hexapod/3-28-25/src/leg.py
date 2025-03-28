@@ -35,9 +35,9 @@ class Leg:
     ###
     ## Setup Servo Motors ||| UNCOMMENT ON HEXAPOD |||
     ###
-    # Coxa: Servo
-    # Femur: Servo
-    # Tibia: Servo
+    Coxa: Servo
+    Femur: Servo
+    Tibia: Servo
     coxa_angle_offset: float                        # Angle of leg around hexapod body
     coxa_position: Coordinate                       # Positions of coxa from the hexapod center.
     offset_transformation_matrix: np.ndarray        # 4x4 Transform for coxa
@@ -55,10 +55,14 @@ class Leg:
     sliding: bool = False                           # flag indicating if leg is moving back to neutral position
     Debug: bool = False                             # Set debug mode for printing errors
     bezier_curve: "BezierCurve" = field(init=False) # Bezier curve which is used for walking
+    transition_curve: "BezierCurve" = field(init=False) # Bezier curve which is used for walking
     current_leg_phase: str = "initializing"         # initializingneutral, swinging,
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
     control_points: Dict[str, np.ndarray] = field(init=False)
-    toe_from_coxa = 150 # distance to place bezier curve away fro the hexapod coxa
+    # For Real Time
+    toe_from_coxa:int = 70
+    # For simulation
+    # toe_from_coxa = 150 # distance to place bezier curve away fro the hexapod coxa
     step_idx:int = 0
     current_phase:bool = True
     duty_cycle: float = 0.75 # % of time leg is in "Stance"/"swinging"
@@ -76,13 +80,13 @@ class Leg:
         temp = solve_effector_IK(self, self.neutral_effector_coord)
         self.recalculate_forward_kinematics(temp)
         self.set_initialization_control_points()
+
         # self.set_walking_control_points()
         # point = self.bezier_curve.get_point(0)
         # point = new_Coordinate(point[0], point[1], point[2])
         # coord = solve_effector_IK(self, point)
         
         # print(f"Joints After Forward Kinematics: {self.Name}, {self.Joints}")
-        self.current_leg_phase = "Neutral"
         # set effector target based off standing position of neutral effector
         # self.effector_target = copy.deepcopy(self.neutral_effector_coord) # Start at neutral
         # print(f"Effector_Target: {self.effector_target}")
@@ -102,7 +106,6 @@ class Leg:
 
         # Get translated standing position point.
         from_coxa = coxa_pos + [0,0, POD_Z_HEIGHT]
-
         # NOTE: Ensure the legs don't hit the middle legs!
         if self.Name == "LR":
             radial_dir = get_radial_direction(coxa_pos, -10) # get direction of the coxa
@@ -121,7 +124,8 @@ class Leg:
             "standing": neutral_start
         }
         self.bezier_curve = BezierCurve(self.control_points, num_pts=100)
-
+        if self.Name == "LR":
+            print(self.bezier_curve.curve())
         
     def set_walking_control_points(self, stride_length:float = 25.0):
         ''' Setup the control points for a full gait cycle '''
@@ -137,28 +141,30 @@ class Leg:
         # [0,0,-X], [coxa.x, coxa.y,0]
 
         # Use the current leg position (should be from standing)
-        start_pos = np.array([self.effector_target.X, self.effector_target.Y, self.effector_target.Z])
+        # start_pos = np.array([self.effector_target.X, self.effector_target.Y, self.effector_target.Z])
+        from_coxa = coxa_pos + [0,0, POD_Z_HEIGHT]
         # print(f'Leg start position: {start_pos}')
 
         # Provide angle offset from coxa for rear legs
         # NOTE: Ensure the legs don't hit the middle legs!
         if self.Name == "LR":
-            radial_dir = get_radial_direction(coxa_pos, -10) # get direction of the coxa
+            radial_dir = get_radial_direction(from_coxa, -10) # get direction of the coxa
         elif self.Name == "RR":
-            radial_dir = get_radial_direction(coxa_pos, 10)
+            radial_dir = get_radial_direction(from_coxa, 10)
         else:
-            radial_dir = get_radial_direction(coxa_pos)
+            radial_dir = get_radial_direction(from_coxa)
         # get the translated start position for each individual leg based off the coxa coord & offset
         
         # NOTE: If needed each leg may need a further distance from coxa to the end effector
         # Do not change "neutral_effector_cord", but offset it using self.toe_coxa, and radial direction if needed
-        translated_start = adjust_point_away_from_coxa(start_pos, radial_dir, 0)
+        translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, 50)
         #print(f"Translated_start: {translated_start}")
         
         # Get the adjusted curves.
         translated_control_points = self.get_adjusted_bezier_control_points(translated_start)
         
         self.bezier_curve = BezierCurve(translated_control_points, num_pts=100)
+        self.transition_curve = BezierCurve(translated_control_points, num_pts=100)
         #print(f"Translated_Bezzier: {self.bezier_curve.curve()}")
 
 
@@ -201,15 +207,17 @@ class Leg:
 
     # Define control points relative to start position
     def get_adjusted_bezier_control_points(self, start_pos: np.ndarray) -> dict:
-        ''' Define control points for a Bézier curve. Walking forward motion '''
+        ''' Define control points for a Bézier curve. Walking forward motion
+            NOTE: Bezier curve is negative for real time and Positive for Simulation 
+        '''
         self.control_points = {
             "start": start_pos,
-            "lift": start_pos + np.array([0, 75, -20]),
-            "peak": start_pos + np.array([0, 100, -35]),
-            "lower": start_pos + np.array([0, 125, -20]),
-            "touchdown": start_pos + np.array([0, 125, 0]),
-            "grounded": start_pos + np.array([0, 125, 0]),
-            "sliding": start_pos + np.array([0, 120, 0]),
+            "lift": start_pos + np.array([0, 10, -70]),
+            "peak": start_pos + np.array([0, 50, -150]),
+            "lower": start_pos + np.array([0, 75, -70]),
+            "touchdown": start_pos + np.array([0, 75, 0]),
+            "grounded": start_pos + np.array([0, 75, 0]),
+            "sliding": start_pos + np.array([0, 75, 0]),
             "return": start_pos,
         }
         return self.control_points
@@ -268,7 +276,6 @@ class Leg:
             self.servos[joint].set_angle(int(angle))
         else:
             raise ValueError(f"Invalid joint: {joint}")                      
-
 
     def Zero(self) -> None:
         '''
@@ -541,15 +548,19 @@ class Leg:
             self.intermediate_angles.jointAngle[i][0] = angles.Coxa
             self.intermediate_angles.jointAngle[i][0] = angles.Femur
             self.intermediate_angles.jointAngle[i][0] = angles.Tibia
-            
+
+
+
+
+
+
+
 ## -----------------------------------------------------
 ##  Test Cases for new leg class without bezier curve
 ## -----------------------------------------------------
-
 def new_legs(): #test code to add 6 new legs
 
     # Create the legs with servos
-
     legs = [
         Leg(
             Index=i,
@@ -601,14 +612,14 @@ def new_leg():
     #print(leg)
     return leg
 
-
 def test_single_leg_movement(leg):
     """ Test function to manually move each leg's servos using predefined angles. """
     import time
     #print("Starting leg movement test...")
 
     # Move Coxa to 0 degrees for each leg
-    #print(leg.Coxa)
+    #print(l
+    # eg.Coxa)
     leg.Coxa.set_angle(0)  # Move coxa servo to neutral position
     time.sleep(.02)
 
@@ -641,7 +652,6 @@ def test_single_leg_movement(leg):
     leg.Tibia.set_angle(0)
     time.sleep(.02)
     # print("Leg movement test completed!")
-
 
 
 def test_legs_movement(legs):

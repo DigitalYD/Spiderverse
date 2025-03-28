@@ -2,17 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.animation as animation
-from pod import Pod
-from hex_body import Body
-from gaits import new_Gait
-from config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX
-from coord import Coordinate
-from inversekinematics import solve_effector_IK
+from src.pod import Pod
+from src.hex_body import Body
+from src.gaits import new_Gait
+from src.config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX, EFFECTOR_ORIGIN_INDEX
+from src.coord import Coordinate
+from src.inversekinematics import solve_effector_IK
 
 # Setup hexapod
 tripod_gait = new_Gait(0, 1.0)
 body = Body(6, Gait=tripod_gait)
-body = body.load("hexapod_config.json")
+body = body.load("src/hexapod_config.json")
 hexapod = Pod(body)
 
 NUM_LEGS = hexapod.body_def.num_legs
