@@ -29,7 +29,7 @@ body = body.load("src/hexapod_config.json") # Overwrites gait set
 hexapod = Pod(body)
 
 body.set_gait(tripod_gait)
-hexapod.set_gait(tripod_gait, 1.0, tripod_phase)
+hexapod.set_gait(tripod_gait, 1.0, ripple_phase)
 
 # print(body.Gait)
 # print(hexapod.gait)
@@ -116,12 +116,12 @@ current_step = 0
 phase_progress = 0.0  # Goes from 0 → 1 in each gait step
 gait_step_duration = 20  # Number of frames per gait phase (adjust as needed)
 
-hexapod.start() # initialize walking
+#hexapod.start() # initialize walking
 
 while True:
     for frame in range(STEPS):
         rate(30)  
-        
+            
         ## Code to update bezier curve based on controller goes here
         foot_targets = hexapod.update()  # Get new foot targets from gait manager
         for i, leg in enumerate(hexapod.Legs):
@@ -136,12 +136,16 @@ while True:
             # <- Here
             # -----------
             if index == 150:
-                print("Hexapod has stopped")
+                hexapod.start()
+                
+            if index == 350:
                 hexapod.stop()
-                
-            if index == 200:
+
+            if index == 400:
                 hexapod.setMode = "resetting"
-                
+            
+            if index == 550:
+                hexapod.start()
             
             # Map Z-up with flipped Z (X, Y, -Z) to VPython Y-up (X, -Z, Y)
             coxa_pos = vector(
