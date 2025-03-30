@@ -110,8 +110,8 @@ class Leg:
         }
         # Create bezier curve for initialization points
         self.bezier_curve = BezierCurve(self.control_points, num_pts=100)
-        if self.Name == "LR":
-            print(self.bezier_curve.curve())
+        # if self.Name == "LR":
+        #     print(self.bezier_curve.curve())
         
     def set_walking_control_points(self, stride_length:float = 25.0):
         ''' Setup the control points for a full gait cycle '''
