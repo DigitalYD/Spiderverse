@@ -11,6 +11,9 @@ REVERT_LIFT = 20.0        # height of arc for end effector when reverting to neu
 # Direction constants for leg movement (forward or reverse in gait cycle)
 FORWARD = 1
 REVERSE = -1
+LEFT = 1
+STRAIGHT = 0
+RIGHT = -1
 
 # Set distance from base reference frame Z to end effector Z when robot is in rest/neutral
 # Anything Under 90 may cause problems with the legs. Basic height

@@ -174,7 +174,7 @@ class Pod:
         self.UpdatePodStructure()
 
     def set_gait(self, gait, speed_factor: float = 0):
-        """Set the gait pattern and optional phase shifts."""
+        ''' Set the gait pattern and optional phase shifts '''
         self.body_def.set_gait(gait)
         self.gait = gait
         self.currentgaitIndex = 0
@@ -397,7 +397,7 @@ class Pod:
     
 
     def rotate_in_place(self, theta: float = 2*np.pi):
-        ''' rotate hexapod in place over multiple steps '''
+        ''' Interpolation: rotate hexapod in place over multiple steps '''
         steps = int(theta / (np.pi / 3)) # 6 steps for 360 degrees
         delta_t = 0.05 * self.gait.speed_factor
 
@@ -412,12 +412,12 @@ class Pod:
 
 
     def Zero(self) -> None:
-        ''' Set all legs to zero angles (straight out) for the entire pod'''
+        ''' Interpolation: Set all legs to zero angles (straight out) for the entire pod'''
         for leg in self.Legs:
             leg.Zero()
 
     def set_stride_vector(self, nrepeats:int, x:float, y:float):
-        ''' Sets up the path of a single step and calculates the intermediate angles needed to complete it in the direction of the vector w/ stride length equal to length of vector '''
+        ''' Interpolation: Sets up the path of a single step and calculates the intermediate angles needed to complete it in the direction of the vector w/ stride length equal to length of vector '''
         self.targetgaitCycles = nrepeats
         for l, leg in enumerate(self.Legs):
             #print(l, leg)
@@ -450,7 +450,7 @@ class Pod:
         self.has_stride = True
 
     def set_rotation(self, nrepeats:int, degrees:float):
-        ''' Sets up the path of a single step, instead of following a vector it will follow a curve segment '''
+        ''' Interpolation: Sets up the path of a single step, instead of following a vector it will follow a curve segment '''
         self.targetgaitCycles = nrepeats
 
         for l, leg in enumerate(self.Legs):
@@ -500,6 +500,7 @@ class Pod:
             self.Legs[i].step_idx = 0
         
     def standing(self):
+        ''' When standing, set mode to neutral, reset current gait cycle, set walking to false'''
         self.targetgaitCycles = self.currentgaitCycle
         self.currentgaitCycle = 0
         self.isWalking = False
@@ -518,7 +519,7 @@ class Pod:
         return self.body_def.Gait.pattern[leg_id][self.currentgaitIndex] == 1
     
     def update_movement(self):
-        ''' Cycles through each set of legs, updates swing and stance indices, scan through each grouping, if a group is finished, move to next to complete a "cycle" '''
+        ''' Interpolation: Cycles through each set of legs, updates swing and stance indices, scan through each grouping, if a group is finished, move to next to complete a "cycle" '''
         end_of_swing:bool
 
         # iterate through legs
