@@ -1,0 +1,43 @@
+{
+    "NumLegs": 6,
+    "Gait": "Tripod",
+    "legNames": ["LR", "LM", "LF", "RF", "RM", "RR"],
+    "Coordinate": {
+        "LR": [
+            -60.5, -89, 0
+        ],
+        "LM": [
+            -97, 0, 0
+        ],
+        "LF": [
+            -60.5, 89, 0
+        ],
+        "RF": [
+            60.5, 89, 0
+        ],
+        "RM": [
+            97, 0, 0
+        ],
+        "RR": [
+            60.5, -89, 0
+        ]
+    },
+    "coxa_angle_offset": {
+        "LR": 214.309,
+        "LM": 180,
+        "LF": 135,
+        "RF": 34.0685,
+        "RM": 0,
+        "RR": 315.0
+    },
+    "Segments": {
+        "Coxa": 45,
+        "Femur": 110,
+        "Tibia": 193
+    },
+    "Angles": {
+        "Coxa": -20,
+        "Femur": 0,
+        "Tibia": 80
+    }
+}
