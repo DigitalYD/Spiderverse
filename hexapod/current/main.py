@@ -91,12 +91,8 @@ def hexapod_control(hexapod, ble_data):
 
         time.sleep(0.1)
         '''
-
-        # print(hexapod.Legs)
-        # exit()
-        ## Code to update bezier curve based on controller goes here
-        #print(hexapod.currentMode)
-        foot_targets = hexapod.update()  # Get new foot targets from gait manager
+        
+        hexapod.update()  # Get new foot targets from gait manager
         # for i, leg in enumerate(hexapod.Legs):
         #     print(leg.Name)
         #     print(leg.Coxa.servo_index, leg.Femur.servo_index, leg.Tibia.servo_index)
@@ -107,19 +103,9 @@ def hexapod_control(hexapod, ble_data):
         # #     angles = solve_effector_IK(leg, foot_targets[i])
         # #     # Calculate new positions and update leg's angles
 
-
-        #     ## keyle said move_leg to hexapod update 
-        #     leg.move_leg()
-                # print(f"Hexapod Mode: {hexapod.currentMode}")
-                # print(f"Leg Phase: {leg.currentlegPhase}")
-                # print(leg.bezier_curve.curve())
-                # print(angles)
         if hexapod.currentMode == "neutral":
            hexapod.start()
-                #print(hexapod.currentMode)
-
-                # print(leg.effector_target)
-            # print(leg.bezier_curve.curve())
+               
            
 
                 #if hexapod.currentMode == "walking":
@@ -187,7 +173,7 @@ if __name__ == "__main__":
     ripple_gait =  GaitType.RIPPLE
 
     # Create the hexapod instance
-    gait = new_Gait(wave_gait, 1.0)  
+    gait = new_Gait(tripod_gait, 1.0)  
     body = Body(6, Gait=gait)  
     body = body.load("src/hexapod_config.json")
     hexapod = Pod(body)

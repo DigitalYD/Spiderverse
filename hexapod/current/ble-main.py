@@ -171,53 +171,16 @@ async def connect_and_listen(address):
 
 # FIXED: Removed async from this function, as it needs to run in a thread/task
 def hexapod_control(hexapod):
-    '''
-        Implement movement and loop here
-        Code for motion goes here.
-        - Controller Code
-        - Add in a timer for ~3 seconds. If no additional movement, Adjust legs back to neutral position (if necessary)
-            - call hexapod.setMode = "resetting" to initialize resetting. (returns legs back to "start" position)
-    '''
-    # Variables for idle timeout
-    last_movement_time = 0
-    idle_timeout = 3.0  # seconds
-    current_time = 0
     
-    # print("Hexapod control loop starting")
     
     while True:
-        current_time += 0.1  # Approximate time increment
         
-        # print(f"Hexapod loop - Move Y: {controller_data['move_y']}, Switch: {controller_data['move_switch']}")
-        
-        # Check if we have joystick input for forward movement
-        if abs(controller_data["move_y"]) > 1500:
-            last_movement_time = current_time
-            
-            # If we're in neutral mode, start walking
-            if hexapod.currentMode == "neutral":
-                hexapod.start()
-                # print("Starting to walk")
+        if hexapod.currentMode == "neutral":
+            hexapod.start()
                 
-            # Adjust direction based on joystick Y axis
-            if controller_data["move_y"] > 1500:  # Positive is backward
-                # hexapod.direction = -1  # Backward
-                hexapod.update()
-                # print("Moving backward")
-        
-        # # If no movement for idle_timeout seconds, reset to neutral
-        # elif current_time - last_movement_time > idle_timeout and hexapod.currentMode == "walking":
-        #     hexapod.setMode = "resetting"
-        #     # print("Resetting to neutral (idle timeout)")
-            
-        # # Get new foot targets from gait manager and update hexapod
-        
-        
-        # # If in neutral and no active movement command, start idle mode
-        # if hexapod.currentMode == "neutral" and not controller_data["move_switch"]:
-        #     hexapod.start()
-            
-        # Sleep to prevent CPU hogging
+        if controller_data["move_y"] > 1500:
+            hexapod.update()
+          
         time.sleep(0.05)
 
 # Main entry

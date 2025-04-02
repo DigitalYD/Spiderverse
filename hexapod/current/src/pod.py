@@ -380,6 +380,7 @@ class Pod:
                     foot_target = new_Coordinate(pos[0], pos[1], pos[2])
                     leg.effector_target = foot_target
                     # thread here for calculation
+                    
                     if SIM_ACTIVE:
                         angles = sim_solve_effector_IK(leg, foot_target)
                     else:
