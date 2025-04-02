@@ -97,19 +97,19 @@ def hexapod_control(hexapod, ble_data):
         ## Code to update bezier curve based on controller goes here
         #print(hexapod.currentMode)
         foot_targets = hexapod.update()  # Get new foot targets from gait manager
-        for i, leg in enumerate(hexapod.Legs):
-            print(leg.Name)
-            print(leg.Coxa.servo_index, leg.Femur.servo_index, leg.Tibia.servo_index)
-            print(leg.Coxa.pca_index, leg.Femur.pca_index, leg.Tibia.pca_index)
-        # print(hexapod.currentMode)
-        # Get IK values from the targets
-        # if foot_targets != None:
-        #     angles = solve_effector_IK(leg, foot_targets[i])
-        #     # Calculate new positions and update leg's angles
+        # for i, leg in enumerate(hexapod.Legs):
+        #     print(leg.Name)
+        #     print(leg.Coxa.servo_index, leg.Femur.servo_index, leg.Tibia.servo_index)
+        #     print(leg.Coxa.pca_index, leg.Femur.pca_index, leg.Tibia.pca_index)
+        # # print(hexapod.currentMode)
+        # # Get IK values from the targets
+        # # if foot_targets != None:
+        # #     angles = solve_effector_IK(leg, foot_targets[i])
+        # #     # Calculate new positions and update leg's angles
 
 
-            ## keyle said move_leg to hexapod update 
-            leg.move_leg()
+        #     ## keyle said move_leg to hexapod update 
+        #     leg.move_leg()
                 # print(f"Hexapod Mode: {hexapod.currentMode}")
                 # print(f"Leg Phase: {leg.currentlegPhase}")
                 # print(leg.bezier_curve.curve())
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     ripple_gait =  GaitType.RIPPLE
 
     # Create the hexapod instance
-    gait = new_Gait(tripod_gait, 1.0)  
+    gait = new_Gait(wave_gait, 1.0)  
     body = Body(6, Gait=gait)  
     body = body.load("src/hexapod_config.json")
     hexapod = Pod(body)
@@ -197,4 +197,3 @@ if __name__ == "__main__":
 
     #(hexapod)
     asyncio.run(main(hexapod))
-

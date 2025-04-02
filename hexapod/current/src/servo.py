@@ -79,13 +79,13 @@ if __name__ == '__main__':
         servos[0].set_angle(0)
         time.sleep(0.02)
 
-    time.sleep(1)
+    time.sleep(0.25)
 
     for leg in range(len(legs)):
         servos[1].set_angle(-120)
         time.sleep(0.02)
 
-    time.sleep(1)
+    time.sleep(0.25)
 
     for leg in range(len(legs)):
         servos[2].set_angle(0)

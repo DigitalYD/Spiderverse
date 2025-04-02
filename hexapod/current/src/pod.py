@@ -261,7 +261,10 @@ class Pod:
 
         foot_targets = []
         step_complete = True
-        delta_idx = 1 if self.direction == 1 else -1
+        # delta_idx = 1 if self.direction == 1 else -1
+
+        speed_multiplier = 5
+        delta_idx = speed_multiplier if self.direction == 1 else -speed_multiplier
 
         for i, leg in enumerate(self.Legs):
                 phase_idx = self.currentgaitIndex % self.gait.indices
@@ -283,13 +286,13 @@ class Pod:
                         if leg.current_phase != is_swing:
                             # Get the proper curve for the new phase
                             if is_swing:
-                                if leg.Name == "LF":
-                                    print("current phase != Swing: if is_Swing, getting start/ground\nTransition_curve")
+                                # if leg.Name == "LF":
+                                    # print("current phase != Swing: if is_Swing, getting start/ground\nTransition_curve")
                                 
                                 transition_curve = leg.bezier_curve.get_points_between("start", "grounded")
                             else:
-                                if leg.Name == "LF":
-                                    print("current phase != Swing: if is_Swing, getting ground/return\nTransition_curve")
+                                # if leg.Name == "LF":
+                                #     print("current phase != Swing: if is_Swing, getting ground/return\nTransition_curve")
                                 transition_curve = leg.bezier_curve.get_points_between("grounded", "return")
 
                             # Find current foot position
@@ -301,13 +304,13 @@ class Pod:
                             leg.current_phase = is_swing
 
                         if is_swing:
-                            print("if_Swing: start/grounded\nswing_curve")
+                            # print("if_Swing: start/grounded\nswing_curve")
                             leg.currentlegPhase = "swinging"
                             swing_curve = leg.bezier_curve.get_points_between("start", "grounded")
                             total_points = len(swing_curve)
                             pos = swing_curve[min(leg.step_idx, total_points - 1)]
                         else:
-                            print("if_not Swing: grounded/return\nstance_curve")
+                            # print("if_not Swing: grounded/return\nstance_curve")
                             stance_curve = leg.bezier_curve.get_points_between("grounded", "return")
                             total_points = len(stance_curve)
                             pos = stance_curve[min(leg.step_idx, total_points - 1)]
@@ -381,7 +384,11 @@ class Pod:
                         angles = sim_solve_effector_IK(leg, foot_target)
                     else:
                         angles = solve_effector_IK(leg, foot_target)
+
                     leg.recalculate_forward_kinematics(angles)
+
+                    leg.move_leg()
+
                     foot_targets.append(angles)
 
         # Check if initialization is complete and set currentMode to "neutral"

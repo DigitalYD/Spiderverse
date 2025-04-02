@@ -92,7 +92,7 @@ class Leg:
         elif self.Name == "LM":
             radial_dir = get_radial_direction(coxa_pos, 0) # get direction of the coxa
         elif self.Name == "LF":
-            radial_dir = get_radial_direction(coxa_pos, 20)
+            radial_dir = get_radial_direction(coxa_pos, 20) ## here
         elif self.Name == "RF":
             radial_dir = get_radial_direction(coxa_pos, -100)
         elif self.Name == "RM":
@@ -145,7 +145,7 @@ class Leg:
         elif self.Name == "LM":
             radial_dir = get_radial_direction(coxa_pos, 0) # get direction of the coxa
         elif self.Name == "LF":
-            radial_dir = get_radial_direction(coxa_pos, 20)
+            radial_dir = get_radial_direction(coxa_pos, 20) ## here
         elif self.Name == "RF":
             radial_dir = get_radial_direction(coxa_pos, -100)
         elif self.Name == "RM":
@@ -211,12 +211,12 @@ class Leg:
         elif self.Name =="LF":
             self.control_points = {
                 "start":    start_pos,
-                "lift":     start_pos + np.array([0, 0, -70]),
-                "peak":     start_pos + np.array([0, 40, -150]),
-                "lower":    start_pos + np.array([0, 65, -70]),
-                "touchdown":start_pos + np.array([0, 65, 0]),
-                "grounded": start_pos + np.array([0, 75, 0]),
-                "sliding":  start_pos + np.array([0, 75, 0]),
+                "lift":     start_pos + np.array([0, 20, -50]),
+                "peak":     start_pos + np.array([0, 35, -100]),
+                "lower":    start_pos + np.array([0, 50, -50]),
+                "touchdown":start_pos + np.array([0, 60, 0]),
+                "grounded": start_pos + np.array([0, 60, 0]),
+                "sliding":  start_pos + np.array([0, 60, 0]),
                 "return":   start_pos,
             }
         else:
