@@ -16,11 +16,11 @@ cleanup() {
     if [ -n "$STATIC_TF_PID" ]; then
         kill -9 $STATIC_TF_PID 2>/dev/null
     fi
-    if [ -n "$CART_NODE_PID" ]; then
-        kill -9 $CART_NODE_PID 2>/dev/null
+    if [ -n "$TRILATERATION_PID" ]; then
+        kill -9 $TRILATERATION_PID 2>/dev/null
     fi
-    if [ -n "$CART_GRID_PID" ]; then
-        kill -9 $CART_GRID_PID 2>/dev/null
+    if [ -n "$SLAM_LAUNCH_PID" ]; then
+        kill -9 $SLAM_LAUNCH_PID 2>/dev/null
     fi
     
     echo "Running final cleanup to ensure all processes terminated..."
@@ -49,24 +49,14 @@ STATIC_TF_PID=$!
 # Give TF broadcaster time to start
 sleep 2
 
-echo "Starting Cartographer SLAM..."
-# Start Cartographer node with our improved config
-ros2 run cartographer_ros cartographer_node \
-    -configuration_directory $CONFIG_DIR \
-    -configuration_basename udp_lidar_cartographer_config.lua &
-CART_NODE_PID=$!
+echo "Starting SLAM with Cartographer and Trilateration..."
+# Launch Cartographer SLAM with trilateration integrated
+ros2 launch lidar_udp_receiver cartographer_slam_launch.py \
+    use_trilateration:=true &
+SLAM_LAUNCH_PID=$!
 
 # Give Cartographer time to start
 sleep 3
-
-echo "Starting Occupancy Grid node..."
-# Start Occupancy Grid node
-ros2 run cartographer_ros occupancy_grid_node \
-    -resolution 0.05 \
-    -publish_period_sec 1.0 &
-CART_GRID_PID=$!
-
-sleep 1
 
 echo "Starting RViz2 for visualization..."
 # Run RViz2 with the isolated environment

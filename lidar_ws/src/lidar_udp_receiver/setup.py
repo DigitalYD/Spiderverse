@@ -27,6 +27,7 @@ setup(
         'console_scripts': [
             'lidar_udp_receiver = lidar_udp_receiver.lidar_udp_receiver:main',
             'tf_broadcaster = lidar_udp_receiver.tf_broadcaster:main',
+            'trilateration_node = lidar_udp_receiver.trilateration:main',
         ],
     },
 )
