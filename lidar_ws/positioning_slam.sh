@@ -1,16 +1,42 @@
 #!/bin/bash
 # =============================================================================
-# SLAM.SH - Main script to start SLAM mapping with the RPLidar
+# POSITIONING_SLAM.SH - SLAM mapping with the RPLidar and positioning system
 # =============================================================================
 # This script:
 # 1. Starts the LiDAR UDP receiver
 # 2. Sets up the proper coordinate transforms (TF)
-# 3. Runs Cartographer for SLAM mapping
-# 4. Publishes occupancy grid (for visualization)
+# 3. Runs a positioning system (trilateration or bilateration)
+# 4. Runs Cartographer for SLAM mapping
+# 5. Publishes occupancy grid (for visualization)
 # 
-# Usage: ./slam.sh
+# Usage: ./positioning_slam.sh [tri|bi|none]
+#        tri - use trilateration (3 anchors)
+#        bi - use bilateration (2 anchors)
+#        none - no positioning system (default)
+#
 # Press Ctrl+C to stop mapping when done
 # =============================================================================
+
+# Check if positioning method is provided
+POSITIONING="none"
+if [ $# -ge 1 ]; then
+    case "$1" in
+        tri|trilateration)
+            POSITIONING="trilateration"
+            ;;
+        bi|bilateration)
+            POSITIONING="bilateration"
+            ;;
+        none)
+            POSITIONING="none"
+            ;;
+        *)
+            echo "Unknown positioning method: $1"
+            echo "Valid options: tri, bi, none"
+            exit 1
+            ;;
+    esac
+fi
 
 # Source ROS2 setup
 source /opt/ros/humble/setup.bash
@@ -51,14 +77,17 @@ ros2 run lidar_udp_receiver tf_broadcaster &
 TF_PID=$!
 sleep 2
 
-echo "==== STEP 3: Starting Cartographer SLAM ===="
-ros2 launch lidar_udp_receiver basic_slam_launch.py &
+echo "==== STEP 3: Starting SLAM with $POSITIONING positioning ===="
+ros2 launch lidar_udp_receiver positioning_slam_launch.py positioning_method:=$POSITIONING &
 LAUNCH_PID=$!
 sleep 3
 
 echo ""
 echo "====================== SLAM STARTED ======================"
 echo "SLAM is now running and mapping your environment."
+if [ "$POSITIONING" != "none" ]; then
+    echo "Using $POSITIONING for additional positioning data."
+fi
 echo ""
 echo "INSTRUCTIONS:"
 echo "1. Move your RPLidar around to map the area"
@@ -66,7 +95,7 @@ echo "2. Run './save_map.sh' in another terminal to save the map"
 echo "3. Press Ctrl+C in this terminal when done mapping"
 echo ""
 echo "Available topics:"
-ros2 topic list | grep -E "scan|map|tf|submap" | sort
+ros2 topic list | grep -E "scan|map|tf|submap|positioning" | sort
 echo "========================================================="
 
 # Keep the script running until Ctrl+C is pressed

@@ -1,14 +1,15 @@
 #!/bin/bash
 # =============================================================================
-# SLAM.SH - Main script to start SLAM mapping with the RPLidar
+# TRI_SLAM.SH - SLAM mapping with the RPLidar and trilateration positioning
 # =============================================================================
 # This script:
 # 1. Starts the LiDAR UDP receiver
 # 2. Sets up the proper coordinate transforms (TF)
-# 3. Runs Cartographer for SLAM mapping
-# 4. Publishes occupancy grid (for visualization)
+# 3. Runs trilateration for positioning (3 anchors)
+# 4. Runs Cartographer for SLAM mapping
+# 5. Publishes occupancy grid (for visualization)
 # 
-# Usage: ./slam.sh
+# Usage: ./tri_slam.sh
 # Press Ctrl+C to stop mapping when done
 # =============================================================================
 
@@ -51,14 +52,15 @@ ros2 run lidar_udp_receiver tf_broadcaster &
 TF_PID=$!
 sleep 2
 
-echo "==== STEP 3: Starting Cartographer SLAM ===="
-ros2 launch lidar_udp_receiver basic_slam_launch.py &
+echo "==== STEP 3: Starting SLAM with trilateration positioning ===="
+ros2 launch lidar_udp_receiver trilateration_slam_launch.py &
 LAUNCH_PID=$!
 sleep 3
 
 echo ""
 echo "====================== SLAM STARTED ======================"
 echo "SLAM is now running and mapping your environment."
+echo "Using trilateration for additional positioning data (3 anchors)."
 echo ""
 echo "INSTRUCTIONS:"
 echo "1. Move your RPLidar around to map the area"
@@ -66,7 +68,7 @@ echo "2. Run './save_map.sh' in another terminal to save the map"
 echo "3. Press Ctrl+C in this terminal when done mapping"
 echo ""
 echo "Available topics:"
-ros2 topic list | grep -E "scan|map|tf|submap" | sort
+ros2 topic list | grep -E "scan|map|tf|submap|positioning" | sort
 echo "========================================================="
 
 # Keep the script running until Ctrl+C is pressed
