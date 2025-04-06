@@ -12,9 +12,12 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        # Make sure all launch files are included
+        (os.path.join('share', package_name, 'launch'), glob('launch/*_launch.py')),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         (os.path.join('share', package_name, 'config'), glob('config/*.rviz')),
         (os.path.join('share', package_name, 'config'), glob('config/*.lua')),
+        (os.path.join('share', package_name, 'config'), glob('config/*.py')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -29,6 +32,7 @@ setup(
             'tf_broadcaster = lidar_udp_receiver.tf_broadcaster:main',
             'trilateration_node = lidar_udp_receiver.trilateration:main',
             'bilateration_node = lidar_udp_receiver.bilateration:main',
+            'vizualize_lidar = lidar_udp_receiver.vizualize_lidar:main',
         ],
     },
 )

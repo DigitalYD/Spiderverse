@@ -68,23 +68,17 @@ The system supports multiple positioning methods to enhance mapping:
   ./cleanup.sh
   ```
 
+- **Visualize LiDAR Data**: View LiDAR data with 0-360° visualization
+  ```bash
+  ./vizualize_lidar.sh
+  
+  # Use a custom topic
+  ./vizualize_lidar.sh /custom_scan_topic
+  ```
+
 ## Maps Location
 
 Maps are saved to:
 ```
 ~/Documents/Spiderverse/maps/
 ```
-
-## Troubleshooting
-
-1. If mapping isn't working:
-   - Make sure your RPLidar is properly connected
-   - Check that data is being received on the `/scan` topic
-
-2. If map saving fails:
-   - Make sure SLAM is running when you try to save
-   - Try moving the RPLidar more to gather more data
-
-3. If viewing maps fails:
-   - Install EOG (Eye of GNOME): `sudo apt install eog`
-   - Check that map files exist in the maps directory

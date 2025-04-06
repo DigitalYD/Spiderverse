@@ -92,6 +92,10 @@ class LidarUdpReceiver(Node):
                     quality = struct.unpack('<I', data[offset+8:offset+12])[0]
                     flag = struct.unpack('<I', data[offset+12:offset+16])[0]
                     
+                    # Convert angle from 0-360° to -180 to 180°
+                    if angle > 180.0:
+                        angle = angle - 360.0
+    
                     # Convert angle from degrees to radians
                     angle_rad = np.radians(angle)
                     
