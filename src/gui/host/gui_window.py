@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QSpl
 from PyQt5.QtCore import Qt
 
 from gst_widget import GStreamerWidget
-from mqtt_widget import PiStatsWidget, IMUWidget
+from imu_widget import IMUWidget
 from lidar_widget import LidarWidget
 
 class MainWindow(QMainWindow):
@@ -17,36 +17,33 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        # Create main layout with splitter
-        main_layout = QHBoxLayout(central_widget)
-        splitter = QSplitter(Qt.Horizontal)
+        # Create main vertical layout
+        main_layout = QVBoxLayout(central_widget)
         
-        # Left panel - Video stream
-        self.video_widget = GStreamerWidget()
-        splitter.addWidget(self.video_widget)
-        
-        # Middle panel - Pi stats and IMU data
-        middle_panel = QWidget()
-        middle_layout = QVBoxLayout(middle_panel)
-        
-        # Pi stats widget
-        self.pi_stats_widget = PiStatsWidget()
-        middle_layout.addWidget(self.pi_stats_widget)
-        
-        # IMU widget
+        # Top panel - IMU data (full width)
         self.imu_widget = IMUWidget()
-        middle_layout.addWidget(self.imu_widget)
+        main_layout.addWidget(self.imu_widget)
         
-        splitter.addWidget(middle_panel)
+        # Bottom panel - Splitter for video and LiDAR
+        bottom_splitter = QSplitter(Qt.Horizontal)
         
-        # Right panel - LiDAR data
+        # Left side - Video stream
+        self.video_widget = GStreamerWidget()
+        bottom_splitter.addWidget(self.video_widget)
+        
+        # Right side - LiDAR data
         self.lidar_widget = LidarWidget()
-        splitter.addWidget(self.lidar_widget)
+        bottom_splitter.addWidget(self.lidar_widget)
         
-        # Set initial sizes
-        splitter.setSizes([500, 350, 350])
+        # Set initial sizes for the bottom splitter (60% video, 40% LiDAR)
+        bottom_splitter.setSizes([600, 400])
         
-        main_layout.addWidget(splitter)
+        # Add bottom splitter to main layout
+        main_layout.addWidget(bottom_splitter)
+        
+        # Set the stretch factor to make bottom panel larger than top panel
+        main_layout.setStretchFactor(bottom_splitter, 4)  # Bottom gets 4x space of top
+        main_layout.setStretchFactor(self.imu_widget, 1)  # Top gets 1 unit of space
         
         # Status bar
         self.statusBar().showMessage("Ready")
