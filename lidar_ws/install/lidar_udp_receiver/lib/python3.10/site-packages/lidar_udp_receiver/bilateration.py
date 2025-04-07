@@ -11,8 +11,8 @@ from nav_msgs.msg import Odometry
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
 # Default anchor positions (x, y, z) in centimeters
-ANCHOR_1_POSITION = (0, 0, 90)
-ANCHOR_2_POSITION = (335, 0, 90)
+ANCHOR_1_POSITION = (310, 0, 0)
+ANCHOR_2_POSITION = (0, 0, 0)
 
 # Server configuration
 SERVER_IP = "0.0.0.0"  # Listen on all available interfaces
@@ -37,7 +37,7 @@ class BilaterationNode(Node):
         self.declare_parameter('position_topic', 'bilateration_pose')
         self.declare_parameter('odometry_topic', 'bilateration_odom')
         self.declare_parameter('polling_period_ms', 100)
-        self.declare_parameter('position_uncertainty', 0.25)  # 25cm default uncertainty
+        self.declare_parameter('position_uncertainty', 0.5)  # Increased from 0.25 to 0.5 (50cm uncertainty)
         self.declare_parameter('use_moving_average', True)
         self.declare_parameter('moving_average_window', 5)
         self.declare_parameter('max_position_jump', 1.0)  # Maximum jump in meters
@@ -60,6 +60,10 @@ class BilaterationNode(Node):
         self.reference_y = self.get_parameter('reference_y').value
         self.prefer_positive_y = self.get_parameter('prefer_positive_y').value
         
+        # Add after getting parameters
+        self.get_logger().info(f"Anchor 1 parameter value: {self.get_parameter('anchor1_pos').value}")
+        self.get_logger().info(f"Anchor 1 position after parsing: {self.anchor1_pos}")
+
         # Position history for moving average
         self.position_history = []
         
@@ -107,6 +111,10 @@ class BilaterationNode(Node):
         
         # Send initial polling update
         self.send_polling_update(self.polling_period_ms)
+
+        d = math.sqrt((self.anchor1_pos[0] - self.anchor2_pos[0])**2 + 
+              (self.anchor1_pos[1] - self.anchor2_pos[1])**2)
+        self.get_logger().info(f"Calculated anchor separation: {d:.2f} cm")
     
     def calculate_position(self, anchor1_pos, anchor2_pos, distance1, distance2):
         """
@@ -328,7 +336,7 @@ class BilaterationNode(Node):
         # Set covariance (diagonal elements for x, y, z position uncertainty)
         # Higher values indicate more uncertainty - use higher values for bilateration
         # since we have less information than trilateration
-        position_uncertainty = self.position_uncertainty * 1.5  # Increased uncertainty
+        position_uncertainty = self.position_uncertainty * 4.0  # Greatly increased from 1.5 to 4.0 to favor LiDAR
         pose_msg.pose.covariance[0] = position_uncertainty  # x
         pose_msg.pose.covariance[7] = position_uncertainty  # y
         pose_msg.pose.covariance[14] = position_uncertainty  # z

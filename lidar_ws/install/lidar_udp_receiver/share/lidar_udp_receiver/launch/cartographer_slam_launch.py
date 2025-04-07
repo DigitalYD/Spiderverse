@@ -79,7 +79,7 @@ def generate_launch_description():
             'polling_period_ms': 100,
             # Anchor positions in centimeters
             'anchor1_pos': [0, 0, 90],
-            'anchor2_pos': [660, 0, 90],
+            'anchor2_pos': [310, 0, 90],
             'anchor3_pos': [250, 600, 90],
             # Uncertainty and filtering parameters
             'position_uncertainty': 0.25,

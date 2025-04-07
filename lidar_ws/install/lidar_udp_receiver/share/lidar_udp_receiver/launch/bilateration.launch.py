@@ -38,13 +38,13 @@ def generate_launch_description():
     
     anchor1_pos_arg = DeclareLaunchArgument(
         'anchor1_pos',
-        default_value='[0.0, 0.0, 90.0]',
+        default_value='[310.0, 0.0, 0.0]',
         description='Position of anchor 1 (x, y, z) in cm'
     )
     
     anchor2_pos_arg = DeclareLaunchArgument(
         'anchor2_pos',
-        default_value='[660.0, 0.0, 90.0]',
+        default_value='[0.0, 0.0, 0.0]',
         description='Position of anchor 2 (x, y, z) in cm'
     )
     

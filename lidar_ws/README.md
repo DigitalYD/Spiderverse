@@ -8,7 +8,7 @@ This folder contains scripts for creating 2D maps using an RPLidar with ROS2 and
    ```bash
    # Basic SLAM (no positioning)
    ./slam.sh
-   
+  
    # SLAM with trilateration (3 anchors)
    ./tri_slam.sh
    

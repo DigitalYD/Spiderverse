@@ -12,7 +12,7 @@ from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
 # Default anchor positions (x, y, z) in centimeters
 ANCHOR_1_POSITION = (0, 0, 90)
-ANCHOR_2_POSITION = (660, 0, 90)
+ANCHOR_2_POSITION = (310, 0, 90)
 ANCHOR_3_POSITION = (250, 600, 90)
 
 # Server configuration
@@ -40,7 +40,7 @@ class TrilaterationNode(Node):
         self.declare_parameter('position_topic', 'trilateration_pose')
         self.declare_parameter('odometry_topic', 'trilateration_odom')
         self.declare_parameter('polling_period_ms', 100)
-        self.declare_parameter('position_uncertainty', 0.25)  # 25cm default uncertainty
+        self.declare_parameter('position_uncertainty', 0.5)  # Increased from 0.25 to 0.5 (50cm uncertainty)
         self.declare_parameter('use_moving_average', True)
         self.declare_parameter('moving_average_window', 5)
         self.declare_parameter('max_position_jump', 1.0)  # Maximum jump in meters
@@ -266,10 +266,11 @@ class TrilaterationNode(Node):
         pose_msg.pose.pose.orientation.w = 1.0  # Default orientation (no rotation)
         
         # Set covariance (diagonal elements for x, y, z position uncertainty)
-        # Higher values indicate more uncertainty
-        pose_msg.pose.covariance[0] = self.position_uncertainty  # x
-        pose_msg.pose.covariance[7] = self.position_uncertainty  # y
-        pose_msg.pose.covariance[14] = self.position_uncertainty  # z
+        # Higher values indicate more uncertainty - increased to favor LiDAR
+        position_uncertainty = self.position_uncertainty * 3.0  # Increased significantly to rely more on LiDAR
+        pose_msg.pose.covariance[0] = position_uncertainty  # x
+        pose_msg.pose.covariance[7] = position_uncertainty  # y
+        pose_msg.pose.covariance[14] = position_uncertainty  # z
         
         # Angular uncertainty (high value as we don't measure orientation)
         angular_uncertainty = 9999.0

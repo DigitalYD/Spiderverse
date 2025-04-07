@@ -55,6 +55,7 @@ sleep 2
 echo "==== STEP 3: Starting SLAM with bilateration positioning ===="
 ros2 launch lidar_udp_receiver bilateration_slam_launch.py &
 LAUNCH_PID=$!
+# ros2 run lidar_udp_receiver bilateration_node --ros-args --log-level debug
 sleep 3
 
 echo ""
