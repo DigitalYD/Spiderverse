@@ -30,7 +30,7 @@ def solve_effector_IK(leg, effector_target, debug_channel=None):
     servo_angles.Coxa = ((180.0 / math.pi) * np.arctan2(y, x)) + (360.0 - leg.coxa_angle_offset)
     # If leg.Index is needed: + 360.0 - leg.CoxaSeparationAngle * float(leg.Index)
 
-    if servo_angles.Coxa >= 180:
+    if servo_angles.Coxa > 180:
         servo_angles.Coxa -= 360
 
     # Inverse kinematics equation 2: Lengths in XY and Z
