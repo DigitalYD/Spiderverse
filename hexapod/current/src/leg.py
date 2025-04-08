@@ -208,32 +208,7 @@ class Leg:
                 "sliding":  start_pos + np.array([0, 75, 0]),
                 "return":   start_pos,
             }
-<<<<<<< Updated upstream
-
-=======
-        elif self.Name =="LF":
-            self.control_points = {
-                "start":    start_pos,
-                "lift":     start_pos + np.array([0, 10, -70]),    # Less aggressive initial movement
-                "peak":     start_pos + np.array([0, 35, -120]),   # Lower peak height, less forward reach
-                "lower":    start_pos + np.array([0, 55, -70]),    # Gentler descent
-                "touchdown":start_pos + np.array([0, 60, 0]),      # Shorter stride
-                "grounded": start_pos + np.array([0, 60, 0]),
-                "sliding":  start_pos + np.array([0, 60, 0]),
-                "return":   start_pos,
-            }
-        else:
-            self.control_points = { # ported from original left side working code
-                "start":    start_pos,
-                "lift":     start_pos + np.array([0, 0, -70]),
-                "peak":     start_pos + np.array([0, 50, -150]),
-                "lower":    start_pos + np.array([0, 75, -70]),
-                "touchdown":start_pos + np.array([0, 75, 0]),
-                "grounded": start_pos + np.array([0, 75, 0]),
-                "sliding":  start_pos + np.array([0, 75, 0]),
-                "return":   start_pos,
-            }
->>>>>>> Stashed changes
+      
         return self.control_points
     
     def get_adjusted_reverse_control_points(self, start_pos: np.ndarray) -> dict:
@@ -250,23 +225,6 @@ class Leg:
                 "sliding":  start_pos + np.array([0, -75, 0]),
                 "return":   start_pos,
             }
-<<<<<<< Updated upstream
-=======
-            
-        else:
-            self.control_points = { # ported from original left side working code
-                "start":    start_pos,
-                "lift":     start_pos + np.array([0, 30, -70]),
-                "peak":     start_pos + np.array([0, -50, -150]),
-                "lower":    start_pos + np.array([0, -75, -70]),
-                "touchdown":start_pos + np.array([0, -75, 0]),
-                "grounded": start_pos + np.array([0, -75, 0]),
-                "sliding":  start_pos + np.array([0, -75, 0]),
-                "return":   start_pos,
-            }
-        
-        
->>>>>>> Stashed changes
         return self.control_points
     
     def set_reset_control_points(self):
@@ -392,29 +350,11 @@ class Leg:
     def move_leg(self):
         ''' Shiver me timbers '''
         #print(self.servo_angles)
-<<<<<<< Updated upstream
+
         self.Coxa.set_angle(int(self.servo_angles.Coxa))
         self.Femur.set_angle(int(self.servo_angles.Femur))
         self.Tibia.set_angle(int(self.servo_angles.Tibia))
         
-=======
-        if self.Name == "LF":
-            # Special handling for LF leg
-            self.Coxa.set_angle(self.servo_angles.Coxa)
-            # Adjust femur angle if needed
-            self.Femur.set_angle(self.servo_angles.Femur)
-            # Adjust tibia angle if needed  
-            self.Tibia.set_angle(self.servo_angles.Tibia)
-            
-            # Debug output
-            print(f"LF MOVE: Coxa={self.servo_angles.Coxa:.1f}, Femur={self.servo_angles.Femur:.1f}, Tibia={self.servo_angles.Tibia:.1f}")
-        else:
-            # Normal handling for other legs
-            self.Coxa.set_angle(self.servo_angles.Coxa)
-            self.Femur.set_angle(self.servo_angles.Femur)
-            self.Tibia.set_angle(self.servo_angles.Tibia)
-            
->>>>>>> Stashed changes
 
     def move_leg_with_bezier(self, step_count=100):
         '''
