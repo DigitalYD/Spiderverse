@@ -59,9 +59,10 @@ class Leg:
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
     control_points: Dict[str, np.ndarray] = field(init=False)
     # For Real Time
-    toe_from_coxa:int = 90
+    right_toe_from_coxa:int = 90
+    left_toe_from_coxa:int = 70
     # For simulation
-    # toe_from_coxa = 150 # distance to place bezier curve away fro the hexapod coxa
+    sim_toe_from_coxa = 150 # distance to place bezier curve away fro the hexapod coxa
     step_idx:int = 0
     current_phase:bool = True
     duty_cycle: float = 0.75 # % of time leg is in "Stance"/"swinging"
@@ -71,33 +72,12 @@ class Leg:
         from src.inversekinematics import solve_effector_IK
         self.Joints = [Coordinate() for _ in range(self.num_joints)] # Setup joint positions 
         self.servo_indexes = [self.Index * 3, self.Index * 3 + 1, self.Index * 3 + 2]
-        # Temporary Delete for pod class
-        #print("Joints after Init : ", self.Joints)
-        # print(f"Joints before Forward Kinematics: {self.Name}, {self.Joints}")
-        # Initialize all joints to 0,0,0 initially
-        # print(self.Coxa)
-        # print(self.Coxa.servo_index)
+
         self.recalculate_forward_kinematics(ServoAngles(0, 0, 0))  # Optional: Update Joints
         temp = solve_effector_IK(self, self.neutral_effector_coord)
         self.recalculate_forward_kinematics(temp)
         self.set_initialization_control_points()
 
-        # self.set_walking_control_points()
-        # point = self.bezier_curve.get_point(0)
-        # point = new_Coordinate(point[0], point[1], point[2])
-        # coord = solve_effector_IK(self, point)
-        
-        # print(f"Joints After Forward Kinematics: {self.Name}, {self.Joints}")
-        # set effector target based off standing position of neutral effector
-        # self.effector_target = copy.deepcopy(self.neutral_effector_coord) # Start at neutral
-        # print(f"Effector_Target: {self.effector_target}")
-        # Solve for IK for current coordinate of standing
-        #self.servo_angles = solve_effector_IK(self, new_Coordinate(0,0,0))  # Set angles
-        # print("Joints after IK : ", self.Joints)
-        # print(f'Servo angles: {self.servo_angles}')
-        #self.recalculate_forward_kinematics(self.servo_angles)  # Optional: Update Joints
-        # print("Joints after FK : ", self.Joints)
-        #print("------------------------------------")
     
     def set_initialization_control_points(self):
         #All points start just before max distance at an angle, then moves down to standing
@@ -109,17 +89,29 @@ class Leg:
         # NOTE: Ensure the legs don't hit the middle legs!
         if self.Name == "LR":
             radial_dir = get_radial_direction(coxa_pos, -10) # get direction of the coxa
+        elif self.Name == "LM":
+            radial_dir = get_radial_direction(coxa_pos, 0) # get direction of the coxa
         elif self.Name == "LF":
-            radial_dir = get_radial_direction(coxa_pos, -10)
+            radial_dir = get_radial_direction(coxa_pos, 20) ## here
         elif self.Name == "RF":
             radial_dir = get_radial_direction(coxa_pos, -100)
+        elif self.Name == "RM":
+            radial_dir = get_radial_direction(coxa_pos, -20)
         elif self.Name == "RR":
             radial_dir = get_radial_direction(coxa_pos, 10)
         else:
             radial_dir = get_radial_direction(coxa_pos)
 
-        neutral_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.toe_from_coxa)
-
+        # To see if there is a discrepency here.
+        if self.Name =="RF" or self.Name == "RM" or self.Name == "RR":
+            neutral_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.right_toe_from_coxa)
+        elif self.Name == "LM":
+            neutral_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
+        elif self.Name == "LF":
+            neutral_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
+        else:
+            neutral_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
+            
         # Use the current position, and move to the intended position of each control point (same as walking start point)
         self.neutral_effector_coord = Coordinate(start_pos[0], start_pos[1], start_pos[2])
         
@@ -128,14 +120,11 @@ class Leg:
             "standing": neutral_start
         }
         self.bezier_curve = BezierCurve(self.control_points, num_pts=100)
-        # if self.Name == "RF":
-        #    print(self.bezier_curve.curve())
+
         
-    def set_walking_control_points(self, stride_length:float = 25.0):
-        ''' Setup the control points for a full gait cycle '''
+    def set_walking_control_points(self):
+        ''' Setup the control points for a full walking gait cycle '''
         
-        # Setup Control Points
-        # Get neutral affector coordinates.
         coxa_pos = np.array([self.coxa_position.X, self.coxa_position.Y, self.coxa_position.Z])
 
         ####
@@ -153,10 +142,14 @@ class Leg:
         # NOTE: Ensure the legs don't hit the middle legs!
         if self.Name == "LR":
             radial_dir = get_radial_direction(coxa_pos, -10) # get direction of the coxa
+        elif self.Name == "LM":
+            radial_dir = get_radial_direction(coxa_pos, 0) # get direction of the coxa
         elif self.Name == "LF":
-            radial_dir = get_radial_direction(coxa_pos, -10)
+            radial_dir = get_radial_direction(coxa_pos, 20) ## here
         elif self.Name == "RF":
             radial_dir = get_radial_direction(coxa_pos, -100)
+        elif self.Name == "RM":
+            radial_dir = get_radial_direction(coxa_pos, -20)
         elif self.Name == "RR":
             radial_dir = get_radial_direction(coxa_pos, 10)
         else:
@@ -165,47 +158,34 @@ class Leg:
         
         # NOTE: If needed each leg may need a further distance from coxa to the end effector
         # Do not change "neutral_effector_cord", but offset it using self.toe_coxa, and radial direction if needed
-        translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.toe_from_coxa)
-        #print(f"Translated_start: {translated_start}")
-        
+        if self.Name =="RF" or self.Name == "RM" or self.Name == "RR":
+            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.right_toe_from_coxa)
+        elif self.Name == "LM":
+            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
+        elif self.Name == "LF":
+            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
+        else:
+            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
+            
         # Get the adjusted curves.
-        translated_control_points = self.get_adjusted_bezier_control_points(translated_start)
+        translated_control_points = self.get_adjusted_forward_bezier_control_points(translated_start)
         
         self.bezier_curve = BezierCurve(translated_control_points, num_pts=100)
-        self.transition_curve = BezierCurve(translated_control_points, num_pts=100)
-        #print(f"Translated_Bezzier: {self.bezier_curve.curve()}")
-
-
-        # for interpolation. Future implementation addtion for more capabilties
-        # theta = np.pi/2
-        # r = np.sqrt(self.neutral_effector_coord.X**2 + self.neutral_effector_coord.Y**2)
-        # psi = np.arctan2(self.neutral_effector_coord.Y, self.neutral_effector_coord.X)
-        # start = np.array([r* np.cos(psi), r*np.sin(psi), self.neutral_effector_coord.Z ])
-        # touchdown = np.array([r * np.cos(psi+theta), r*np.sin(psi+theta), self.neutral_effector_coord.Z ])
-        # slide_angle = psi + theta + np.pi/12 #extra 15 degrees for slide push
-        # slide_radius = r * 1.1 # 10% outward push for torque
-
-        # # Control points for rotation around Z axis, during sliding phase adjust slightly for shifting body
-        # self.control_points = {
-        #     "start": start,
-        #     "lift": start + np.array([0, 0, 0]),
-        #     "peak": (start + touchdown) / 2 + np.array([0, 0, 0]),
-        #     "lower": touchdown + np.array([0, 0, 0]),
-        #     "touchdown": touchdown,
-        #     "grounded": touchdown + np.array([0, 0, 0]),  # Adjust z to ground
-        #     "sliding": np.array([slide_radius * np.cos(slide_angle), slide_radius * np.sin(slide_angle), 0]),
-        #     "return": start  # Back to starting radius, not angle
-        # }
+        #print(f"Translated_Bezier: {self.bezier_curve.curve()}")
 
 
     def set_back_control_points(self):
-        ''' NOT IMPLEMENTED PROPERLY'''
+        ''' NOT IMPLEMENTED YET'''
         print("CONTROL POINTS NOT SET")
         coxa_pos = np.array([self.coxa_position.X, self.coxa_position.Y, self.coxa_position.Z])
         
-        if self.Name == "LR" or self.Name == "LF":
+        if self.Name == "LR":
             radial_dir = get_radial_direction(coxa_pos, -10) # get direction of the coxa
-        elif self.Name == "FR":
+        elif self.Name == "LF":
+            radial_dir = get_radial_direction(coxa_pos, -10)
+        elif self.Name == "RF":
+            radial_dir = get_radial_direction(coxa_pos, -100)
+        elif self.Name == "RR":
             radial_dir = get_radial_direction(coxa_pos, 10)
         else:
             radial_dir = get_radial_direction(coxa_pos)
@@ -215,55 +195,74 @@ class Leg:
         return
 
     # Define control points relative to start position
-    def get_adjusted_bezier_control_points(self, start_pos: np.ndarray) -> dict:
+    def get_adjusted_forward_bezier_control_points(self, start_pos: np.ndarray) -> dict:
         ''' Define control points for a Bézier curve. Walking forward motion '''
-        self.control_points = {
-        #     "start": start_pos,
-        #     "lift": start_pos + np.array([0, -20, -70]),
-        #     "peak": start_pos + np.array([0, 30, -150]),
-        #     "lower": start_pos + np.array([0, 55, -70]),
-        #     "touchdown": start_pos + np.array([0, 55, 0]),
-        #     "grounded": start_pos + np.array([0, 55, 0]),
-        #     "sliding": start_pos + np.array([0, 55, 0]),
-        #     "return": start_pos,
-        # }
-
-            "start": start_pos,
-            "lift": start_pos + np.array([0, 0, -70]),
-            "peak": start_pos + np.array([0, 50, -150]),
-            "lower": start_pos + np.array([0, 75, -70]),
-            "touchdown": start_pos + np.array([0, 75, 0]),
-            "grounded": start_pos + np.array([0, 75, 0]),
-            "sliding": start_pos + np.array([0, 75, 0]),
-            "return": start_pos,
-        }
+        if self.Name == "RF" or self.Name == "LM" or self.Name == "RR":
+            self.control_points = {
+                "start":    start_pos,
+                "lift":     start_pos + np.array([0, 30, -70]),
+                "peak":     start_pos + np.array([0, 50, -150]),
+                "lower":    start_pos + np.array([0, 75, -70]),
+                "touchdown":start_pos + np.array([0, 75, 0]),
+                "grounded": start_pos + np.array([0, 75, 0]),
+                "sliding":  start_pos + np.array([0, 75, 0]),
+                "return":   start_pos,
+            }
+        elif self.Name =="LF":
+            self.control_points = {
+                "start":    start_pos,
+                "lift":     start_pos + np.array([0, 20, -50]),
+                "peak":     start_pos + np.array([0, 35, -100]),
+                "lower":    start_pos + np.array([0, 50, -50]),
+                "touchdown":start_pos + np.array([0, 60, 0]),
+                "grounded": start_pos + np.array([0, 60, 0]),
+                "sliding":  start_pos + np.array([0, 60, 0]),
+                "return":   start_pos,
+            }
+        else:
+            self.control_points = { # ported from original left side working code
+                "start":    start_pos,
+                "lift":     start_pos + np.array([0, 0, -70]),
+                "peak":     start_pos + np.array([0, 50, -150]),
+                "lower":    start_pos + np.array([0, 75, -70]),
+                "touchdown":start_pos + np.array([0, 75, 0]),
+                "grounded": start_pos + np.array([0, 75, 0]),
+                "sliding":  start_pos + np.array([0, 75, 0]),
+                "return":   start_pos,
+            }
         return self.control_points
-
-    def set_rotation_control_points(self, theta:float = np.pi/2):
-        ''' set control points for rotation'''
-        r = np.sqrt(self.neutral_effector_coord.X**2 + self.neutral_effector_coord.Y**2)
-        psi = np.arctan2(self.neutral_effector_coord.Y, self.neutral_effector_coord.X)
-        start = np.array([r* np.cos(psi), r*np.sin(psi), self.neutral_effector_coord.Z ])
-        touchdown = np.array([r * np.cos(psi+theta), r*np.sin(psi+theta), self.neutral_effector_coord.Z ])
-        slide_angle = psi + theta + np.pi/12 #extra 15 degrees for slide push
-        slide_radius = r * 1.1 # 10% outward push for torque
-
-        # Control points for rotation around Z axis, during sliding phase adjust slightly for shifting body
-        self.control_points = {
-            "start": start,
-            "lift": start + np.array([0, 0, 25]),
-            "peak": (start + touchdown) / 2 + np.array([0, 0, 75]),
-            "lower": touchdown + np.array([0, 0, 25]),
-            "touchdown": touchdown,
-            "grounded": touchdown + np.array([0, 0, -20]),  # Adjust z to ground
-            "sliding": np.array([slide_radius * np.cos(slide_angle), slide_radius * np.sin(slide_angle), self.neutral_effector_coord.Z]),
-            "return": start  # Back to starting radius, not angle
-        }
-        self.bezier_curve = BezierCurve(self.control_points)
-
-
+    
+    def get_adjusted_reverse_control_points(self, start_pos: np.ndarray) -> dict:
+        ''' Define control points for a Bézier curve. Walking forward motion
+            Requires testing to ensure leg curve is back
+        '''
+        if self.Name == "RF" or self.Name == "LM" or self.Name == "RR":
+            self.control_points = {
+                "start":    start_pos,
+                "lift":     start_pos + np.array([0, -10, -70]),
+                "peak":     start_pos + np.array([0, -50, -150]),
+                "lower":    start_pos + np.array([0, -75, -70]),
+                "touchdown":start_pos + np.array([0, -75, 0]),
+                "grounded": start_pos + np.array([0, -75, 0]),
+                "sliding":  start_pos + np.array([0, -75, 0]),
+                "return":   start_pos,
+            }
+        else:
+            self.control_points = { # ported from original left side working code
+                "start":    start_pos,
+                "lift":     start_pos + np.array([0, 30, -70]),
+                "peak":     start_pos + np.array([0, -50, -150]),
+                "lower":    start_pos + np.array([0, -75, -70]),
+                "touchdown":start_pos + np.array([0, -75, 0]),
+                "grounded": start_pos + np.array([0, -75, 0]),
+                "sliding":  start_pos + np.array([0, -75, 0]),
+                "return":   start_pos,
+            }
+        
+        
+        return self.control_points
     def set_reset_control_points(self):
-        ''' set control points for reset/standing. '''
+        ''' set control points for reset/standing (May not be needed/used). '''
         current = np.array([self.effector_target.X, self.effector_target.Y, self.effector_target.Z])
         neutral = np.array([self.neutral_effector_coord.X, self.neutral_effector_coord.Y, self.neutral_effector_coord.Z])
         self.control_points = {
@@ -384,7 +383,7 @@ class Leg:
 
     def move_leg(self):
         ''' Shiver me timbers '''
-        print(self.servo_angles)
+        #print(self.servo_angles)
         self.Coxa.set_angle(self.servo_angles.Coxa)
         self.Femur.set_angle(self.servo_angles.Femur)
         self.Tibia.set_angle(self.servo_angles.Tibia)

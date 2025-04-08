@@ -6,8 +6,8 @@ from src.hex_body import new_hexapod_body, Body
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict
 from src.gaits import new_Gait, GaitType, Gait
-from src.config import FORWARD, REVERSE, POD_Z_HEIGHT, INTERPOLATION_STEPS,EFFECTOR_ORIGIN_INDEX, NUM_LEGS
-from src.inversekinematics import solve_effector_IK
+from src.config import FORWARD, REVERSE, SIM_ACTIVE, POD_Z_HEIGHT, INTERPOLATION_STEPS,EFFECTOR_ORIGIN_INDEX, NUM_LEGS
+from src.inversekinematics import solve_effector_IK, sim_solve_effector_IK
 from src.coord import Coordinate, new_Coordinate
 from src.bezier2d import BezierCurve
 
@@ -54,8 +54,10 @@ class Pod:
             angle_rad = np.radians(self.body_def.coxa_offsets[i])
             neutral_x = (self.body_def.leg_segments[0].Coxa + self.body_def.leg_segments[0].Femur + self.body_def.leg_segments[0].Tibia) * np.cos(angle_rad)
             neutral_y = (self.body_def.leg_segments[0].Coxa + self.body_def.leg_segments[1].Femur + self.body_def.leg_segments[0].Tibia) * np.sin(angle_rad)
-            # neutral_effector[i] = Coordinate(neutral_x, neutral_y, -30) # -30 for Simulation
-            neutral_effector[i] = Coordinate(neutral_x, neutral_y, -90) # For 3D
+            if SIM_ACTIVE:  # Adjust initialization height of the leg
+                neutral_effector[i] = Coordinate(neutral_x, neutral_y, -30) # -30 for Simulation
+            else:
+                neutral_effector[i] = Coordinate(neutral_x, neutral_y, -90) # For 3D
         # Generate six legs
         self.Legs = [
             Leg(
@@ -140,40 +142,49 @@ class Pod:
     def UpdatePodStructure(self) -> None:
         ''' Update and Recalculate the offset transformation matrices for each leg and modify the leg objects '''
         offset_matrix = {} 
+        neutral_effector = {}
+                
         for i in range(self.body_def.num_legs):  # Six legs
-            # Example transformation matrix (identity for now)
+        # Example transformation matrix (identity for now)
             offset_matrix[i] = np.array([
                 [np.cos(self.body_def.coxa_offsets[i] * np.pi/180), -np.sin(self.body_def.coxa_offsets[i]*np.pi/180), 0, self.body_def.coxa_coords[i].X],  # x translation
                 [np.sin(self.body_def.coxa_offsets[i]*np.pi/180), np.cos(self.body_def.coxa_offsets[i]*np.pi/180), 0, self.body_def.coxa_coords[i].Y],    # y translation
                 [0, 0, 1, self.body_def.coxa_coords[i].Z],      # z translation (none)
                 [0, 0, 0, 1]       # homogeneous row
                 ])
-                # print(f"Leg {i} Coxa Offset: {self.body_def.coxa_offsets[i]}, Coxa Cord {self.body_def.coxa_coords[i]}, offset matrix = {offset_matrix[i]}")
-
-            # Generate six legs
-            self.Legs = [
-                Leg(
-                    Index=i,
-                    Name=self.body_def.leg_names[i],
-                    # Coxa=Servo(i * 3, pca=0x40 if i * 3 < 9 else 0x41),
-                    # Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 9 else 0x41),
-                    # Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 9 else 0x41),
-                    coxa_position = self.body_def.coxa_coords[i],
-                    coxa_angle_offset=self.body_def.coxa_offsets[i],
-                    offset_transformation_matrix=offset_matrix[i],
-                    segment_length=self.body_def.leg_segments[i],
-                    servo_angles=self.body_def.rest_angles[i],
-                    neutral_effector_coord = Coordinate(0, 0, 0)
-                )
-                for i in range(self.body_def.num_legs)
-            ]
+            # print(f"Leg {i} Coxa Offset: {self.body_def.coxa_offsets[i]}, Coxa Cord {self.body_def.coxa_coords[i]}, offset matrix = {offset_matrix[i]}")
+            angle_rad = np.radians(self.body_def.coxa_offsets[i])
+            neutral_x = (self.body_def.leg_segments[0].Coxa + self.body_def.leg_segments[0].Femur + self.body_def.leg_segments[0].Tibia) * np.cos(angle_rad)
+            neutral_y = (self.body_def.leg_segments[0].Coxa + self.body_def.leg_segments[1].Femur + self.body_def.leg_segments[0].Tibia) * np.sin(angle_rad)
+            if SIM_ACTIVE:
+                neutral_effector[i] = Coordinate(neutral_x, neutral_y, -30) # -30 for Simulation
+            else:
+                neutral_effector[i] = Coordinate(neutral_x, neutral_y, -90) # For 3D
+        # Generate six legs
+        self.Legs = [
+            Leg(
+                Index=i,
+                Name=self.body_def.leg_names[i],
+                Coxa=Servo(i * 3, pca=0x40 if i * 3 < 9 else 0x41),
+                Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 9 else 0x41),
+                Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 9 else 0x41),
+                coxa_position = self.body_def.coxa_coords[i],
+                coxa_angle_offset=self.body_def.coxa_offsets[i],
+                offset_transformation_matrix=offset_matrix[i],
+                segment_length=self.body_def.leg_segments[i],
+                servo_angles=self.body_def.rest_angles[i],
+                neutral_effector_coord = neutral_effector[i]
+            )
+            for i in range(self.body_def.num_legs)
+        ]
+        self.gait = new_Gait(GaitType.TRIPOD) # Default Gait Tripod
 
     def load_body_def(self, body_def: Body) -> None:
         self.body_def = body_def
         self.direction = FORWARD
         self.UpdatePodStructure()
 
-    def set_gait(self, gait, speed_factor: float = 0):
+    def set_gait(self, gait):
         """Set the gait pattern and optional phase shifts."""
         self.body_def.set_gait(gait)
         self.gait = gait
@@ -250,7 +261,10 @@ class Pod:
 
         foot_targets = []
         step_complete = True
-        delta_idx = 1 if self.direction == 1 else -1
+        # delta_idx = 1 if self.direction == 1 else -1
+
+        speed_multiplier = 5
+        delta_idx = speed_multiplier if self.direction == 1 else -speed_multiplier
 
         for i, leg in enumerate(self.Legs):
                 phase_idx = self.currentgaitIndex % self.gait.indices
@@ -272,8 +286,13 @@ class Pod:
                         if leg.current_phase != is_swing:
                             # Get the proper curve for the new phase
                             if is_swing:
+                                # if leg.Name == "LF":
+                                    # print("current phase != Swing: if is_Swing, getting start/ground\nTransition_curve")
+                                
                                 transition_curve = leg.bezier_curve.get_points_between("start", "grounded")
                             else:
+                                # if leg.Name == "LF":
+                                #     print("current phase != Swing: if is_Swing, getting ground/return\nTransition_curve")
                                 transition_curve = leg.bezier_curve.get_points_between("grounded", "return")
 
                             # Find current foot position
@@ -285,13 +304,13 @@ class Pod:
                             leg.current_phase = is_swing
 
                         if is_swing:
+                            # print("if_Swing: start/grounded\nswing_curve")
                             leg.currentlegPhase = "swinging"
                             swing_curve = leg.bezier_curve.get_points_between("start", "grounded")
                             total_points = len(swing_curve)
                             pos = swing_curve[min(leg.step_idx, total_points - 1)]
                         else:
-                            # print("in touchdown/return")
-                            #compare current leg position with point position, if not at points
+                            # print("if_not Swing: grounded/return\nstance_curve")
                             stance_curve = leg.bezier_curve.get_points_between("grounded", "return")
                             total_points = len(stance_curve)
                             pos = stance_curve[min(leg.step_idx, total_points - 1)]
@@ -302,7 +321,6 @@ class Pod:
                             else:
                                 leg.currentlegPhase = "returning"
                                 #print("returning")
-
 
                                 
                     elif self.currentMode == "neutral":
@@ -341,7 +359,6 @@ class Pod:
                         if leg.current_phase != is_swing:
                             leg.step_idx = 0
                             leg.current_phase = is_swing
-
                         if is_swing:
                             leg.currentlegPhase = "swinging"
                             initialize_curve = leg.bezier_curve.get_points_between("start", "standing")
@@ -362,8 +379,17 @@ class Pod:
 
                     foot_target = new_Coordinate(pos[0], pos[1], pos[2])
                     leg.effector_target = foot_target
-                    angles = solve_effector_IK(leg, foot_target)
+                    # thread here for calculation
+                    
+                    if SIM_ACTIVE:
+                        angles = sim_solve_effector_IK(leg, foot_target)
+                    else:
+                        angles = solve_effector_IK(leg, foot_target)
+
                     leg.recalculate_forward_kinematics(angles)
+
+                    leg.move_leg()
+
                     foot_targets.append(angles)
 
         # Check if initialization is complete and set currentMode to "neutral"

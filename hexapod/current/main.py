@@ -42,7 +42,7 @@ async def connect_and_listen(address):
         await client.stop_notify(CHARACTERISTIC_UUID)
 
 # Main entry
-def main(hexapod):
+async def main(hexapod):
     # Filter function fixed with correct lambda syntax
     # device = await BleakScanner.find_device_by_filter(lambda d, _: d.name and "AB_BLE_ESP32" in d.name)
     
@@ -53,8 +53,7 @@ def main(hexapod):
     #     # Use the hardcoded MAC if device not found by name
     #     #print("⚠️ ESP32 not found by name, using hardcoded MAC")
     #     await connect_and_listen(ESP32_MAC)
-    # hexapod.Legs.Zero()
-
+    
     hexapod_control(hexapod, current_data)
     
     # previous_data.deepcopy(current_data)
@@ -84,29 +83,31 @@ def hexapod_control(hexapod, ble_data):
 
     while True:
 
+        ## controller code
+        '''
+        current_data = notification_handler()
+
+        print(current_data)
+
+        time.sleep(0.1)
+        '''
         
         hexapod.update()  # Get new foot targets from gait manager
-        for i, leg in enumerate(hexapod.Legs):
-            
-
-
-        #     # print(leg.Name)
-        #     # print(leg.Coxa.servo_index, leg.Femur.servo_index, leg.Tibia.servo_index)
-        #     # print(leg.Coxa.pca_index, leg.Femur.pca_index, leg.Tibia.pca_index)
-        # # # print(hexapod.currentMode)
-        # # # Get IK values from the targets
-        # # # if foot_targets != None:
-        # # #     angles = solve_effector_IK(leg, foot_targets[i])
-        # # #     # Calculate new positions and update leg's angles
-            if (leg.Name == "LF") :
-              leg.move_leg()
-
+        # for i, leg in enumerate(hexapod.Legs):
+        #     print(leg.Name)
+        #     print(leg.Coxa.servo_index, leg.Femur.servo_index, leg.Tibia.servo_index)
+        #     print(leg.Coxa.pca_index, leg.Femur.pca_index, leg.Tibia.pca_index)
+        # # print(hexapod.currentMode)
+        # # Get IK values from the targets
+        # # if foot_targets != None:
+        # #     angles = solve_effector_IK(leg, foot_targets[i])
+        # #     # Calculate new positions and update leg's angles
 
         if hexapod.currentMode == "neutral":
            hexapod.start()
                
            
-        # exit()
+
                 #if hexapod.currentMode == "walking":
                     #print(leg.bezier_curve.curve())
                     #exit()

@@ -60,9 +60,9 @@ class Leg:
     control_points: Dict[str, np.ndarray] = field(init=False)
     # For Real Time
     right_toe_from_coxa:int = 90
-    left_toe_from_coxa:int = 90
+    left_toe_from_coxa:int = 70
     # For simulation
-    sim_toe_from_coxa = 40 # distance to place bezier curve away fro the hexapod coxa
+    sim_toe_from_coxa = 150 # distance to place bezier curve away fro the hexapod coxa
     step_idx:int = 0
     current_phase:bool = True
     duty_cycle: float = 0.75 # % of time leg is in "Stance"/"swinging"
@@ -92,7 +92,7 @@ class Leg:
         elif self.Name == "LM":
             radial_dir = get_radial_direction(coxa_pos, 0) # get direction of the coxa
         elif self.Name == "LF":
-            radial_dir = get_radial_direction(coxa_pos, 30) ## here
+            radial_dir = get_radial_direction(coxa_pos, 20) ## here
         elif self.Name == "RF":
             radial_dir = get_radial_direction(coxa_pos, -100)
         elif self.Name == "RM":
@@ -197,8 +197,8 @@ class Leg:
     # Define control points relative to start position
     def get_adjusted_forward_bezier_control_points(self, start_pos: np.ndarray) -> dict:
         ''' Define control points for a Bézier curve. Walking forward motion '''
-
-        self.control_points = {
+        if self.Name == "RF" or self.Name == "LM" or self.Name == "RR":
+            self.control_points = {
                 "start":    start_pos,
                 "lift":     start_pos + np.array([0, 30, -70]),
                 "peak":     start_pos + np.array([0, 50, -150]),
@@ -208,14 +208,36 @@ class Leg:
                 "sliding":  start_pos + np.array([0, 75, 0]),
                 "return":   start_pos,
             }
-      
+        elif self.Name =="LF":
+            self.control_points = {
+                "start":    start_pos,
+                "lift":     start_pos + np.array([0, 20, -50]),
+                "peak":     start_pos + np.array([0, 35, -100]),
+                "lower":    start_pos + np.array([0, 50, -50]),
+                "touchdown":start_pos + np.array([0, 60, 0]),
+                "grounded": start_pos + np.array([0, 60, 0]),
+                "sliding":  start_pos + np.array([0, 60, 0]),
+                "return":   start_pos,
+            }
+        else:
+            self.control_points = { # ported from original left side working code
+                "start":    start_pos,
+                "lift":     start_pos + np.array([0, 0, -70]),
+                "peak":     start_pos + np.array([0, 50, -150]),
+                "lower":    start_pos + np.array([0, 75, -70]),
+                "touchdown":start_pos + np.array([0, 75, 0]),
+                "grounded": start_pos + np.array([0, 75, 0]),
+                "sliding":  start_pos + np.array([0, 75, 0]),
+                "return":   start_pos,
+            }
         return self.control_points
     
     def get_adjusted_reverse_control_points(self, start_pos: np.ndarray) -> dict:
         ''' Define control points for a Bézier curve. Walking forward motion
             Requires testing to ensure leg curve is back
         '''
-        self.control_points = {
+        if self.Name == "RF" or self.Name == "LM" or self.Name == "RR":
+            self.control_points = {
                 "start":    start_pos,
                 "lift":     start_pos + np.array([0, -10, -70]),
                 "peak":     start_pos + np.array([0, -50, -150]),
@@ -225,8 +247,20 @@ class Leg:
                 "sliding":  start_pos + np.array([0, -75, 0]),
                 "return":   start_pos,
             }
+        else:
+            self.control_points = { # ported from original left side working code
+                "start":    start_pos,
+                "lift":     start_pos + np.array([0, 30, -70]),
+                "peak":     start_pos + np.array([0, -50, -150]),
+                "lower":    start_pos + np.array([0, -75, -70]),
+                "touchdown":start_pos + np.array([0, -75, 0]),
+                "grounded": start_pos + np.array([0, -75, 0]),
+                "sliding":  start_pos + np.array([0, -75, 0]),
+                "return":   start_pos,
+            }
+        
+        
         return self.control_points
-    
     def set_reset_control_points(self):
         ''' set control points for reset/standing (May not be needed/used). '''
         current = np.array([self.effector_target.X, self.effector_target.Y, self.effector_target.Z])
@@ -350,10 +384,9 @@ class Leg:
     def move_leg(self):
         ''' Shiver me timbers '''
         #print(self.servo_angles)
-
-        self.Coxa.set_angle(int(self.servo_angles.Coxa))
-        self.Femur.set_angle(int(self.servo_angles.Femur))
-        self.Tibia.set_angle(int(self.servo_angles.Tibia))
+        self.Coxa.set_angle(self.servo_angles.Coxa)
+        self.Femur.set_angle(self.servo_angles.Femur)
+        self.Tibia.set_angle(self.servo_angles.Tibia)
         
 
     def move_leg_with_bezier(self, step_count=100):

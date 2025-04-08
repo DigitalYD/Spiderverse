@@ -99,12 +99,10 @@ class BezierCurve:
         if start_key not in self.index_map or end_key not in self.index_map:
             raise ValueError(f"Keys '{start_key}' or '{end_key}' not found in control points dictionary.")
 
-        # Get the precomputed indices for the start and end keys
         start_idx = self.index_map[start_key]
         end_idx = self.index_map[end_key]
         
         if start_idx > end_idx:
-            start_idx, end_idx = end_idx, start_idx  # Swap if start is after end
+            start_idx, end_idx = end_idx, start_idx
         
-        # Return the slice of precomputed points between start_idx and end_idx
         return [self.cp[i] for i in range(start_idx, end_idx + 1)]

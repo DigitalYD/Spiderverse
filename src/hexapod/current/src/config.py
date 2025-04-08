@@ -1,4 +1,6 @@
 # Constants related to leg joints and interpolation (from leg.go and pod.go)
+
+SIM_ACTIVE: bool = False
 NUM_JOINTS = 4  # number of joints in a leg (Coxa, Femur, Tibia, End Effector)
 COXA_ORIGIN_INDEX = 0
 FEMUR_ORIGIN_INDEX = 1
@@ -11,6 +13,9 @@ REVERT_LIFT = 20.0        # height of arc for end effector when reverting to neu
 # Direction constants for leg movement (forward or reverse in gait cycle)
 FORWARD = 1
 REVERSE = -1
+LEFT = 1
+STRAIGHT = 0
+RIGHT = -1
 
 # Set distance from base reference frame Z to end effector Z when robot is in rest/neutral
 # Anything Under 90 may cause problems with the legs. Basic height
@@ -22,7 +27,7 @@ POD_Z_HEIGHT:float = 140
 Z_LIFT:float = 70.0
 
 # Define max height of arc by end effector when in neutral/rest pos
-NeutralLIFT:float = 50
+NEUTRAL_LIFT:float = 50
 
 # Odd number of interpolation steps
 INTERPOLATION_STEPS = 21

@@ -91,30 +91,21 @@ def hexapod_control(hexapod, ble_data):
 
         time.sleep(0.1)
         '''
+        
+        hexapod.update()  # Get new foot targets from gait manager
+        # for i, leg in enumerate(hexapod.Legs):
+        #     print(leg.Name)
+        #     print(leg.Coxa.servo_index, leg.Femur.servo_index, leg.Tibia.servo_index)
+        #     print(leg.Coxa.pca_index, leg.Femur.pca_index, leg.Tibia.pca_index)
+        # # print(hexapod.currentMode)
+        # # Get IK values from the targets
+        # # if foot_targets != None:
+        # #     angles = solve_effector_IK(leg, foot_targets[i])
+        # #     # Calculate new positions and update leg's angles
 
-        # print(hexapod.Legs)
-        # exit()
-        ## Code to update bezier curve based on controller goes here
-        print(hexapod.currentMode)
-        foot_targets = hexapod.update()  # Get new foot targets from gait manager
-        for i, leg in enumerate(hexapod.Legs):
-            if leg.Name == "LR":
-            # print(hexapod.currentMode)
-            # Get IK values from the targets
-            # if foot_targets != None:
-            #     angles = solve_effector_IK(leg, foot_targets[i])
-            #     # Calculate new positions and update leg's angles
-                leg.move_leg()
-                # print(f"Hexapod Mode: {hexapod.currentMode}")
-                # print(f"Leg Phase: {leg.currentlegPhase}")
-                # print(leg.bezier_curve.curve())
-                # print(angles)
         if hexapod.currentMode == "neutral":
-            hexapod.start()
-                #print(hexapod.currentMode)
-
-                # print(leg.effector_target)
-            # print(leg.bezier_curve.curve())
+           hexapod.start()
+               
            
 
                 #if hexapod.currentMode == "walking":
@@ -192,4 +183,3 @@ if __name__ == "__main__":
 
     #(hexapod)
     asyncio.run(main(hexapod))
-
