@@ -27,7 +27,7 @@ def solve_effector_IK(leg, effector_target, debug_channel=None):
     # Inverse kinematics equation 1: Coxa angle
     x = effector_target.X - leg.Joints[COXA_ORIGIN_INDEX].X
     y = effector_target.Y - leg.Joints[COXA_ORIGIN_INDEX].Y
-    servo_angles.Coxa = (180.0 / math.pi) * np.arctan2(y, x) + 360.0 - leg.coxa_angle_offset
+    servo_angles.Coxa = ((180.0 / math.pi) * np.arctan2(y, x)) + (360.0 - leg.coxa_angle_offset)
     # If leg.Index is needed: + 360.0 - leg.CoxaSeparationAngle * float(leg.Index)
 
     if servo_angles.Coxa >= 180:
