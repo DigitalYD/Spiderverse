@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from pod import Pod
-from hex_body import new_hexapod_body
+from src.pod import Pod
+from src.hex_body import new_hexapod_body
 
 # Initialize pod with hexapod body config
 hexapod = Pod(body_def=new_hexapod_body())

@@ -75,6 +75,8 @@ class Pod:
             )
             for i in range(self.body_def.num_legs)
         ]
+        
+        
         self.gait = new_Gait(GaitType.TRIPOD) # Default Gait Tripod
 
     # Property & Setter Allows the height of the hexapod to be adjusted!
@@ -261,9 +263,8 @@ class Pod:
 
         foot_targets = []
         step_complete = True
-        # delta_idx = 1 if self.direction == 1 else -1
 
-        speed_multiplier = 5
+        speed_multiplier = 3
         delta_idx = speed_multiplier if self.direction == 1 else -speed_multiplier
 
         for i, leg in enumerate(self.Legs):
@@ -287,7 +288,7 @@ class Pod:
                             # Get the proper curve for the new phase
                             if is_swing:
                                 # if leg.Name == "LF":
-                                    # print("current phase != Swing: if is_Swing, getting start/ground\nTransition_curve")
+                                #     print("current phase != Swing: if is_Swing, getting start/ground\nTransition_curve")
                                 
                                 transition_curve = leg.bezier_curve.get_points_between("start", "grounded")
                             else:
@@ -381,14 +382,14 @@ class Pod:
                     leg.effector_target = foot_target
                     # thread here for calculation
                     
-                    if SIM_ACTIVE:
-                        angles = sim_solve_effector_IK(leg, foot_target)
-                    else:
-                        angles = solve_effector_IK(leg, foot_target)
+                    # if SIM_ACTIVE:
+                    #     angles = sim_solve_effector_IK(leg, foot_target)
+                    # else:
+                    angles = solve_effector_IK(leg, foot_target)
 
                     leg.recalculate_forward_kinematics(angles)
 
-                    leg.move_leg()
+                    # leg.move_leg()
 
                     foot_targets.append(angles)
 

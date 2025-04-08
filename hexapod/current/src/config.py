@@ -24,7 +24,7 @@ RIGHT = -1
 POD_Z_HEIGHT:float = 175
 
 # height of arc for end effector during swing phase.
-Z_LIFT:float = 70.0
+Z_LIFT:float = 90.0 #70.0
 
 # Define max height of arc by end effector when in neutral/rest pos
 NEUTRAL_LIFT:float = 50
