@@ -67,7 +67,7 @@ class Servo():
         #print(f"Pulse Complete, angle {kin_angle_corr}")
 
         self.pca.setServoPulse(self.servo_index, pulse)
-        time.sleep(0.01)
+        time.sleep(0.005)
 
 
 if __name__ == '__main__':
