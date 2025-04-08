@@ -59,8 +59,8 @@ class Leg:
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
     control_points: Dict[str, np.ndarray] = field(init=False)
     # For Real Time
-    right_toe_from_coxa:int = 40
-    left_toe_from_coxa:int = 40
+    right_toe_from_coxa:int = 90
+    left_toe_from_coxa:int = 90
     # For simulation
     sim_toe_from_coxa = 40 # distance to place bezier curve away fro the hexapod coxa
     step_idx:int = 0
