@@ -60,7 +60,7 @@ class Leg:
     control_points: Dict[str, np.ndarray] = field(init=False)
     # For Real Time
     right_toe_from_coxa:int = 90
-    left_toe_from_coxa:int = 70
+    left_toe_from_coxa:int = 90
     # For simulation
     sim_toe_from_coxa = 150 # distance to place bezier curve away fro the hexapod coxa
     step_idx:int = 0
