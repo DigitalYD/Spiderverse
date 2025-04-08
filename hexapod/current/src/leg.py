@@ -384,9 +384,9 @@ class Leg:
     def move_leg(self):
         ''' Shiver me timbers '''
         #print(self.servo_angles)
-        self.Coxa.set_angle(self.servo_angles.Coxa)
-        self.Femur.set_angle(self.servo_angles.Femur)
-        self.Tibia.set_angle(self.servo_angles.Tibia)
+        self.Coxa.set_angle(int(self.servo_angles.Coxa))
+        self.Femur.set_angle(int(self.servo_angles.Femur))
+        self.Tibia.set_angle(int(self.servo_angles.Tibia))
         
 
     def move_leg_with_bezier(self, step_count=100):
