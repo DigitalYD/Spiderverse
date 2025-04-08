@@ -59,10 +59,10 @@ class Leg:
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
     control_points: Dict[str, np.ndarray] = field(init=False)
     # For Real Time
-    right_toe_from_coxa:int = 90
-    left_toe_from_coxa:int = 70
+    right_toe_from_coxa:int = 40
+    left_toe_from_coxa:int = 40
     # For simulation
-    sim_toe_from_coxa = 150 # distance to place bezier curve away fro the hexapod coxa
+    sim_toe_from_coxa = 40 # distance to place bezier curve away fro the hexapod coxa
     step_idx:int = 0
     current_phase:bool = True
     duty_cycle: float = 0.75 # % of time leg is in "Stance"/"swinging"
