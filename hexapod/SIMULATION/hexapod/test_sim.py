@@ -178,7 +178,7 @@ while True:
         if index == 400:
             hexapod.reverse_direction()
 
-        if index == 550:
+        if index == 600:
             hexapod.stop()
         
         if index == 650:
