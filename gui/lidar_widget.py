@@ -7,12 +7,13 @@ import random
 import numpy as np
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGroupBox
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QPen, QFont, QBrush, QPolygonF
-from PyQt5.QtCore import Qt, QTimer, QPointF, QRectF, pyqtSignal, QObject
+from PyQt5.QtCore import Qt, QTimer, QPointF, QRectF, pyqtSignal, QObject, QProcess
 
 # Use subprocess to get real LiDAR data without threading conflicts
 import json
 import subprocess
 import os
+import sys
 import tempfile
 
 # Path to data file for IPC
@@ -183,6 +184,79 @@ class LidarWidget(QWidget):
         self.pixmap.fill(Qt.black)
         self.lidar_label.setPixmap(self.pixmap)
         
+        # Create a button to save the map
+        from PyQt5.QtWidgets import QPushButton, QHBoxLayout
+        
+        from PyQt5.QtWidgets import QGridLayout
+        
+        # Button style (common properties)
+        button_style = """
+            QPushButton {
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-weight: bold;
+                font-size: 12px;
+                border: 1px solid #555555;
+            }
+            QPushButton:hover {
+                background-color: #aaccff;
+            }
+            QPushButton:pressed {
+                background-color: #88aadd;
+            }
+            QPushButton:disabled {
+                background-color: #888888;
+                color: #dddddd;
+            }
+        """
+        
+        # Use grid layout for multiple buttons
+        map_button_layout = QGridLayout()
+        map_button_layout.setSpacing(10)  # Add spacing between buttons
+        
+        # SLAM buttons in first row - all with grey background
+        self.slam_button = QPushButton("Launch SLAM")
+        self.slam_button.setToolTip("Launch regular SLAM (slam.sh)")
+        self.slam_button.clicked.connect(lambda: self.launch_slam("slam.sh"))
+        self.slam_button.setStyleSheet(button_style + """
+            background-color: #dddddd;
+            color: black;
+        """)
+        map_button_layout.addWidget(self.slam_button, 0, 0)
+        
+        self.bi_slam_button = QPushButton("Launch Bi-SLAM")
+        self.bi_slam_button.setToolTip("Launch bilateration SLAM (bi_slam.sh)")
+        self.bi_slam_button.clicked.connect(lambda: self.launch_slam("bi_slam.sh"))
+        self.bi_slam_button.setStyleSheet(button_style + """
+            background-color: #dddddd;
+            color: black;
+        """)
+        map_button_layout.addWidget(self.bi_slam_button, 0, 1)
+        
+        self.tri_slam_button = QPushButton("Launch Tri-SLAM")
+        self.tri_slam_button.setToolTip("Launch trilateration SLAM (tri_slam.sh)")
+        self.tri_slam_button.clicked.connect(lambda: self.launch_slam("tri_slam.sh"))
+        self.tri_slam_button.setStyleSheet(button_style + """
+            background-color: #dddddd;
+            color: black;
+        """)
+        map_button_layout.addWidget(self.tri_slam_button, 0, 2)
+        
+        # Save map button in second row, spanning all columns - blue background
+        self.save_map_button = QPushButton("SAVE MAP")
+        self.save_map_button.setToolTip("Save the current SLAM map to a file")
+        self.save_map_button.clicked.connect(self.save_map)
+        self.save_map_button.setStyleSheet(button_style + """
+            background-color: #3498db;
+            color: white;
+            font-size: 14px;
+            padding: 10px;
+        """)
+        map_button_layout.addWidget(self.save_map_button, 1, 0, 1, 3)  # row, col, rowspan, colspan
+        
+        # Current SLAM process tracking
+        self.slam_process = None
+        
         # Status label
         self.status_label = QLabel("Waiting for LiDAR data...")
         self.status_label.setAlignment(Qt.AlignCenter)
@@ -190,6 +264,7 @@ class LidarWidget(QWidget):
         self.status_label.setStyleSheet("color: yellow;")
         
         group_layout.addWidget(self.lidar_label)
+        group_layout.addLayout(map_button_layout)
         group_layout.addWidget(self.status_label)
         group_box.setLayout(group_layout)
         layout.addWidget(group_box)
@@ -609,14 +684,235 @@ class LidarWidget(QWidget):
             painter.setPen(QColor(200, 200, 200))
             painter.drawText(QRectF(10, 10, 400, 20), "0° is left ←, -90° is down ↓, +90° is up ↑ (mirrored)")
     
+    def launch_slam(self, script_name):
+        """Launch one of the SLAM scripts"""
+        from PyQt5.QtWidgets import QMessageBox
+        
+        # Check if a SLAM process is already running
+        if self.slam_process is not None:
+            if self.slam_process.poll() is None:  # Still running
+                response = QMessageBox.question(
+                    self,
+                    "SLAM Already Running",
+                    f"A SLAM process is already running. Do you want to stop it and start {script_name}?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+                
+                if response == QMessageBox.No:
+                    return
+                    
+                # Kill the existing process
+                try:
+                    self.slam_process.terminate()
+                    self.slam_process.wait(timeout=3)
+                    if self.slam_process.poll() is None:
+                        self.slam_process.kill()
+                except Exception as e:
+                    print(f"Error terminating existing SLAM process: {e}")
+        
+        # Path to the SLAM script
+        script_path = os.path.expanduser(f"~/Documents/Spiderverse/lidar_ws/{script_name}")
+        
+        if not os.path.exists(script_path):
+            QMessageBox.critical(self, "Error", f"SLAM script not found at {script_path}")
+            return
+            
+        # Update button states
+        self.slam_button.setEnabled(False)
+        self.bi_slam_button.setEnabled(False)
+        self.tri_slam_button.setEnabled(False)
+        
+        # Update status
+        self.status_label.setText(f"Starting {script_name}...")
+        self.status_label.setStyleSheet("color: orange;")
+        
+        # Force update UI
+        from PyQt5.QtCore import QCoreApplication
+        QCoreApplication.processEvents()
+        
+        try:
+            # Create a new terminal window to run the SLAM script
+            # This allows users to see the SLAM output and interact with it if needed
+            if sys.platform == 'linux':
+                # For Linux, use xterm, gnome-terminal, or konsole
+                for terminal in ['xterm', 'gnome-terminal', 'konsole']:
+                    if subprocess.call(['which', terminal], stdout=subprocess.PIPE) == 0:
+                        if terminal == 'gnome-terminal':
+                            cmd = [terminal, '--', 'bash', '-c', f"cd ~/Documents/Spiderverse/lidar_ws && bash {script_name}; exec bash"]
+                        elif terminal == 'konsole':
+                            cmd = [terminal, '-e', f"cd ~/Documents/Spiderverse/lidar_ws && bash {script_name}; exec bash"]
+                        else:  # xterm
+                            cmd = [terminal, '-e', f"cd ~/Documents/Spiderverse/lidar_ws && bash {script_name}; exec bash"]
+                        
+                        self.slam_process = subprocess.Popen(cmd)
+                        self.status_label.setText(f"Running {script_name} in separate terminal")
+                        self.status_label.setStyleSheet("color: lime;")
+                        break
+                else:
+                    # No terminal found, run script directly
+                    cmd = ["bash", script_path]
+                    self.slam_process = subprocess.Popen(
+                        cmd,
+                        cwd=os.path.expanduser("~/Documents/Spiderverse/lidar_ws")
+                    )
+                    self.status_label.setText(f"Running {script_name} (no terminal available)")
+                    self.status_label.setStyleSheet("color: lime;")
+            else:
+                # For other platforms
+                cmd = ["bash", script_path]
+                self.slam_process = subprocess.Popen(
+                    cmd,
+                    cwd=os.path.expanduser("~/Documents/Spiderverse/lidar_ws")
+                )
+                self.status_label.setText(f"Running {script_name}")
+                self.status_label.setStyleSheet("color: lime;")
+            
+            # Start a timer to check process status
+            self.process_timer = QTimer()
+            self.process_timer.timeout.connect(self.check_slam_process)
+            self.process_timer.start(1000)  # Check every second
+            
+        except Exception as e:
+            self.status_label.setText(f"Error launching {script_name}: {e}")
+            self.status_label.setStyleSheet("color: red;")
+            QMessageBox.critical(self, "Error", f"Failed to launch SLAM script:\n{str(e)}")
+            
+            # Re-enable buttons
+            self.slam_button.setEnabled(True)
+            self.bi_slam_button.setEnabled(True)
+            self.tri_slam_button.setEnabled(True)
+    
+    def check_slam_process(self):
+        """Check if the SLAM process is still running"""
+        if self.slam_process and self.slam_process.poll() is not None:
+            # Process has terminated
+            return_code = self.slam_process.returncode
+            
+            if return_code == 0:
+                self.status_label.setText("SLAM process completed successfully")
+            else:
+                self.status_label.setText(f"SLAM process terminated with code {return_code}")
+                self.status_label.setStyleSheet("color: orange;")
+            
+            # Re-enable buttons
+            self.slam_button.setEnabled(True)
+            self.bi_slam_button.setEnabled(True)
+            self.tri_slam_button.setEnabled(True)
+            
+            # Stop the timer
+            self.process_timer.stop()
+    
+    def save_map(self):
+        """Run the save_map.sh script to save the current SLAM map using QProcess"""
+        from PyQt5.QtWidgets import QMessageBox
+        
+        # Path to the save_map.sh script
+        script_path = os.path.expanduser("~/Documents/Spiderverse/lidar_ws/save_map.sh")
+        
+        if not os.path.exists(script_path):
+            QMessageBox.critical(self, "Error", f"Save map script not found at {script_path}")
+            return
+            
+        # Disable the button while running
+        self.save_map_button.setEnabled(False)
+        self.save_map_button.setText("Saving...")
+        self.status_label.setText("Saving map... Please wait...")
+        self.status_label.setStyleSheet("color: orange;")
+
+        # Store output data
+        self.map_stdout = ""
+        self.map_stderr = ""
+        
+        # Create a QProcess
+        self.map_process = QProcess(self)
+        self.map_process.setWorkingDirectory(os.path.expanduser("~/Documents/Spiderverse/lidar_ws"))
+        
+        # Connect signals
+        self.map_process.finished.connect(self.on_map_save_finished)
+        self.map_process.readyReadStandardOutput.connect(self.read_map_stdout)
+        self.map_process.readyReadStandardError.connect(self.read_map_stderr)
+        
+        # Setup timeout timer
+        self.map_timeout_timer = QTimer(self)
+        self.map_timeout_timer.timeout.connect(self.on_map_save_timeout)
+        self.map_timeout_timer.setSingleShot(True)
+        self.map_timeout_timer.start(120000)  # 2 minute timeout
+        
+        # Start the process
+        self.map_process.start("bash", [script_path])
+        
+    def read_map_stdout(self):
+        """Read standard output from map save process"""
+        data = self.map_process.readAllStandardOutput().data().decode('utf-8')
+        self.map_stdout += data
+        
+    def read_map_stderr(self):
+        """Read standard error from map save process"""
+        data = self.map_process.readAllStandardError().data().decode('utf-8')
+        self.map_stderr += data
+        
+    def on_map_save_timeout(self):
+        """Handle timeout when saving map takes too long"""
+        from PyQt5.QtWidgets import QMessageBox
+        
+        if hasattr(self, 'map_process') and self.map_process.state() != QProcess.NotRunning:
+            self.map_process.kill()
+            self.status_label.setText("Map save timed out")
+            self.status_label.setStyleSheet("color: red;")
+            QMessageBox.critical(self, "Timeout", "Save map operation timed out after 2 minutes")
+            
+            # Re-enable the button
+            self.save_map_button.setEnabled(True)
+            self.save_map_button.setText("Save Map")
+            
+    def on_map_save_finished(self, exit_code, exit_status):
+        """Handle completion of the map save process"""
+        from PyQt5.QtWidgets import QMessageBox
+        import re
+        
+        # Stop the timeout timer
+        if hasattr(self, 'map_timeout_timer') and self.map_timeout_timer.isActive():
+            self.map_timeout_timer.stop()
+        
+        # Check if the process was successful
+        if exit_code == 0 and "SUCCESS" in self.map_stdout:
+            # Extract the map file path from the output
+            map_path_match = re.search(r"Map file: (.*\.pgm)", self.map_stdout)
+            map_path = map_path_match.group(1) if map_path_match else "Unknown location"
+            
+            # Show success message
+            self.status_label.setText(f"Map saved successfully to {map_path}")
+            self.status_label.setStyleSheet("color: lime;")
+            
+            QMessageBox.information(
+                self, 
+                "Map Saved", 
+                f"Map successfully saved to:\n{map_path}\n\nOutput:\n{self.map_stdout.strip()}"
+            )
+        else:
+            error_msg = self.map_stderr if self.map_stderr else self.map_stdout
+            self.status_label.setText(f"Error saving map")
+            self.status_label.setStyleSheet("color: red;")
+            
+            QMessageBox.warning(
+                self, 
+                "Map Save Failed", 
+                f"Failed to save map. Is Cartographer running?\n\nError:\n{error_msg}"
+            )
+            
+        # Re-enable the button
+        self.save_map_button.setEnabled(True)
+        self.save_map_button.setText("Save Map")
+    
     def closeEvent(self, event):
         """Handle widget close event"""
-        # Stop timers
-        if hasattr(self, 'viz_timer'):
-            self.viz_timer.stop()
-            
-        if hasattr(self, 'data_timer'):
-            self.data_timer.stop()
+        # Stop all timers
+        for timer_attr in ['viz_timer', 'data_timer', 'process_timer', 'map_timeout_timer']:
+            if hasattr(self, timer_attr):
+                timer = getattr(self, timer_attr)
+                if timer and timer.isActive():
+                    timer.stop()
             
         # Terminate the LiDAR process if it's running
         if self.lidar_process is not None:
@@ -630,6 +926,28 @@ class LidarWidget(QWidget):
                     self.lidar_process.kill()
             except Exception as e:
                 print(f"Error terminating LiDAR process: {e}")
+                
+        # Terminate SLAM process if it's running
+        if hasattr(self, 'slam_process') and self.slam_process is not None:
+            print("Terminating SLAM process...")
+            try:
+                self.slam_process.terminate()
+                self.slam_process.wait(timeout=2)
+                
+                # Force kill if it didn't terminate properly
+                if self.slam_process.poll() is None:
+                    self.slam_process.kill()
+            except Exception as e:
+                print(f"Error terminating SLAM process: {e}")
+        
+        # Terminate map save process if it's running
+        if hasattr(self, 'map_process') and self.map_process is not None:
+            print("Terminating map save process...")
+            try:
+                if self.map_process.state() != QProcess.NotRunning:
+                    self.map_process.kill()
+            except Exception as e:
+                print(f"Error terminating map save process: {e}")
                 
         # Clean up data file
         if os.path.exists(LIDAR_DATA_FILE):

@@ -11,8 +11,8 @@ from nav_msgs.msg import Odometry
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
 # Default anchor positions (x, y, z) in centimeters
-ANCHOR_1_POSITION = (310, 0, 0)
-ANCHOR_2_POSITION = (0, 0, 0)
+ANCHOR_1_POSITION = (310.0, 0.0, 90.0)
+ANCHOR_2_POSITION = (0.0, 0.0, 90.0)
 
 # Server configuration
 SERVER_IP = "0.0.0.0"  # Listen on all available interfaces
