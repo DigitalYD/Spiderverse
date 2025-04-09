@@ -48,7 +48,7 @@ scene.forward = -scene.forward
 
 
 # Ground plane: Flip Z=0 to Z=0 but adjust position later; VPython Y maps to your Z
-ground = box(pos=vector(0, -100, 0), size=vector(300, 1, 300), color=color.green)  # Ground at Y=-100 (your Z=-100)
+ground = box(pos=vector(0, -230, 0), size=vector(500, 1, 500), color=color.green)  # Ground at Y=-100 (your Z=-100)
 
 # Hexagon dimensions
 HEXAGON_RADIUS = 50  
@@ -117,7 +117,6 @@ current_step = 0
 phase_progress = 0.0  # Goes from 0 → 1 in each gait step
 gait_step_duration = 20  # Number of frames per gait phase (adjust as needed)
 
-#hexapod.start() # initialize walking
 
 while True:
     for frame in range(STEPS):
@@ -130,22 +129,6 @@ while True:
                 #print(hexapod.currentMode)
                 # angles = solve_effector_IK(leg, foot_targets[i])
                 # Calculate new positions
-            ###---------- 
-            # Move leg positions based on new theta angles here
-            ###---------- 
-            # <- Here
-            # -----------
-            if index == 120:
-                hexapod.start()
-                
-            # if index == 350:
-            #     hexapod.stop()
-
-            # if index == 400:
-            #     hexapod.setMode = "resetting"
-            
-            # if index == 550:
-            #     hexapod.start()
             
             # Map Z-up with flipped Z (X, Y, -Z) to VPython Y-up (X, -Z, Y)
             coxa_pos = vector(
@@ -183,4 +166,24 @@ while True:
 
             legs_visuals[i][1][2].pos = tibia_pos
             legs_visuals[i][1][2].axis = end_effector_pos - tibia_pos
+        ###---------- 
+        # Move leg positions based on new theta angles here
+        ###---------- 
+        if index == 120:
+            hexapod.start()
+            
+        if index == 300:
+            hexapod.stop()
+
+        if index == 400:
+            hexapod.reverse_direction()
+
+        if index == 550:
+            hexapod.stop()
+        
+        if index == 650:
+            hexapod.set_direction == 1
+            index = 0
+        # if index == 550:
+        #     hexapod.start()
         index += 1

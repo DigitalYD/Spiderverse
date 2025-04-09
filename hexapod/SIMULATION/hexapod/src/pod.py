@@ -95,7 +95,30 @@ class Pod:
         self.direction = direction
     
     def reverse_direction(self) -> None:
+        ''' Reverse the direction of the hexapod '''
+        # Set reverse flag
         self.direction = REVERSE if self.direction == FORWARD else FORWARD
+        #set the mode to reset so the legs move back
+        # -----------------------------------> NOTE THIS ONLY WORKS OUT OF SIMULATION <-----------------------------------
+        # When pushed to real-time, edit this out!
+        # while self.currentMode != "neutral":
+        #     _ = self.update()
+            # for i, leg in enumerate(self.Legs):
+                # leg.move_leg()
+            
+
+        # print("Setting Reverse Control Points")
+        # # # Change all the legs bezier curves to reverse
+        for i, leg in enumerate(self.Legs):
+            leg.set_back_control_points()
+            
+        for i in range(self.body_def.num_legs):
+            self.Legs[i].step_idx = 0
+        self.isWalking = True
+        self.currentMode = "walking"
+        self.currentgaitIndex = 0
+        self.currentgaitCycle = 0
+        # print("Reverse points set")
     
     def set_coxa_length(self, leg_num:int, length:float) -> None:
         ''' Dynamically change length of coxa for given leg '''
@@ -256,141 +279,128 @@ class Pod:
                             self.isWalking = False
                     self.tick += 1 
 
+
+
     def update(self) -> List[Coordinate]:
         ''' Advance walking movement with proper gait '''
 
         foot_targets = []
         step_complete = True
-        # delta_idx = 1 if self.direction == 1 else -1
-
-        speed_multiplier = 5
-        delta_idx = speed_multiplier if self.direction == 1 else -speed_multiplier
+        delta_idx = 1
 
         for i, leg in enumerate(self.Legs):
-                phase_idx = self.currentgaitIndex % self.gait.indices
-                is_swing = self.gait.pattern[i][phase_idx] == 1
+            phase_idx = self.currentgaitIndex % self.gait.indices
+            is_swing = self.gait.pattern[i][phase_idx] == 1
 
-                if self.currentMode == "neutral" and all(leg.currentlegPhase == "neutral" for leg in self.Legs):
-                    # # print("STANDING AND ALL LEGS ARE NEUTRAL")
-                    # for i, leg in enumerate(self.Legs):
-                        # print(f"Leg {i} phase: {leg.currentlegPhase}", end="")
-                        # if leg.currentlegPhase == "neutral":
-                        #     print(f"Mode Neutral:Leg {i} neutral")
-                        # else:
-                        #     print(f"Mode Neutral: Leg {i}, walking")
-                    self.standing()
-                    return [leg.effector_target for leg in self.Legs]
-                else:
-                    if self.currentMode == "walking":
-                        # print("Is walking")
-                        if leg.current_phase != is_swing:
-                            # Get the proper curve for the new phase
-                            if is_swing:
-                                # if leg.Name == "LF":
-                                    # print("current phase != Swing: if is_Swing, getting start/ground\nTransition_curve")
-                                
-                                transition_curve = leg.bezier_curve.get_points_between("start", "grounded")
-                            else:
-                                # if leg.Name == "LF":
-                                #     print("current phase != Swing: if is_Swing, getting ground/return\nTransition_curve")
-                                transition_curve = leg.bezier_curve.get_points_between("grounded", "return")
-
-                            # Find current foot position
-                            current_pos = np.array([leg.effector_target.X, leg.effector_target.Y, leg.effector_target.Z])
-
-                            # Find nearest point on the new curve
-                            distances = [np.linalg.norm(current_pos - np.array(p)) for p in transition_curve]
-                            leg.step_idx = np.argmin(distances)
-                            leg.current_phase = is_swing
-
+            if self.currentMode == "neutral" and all(leg.currentlegPhase == "neutral" for leg in self.Legs):
+                # # print("STANDING AND ALL LEGS ARE NEUTRAL")
+                # for i, leg in enumerate(self.Legs):
+                    # print(f"Leg {i} phase: {leg.currentlegPhase}", end="")
+                    # if leg.currentlegPhase == "neutral":
+                    #     print(f"Mode Neutral:Leg {i} neutral")
+                    # else:
+                    #     print(f"Mode Neutral: Leg {i}, walking")
+                self.standing()
+                return [leg.effector_target for leg in self.Legs]
+            else:
+                if self.currentMode == "walking":
+                    # print("Is walking")
+                    if leg.current_phase != is_swing:
+                        # Get the proper curve for the new phase
                         if is_swing:
-                            # print("if_Swing: start/grounded\nswing_curve")
-                            leg.currentlegPhase = "swinging"
-                            swing_curve = leg.bezier_curve.get_points_between("start", "grounded")
-                            total_points = len(swing_curve)
-                            pos = swing_curve[min(leg.step_idx, total_points - 1)]
+                            transition_curve = leg.bezier_curve.get_points_between("start", "touchdown")
                         else:
-                            # print("if_not Swing: grounded/return\nstance_curve")
-                            stance_curve = leg.bezier_curve.get_points_between("grounded", "return")
-                            total_points = len(stance_curve)
-                            pos = stance_curve[min(leg.step_idx, total_points - 1)]
-                            neutral = leg.bezier_curve.get_point(leg.bezier_curve.num_points)
-                            if np.allclose(pos, neutral, atol=1e-3):
-                                leg.currentlegPhase = "neutral"
-                                # print(f"Leg {i} Neutral")
-                            else:
-                                leg.currentlegPhase = "returning"
-                                #print("returning")
+                            transition_curve = leg.bezier_curve.get_points_between("touchdown", "return")
 
-                                
-                    elif self.currentMode == "neutral":
-                        '''Works in Simulation: Untested in real-time'''
-                        return [leg.effector_target for leg in self.Legs]
-
-
-                    elif self.currentMode == "resetting":
-                        '''Works in Simulation: Untested in real-time'''
-                        reset_curve = leg.bezier_curve.curve()
-                        total_points = len(reset_curve)
-                        neutral = reset_curve[-1]
-
+                        # Find current foot position
                         current_pos = np.array([leg.effector_target.X, leg.effector_target.Y, leg.effector_target.Z])
-                        distances = [np.linalg.norm(current_pos - p) for p in reset_curve]
+
+                        # Find nearest point on the new curve
+                        distances = [np.linalg.norm(current_pos - np.array(p)) for p in transition_curve]
                         leg.step_idx = np.argmin(distances)
+                        leg.current_phase = is_swing
 
-                        phase_idx = self.currentgaitIndex % self.gait.indices
-                        is_resetting_leg = self.gait.pattern[i][phase_idx] == 1
-
-                        if is_resetting_leg and leg.currentlegPhase != "neutral":
-                            if leg.step_idx < total_points - 1:
-                                leg.step_idx -= 1
-                            pos = reset_curve[leg.step_idx]
-                            if np.allclose(pos, neutral, atol=1e-3):
-                                leg.currentlegPhase = "neutral"
-                                # print(f"Leg {i} finished resetting")
-                            else:
-                                leg.currentlegPhase = "resetting"
-                                step_complete = False
-                                # print(f"Leg {i} resetting: step_idx={leg.step_idx}")
-                        else:
-                            pos = reset_curve[leg.step_idx]
-                    elif self.currentMode == "initializing":
-                        ''' This section works in real-time and simulator DO NOT EDIT'''
-                        if leg.current_phase != is_swing:
-                            leg.step_idx = 0
-                            leg.current_phase = is_swing
-                        if is_swing:
-                            leg.currentlegPhase = "swinging"
-                            initialize_curve = leg.bezier_curve.get_points_between("start", "standing")
-                            total_points = len(initialize_curve)
-                            pos = initialize_curve[min(leg.step_idx, total_points - 1)]
-                        else:
-                            leg.current_leg_phase = "neutral"
-                            initialize_curve = leg.bezier_curve.get_points_between("start", "standing")
-                            total_points = len(initialize_curve)
-                            pos = initialize_curve[min(leg.step_idx, total_points - 1)]
-
-                    if self.currentMode != "resetting":
-                        if leg.step_idx < total_points - 1:
-                            leg.step_idx += delta_idx
-                            step_complete = False
-                        else:
-                            leg.step_idx = total_points - 1
-
-                    foot_target = new_Coordinate(pos[0], pos[1], pos[2])
-                    leg.effector_target = foot_target
-                    # thread here for calculation
-                    
-                    if SIM_ACTIVE:
-                        angles = sim_solve_effector_IK(leg, foot_target)
+                    if is_swing:
+                        leg.currentlegPhase = "swinging"
+                        swing_curve = leg.bezier_curve.get_points_between("start", "touchdown")
+                        total_points = len(swing_curve)
+                        pos = swing_curve[min(leg.step_idx, total_points - 1)]
                     else:
-                        angles = solve_effector_IK(leg, foot_target)
+                        # print("in touchdown/return")
+                        #compare current leg position with point position, if not at points
+                        stance_curve = leg.bezier_curve.get_points_between("touchdown", "return")
+                        total_points = len(stance_curve)
+                        pos = stance_curve[min(leg.step_idx, total_points - 1)]
+                        neutral = leg.bezier_curve.get_point(leg.bezier_curve.num_points)
+                        if np.allclose(pos, neutral, atol=1e-3):
+                            leg.currentlegPhase = "neutral"
+                            # print(f"Leg {i} Neutral")
+                        else:
+                            leg.currentlegPhase = "returning"
+                            #print("returning")
+                            
+                elif self.currentMode == "neutral":
+                    leg.currentlegPhase = "neutral"
+                    
+                    return [leg.effector_target for leg in self.Legs]
+                elif self.currentMode == "resetting":
+                    reset_curve = leg.bezier_curve.curve()
+                    total_points = len(reset_curve)
+                    neutral = reset_curve[-1]
 
-                    leg.recalculate_forward_kinematics(angles)
+                    current_pos = np.array([leg.effector_target.X, leg.effector_target.Y, leg.effector_target.Z])
+                    distances = [np.linalg.norm(current_pos - p) for p in reset_curve]
+                    leg.step_idx = np.argmin(distances)
 
-                    leg.move_leg()
+                    phase_idx = self.currentgaitIndex % self.gait.indices
+                    is_resetting_leg = self.gait.pattern[i][phase_idx] == 1
 
-                    foot_targets.append(angles)
+                    if is_resetting_leg and leg.currentlegPhase != "neutral":
+                        if leg.step_idx < total_points - 1:
+                            leg.step_idx -= 1
+                        pos = reset_curve[leg.step_idx]
+                        if np.allclose(pos, neutral, atol=1e-3):
+                            leg.currentlegPhase = "neutral"
+                            # print(f"Leg {i} finished resetting")
+                        else:
+                            leg.currentlegPhase = "resetting"
+                            step_complete = False
+                            # print(f"Leg {i} resetting: step_idx={leg.step_idx}")
+                    else:
+                        pos = reset_curve[leg.step_idx]
+                elif self.currentMode == "initializing":
+
+                    if leg.current_phase != is_swing:
+                        leg.step_idx = 0
+                        leg.current_phase = is_swing
+
+                    if is_swing:
+                        leg.currentlegPhase = "swinging"
+                        initialize_curve = leg.bezier_curve.get_points_between("start", "standing")
+                        total_points = len(initialize_curve)
+                        pos = initialize_curve[min(leg.step_idx, total_points - 1)]
+                    else:
+                        # For initialization, assume all legs move to standing (adjust if needed)
+                        leg.current_leg_phase = "neutral"
+                        initialize_curve = leg.bezier_curve.get_points_between("start", "standing")
+                        total_points = len(initialize_curve)
+                        pos = initialize_curve[min(leg.step_idx, total_points - 1)]
+
+                if self.currentMode != "resetting":
+                    if leg.step_idx < total_points - 1:
+                        leg.step_idx += delta_idx
+                        step_complete = False
+                    else:
+                        leg.step_idx = total_points - 1
+
+                foot_target = new_Coordinate(pos[0], pos[1], pos[2])
+                leg.effector_target = foot_target
+                angles = solve_effector_IK(leg, foot_target)
+                leg.recalculate_forward_kinematics(angles)
+                foot_targets.append(foot_target)
+                
+                # TODO ---------------------------------> UNCOMMENT THIS FOR REAL TIME <---------------------------------
+                # leg.move_leg()
 
         # Check if initialization is complete and set currentMode to "neutral"
         if self.currentMode == "initializing":
@@ -420,7 +430,7 @@ class Pod:
                     self.isWalking = False
 
         return foot_targets
-    
+
 
     def rotate_in_place(self, theta: float = 2*np.pi):
         ''' rotate hexapod in place over multiple steps '''
@@ -521,7 +531,7 @@ class Pod:
     def stop(self):
         ''' stop walking mode only after "resetting" to neutral'''
         self.isWalking = False
-        self.currentMode = "neutral"
+        self.currentMode = "resetting"
         for i in range(self.body_def.num_legs):
             self.Legs[i].step_idx = 0
         
