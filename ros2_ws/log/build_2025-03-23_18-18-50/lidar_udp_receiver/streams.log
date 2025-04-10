@@ -1,0 +1,56 @@
+[0.006s] Invoking command in '/home/ocean/Documents/Spiderverse/ros2_ws/build/lidar_udp_receiver': CMAKE_PREFIX_PATH=/home/ocean/Documents/Spiderverse/ros2_ws/install/lidar_slam_new:/home/ocean/Documents/Spiderverse/ros2_ws/install/lidar_slam:/opt/ros/humble /usr/bin/cmake /home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver -DCMAKE_INSTALL_PREFIX=/home/ocean/Documents/Spiderverse/ros2_ws/install/lidar_udp_receiver
+[0.083s] -- The C compiler identification is GNU 11.4.0
+[0.142s] -- The CXX compiler identification is GNU 11.4.0
+[0.150s] -- Detecting C compiler ABI info
+[0.212s] -- Detecting C compiler ABI info - done
+[0.217s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.218s] -- Detecting C compile features
+[0.219s] -- Detecting C compile features - done
+[0.221s] -- Detecting CXX compiler ABI info
+[0.287s] -- Detecting CXX compiler ABI info - done
+[0.292s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.292s] -- Detecting CXX compile features
+[0.292s] -- Detecting CXX compile features - done
+[0.296s] -- Found ament_cmake: 1.3.11 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.404s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.474s] -- Found rclcpp: 16.0.11 (/opt/ros/humble/share/rclcpp/cmake)
+[0.503s] -- Found rosidl_generator_c: 3.1.6 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+[0.506s] -- Found rosidl_adapter: 3.1.6 (/opt/ros/humble/share/rosidl_adapter/cmake)
+[0.512s] -- Found rosidl_generator_cpp: 3.1.6 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+[0.521s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.532s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.560s] -- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+[0.562s] -- Found rmw_fastrtps_cpp: 6.2.7 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)
+[0.647s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+[0.671s] -- Found FastRTPS: /opt/ros/humble/include  
+[0.697s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.703s] -- Looking for pthread.h
+[0.773s] -- Looking for pthread.h - found
+[0.774s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[0.833s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+[0.834s] -- Found Threads: TRUE  
+[0.867s] -- Found sensor_msgs: 4.2.4 (/opt/ros/humble/share/sensor_msgs/cmake)
+[0.928s] -- Configuring done
+[0.935s] -- Generating done
+[0.937s] -- Build files have been written to: /home/ocean/Documents/Spiderverse/ros2_ws/build/lidar_udp_receiver
+[0.946s] Invoked command in '/home/ocean/Documents/Spiderverse/ros2_ws/build/lidar_udp_receiver' returned '0': CMAKE_PREFIX_PATH=/home/ocean/Documents/Spiderverse/ros2_ws/install/lidar_slam_new:/home/ocean/Documents/Spiderverse/ros2_ws/install/lidar_slam:/opt/ros/humble /usr/bin/cmake /home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver -DCMAKE_INSTALL_PREFIX=/home/ocean/Documents/Spiderverse/ros2_ws/install/lidar_udp_receiver
+[0.948s] Invoking command in '/home/ocean/Documents/Spiderverse/ros2_ws/build/lidar_udp_receiver': CMAKE_PREFIX_PATH=/home/ocean/Documents/Spiderverse/ros2_ws/install/lidar_slam_new:/home/ocean/Documents/Spiderverse/ros2_ws/install/lidar_slam:/opt/ros/humble /usr/bin/cmake --build /home/ocean/Documents/Spiderverse/ros2_ws/build/lidar_udp_receiver -- -j16 -l16
+[0.988s] [ 50%] [32mBuilding CXX object CMakeFiles/lidar_udp_receiver_node.dir/src/lidar_udp_receiver_node.cpp.o[0m
+[2.348s] [01m[K/home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver/src/lidar_udp_receiver_node.cpp:[m[K In member function ‘[01m[Kbool LidarUdpReceiver::setupUdpSocket()[m[K’:
+[2.348s] [01m[K/home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver/src/lidar_udp_receiver_node.cpp:78:39:[m[K [01;31m[Kerror: [m[K‘[01m[KF_GETFL[m[K’ was not declared in this scope
+[2.348s]    78 |         int flags = fcntl(socket_fd_, [01;31m[KF_GETFL[m[K, 0);
+[2.348s]       |                                       [01;31m[K^~~~~~~[m[K
+[2.351s] [01m[K/home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver/src/lidar_udp_receiver_node.cpp:78:21:[m[K [01;31m[Kerror: [m[K‘[01m[Kfcntl[m[K’ was not declared in this scope
+[2.351s]    78 |         int flags = [01;31m[Kfcntl[m[K(socket_fd_, F_GETFL, 0);
+[2.351s]       |                     [01;31m[K^~~~~[m[K
+[2.354s] [01m[K/home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver/src/lidar_udp_receiver_node.cpp:79:27:[m[K [01;31m[Kerror: [m[K‘[01m[KF_SETFL[m[K’ was not declared in this scope
+[2.354s]    79 |         fcntl(socket_fd_, [01;31m[KF_SETFL[m[K, flags | O_NONBLOCK);
+[2.354s]       |                           [01;31m[K^~~~~~~[m[K
+[2.358s] [01m[K/home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver/src/lidar_udp_receiver_node.cpp:79:44:[m[K [01;31m[Kerror: [m[K‘[01m[KO_NONBLOCK[m[K’ was not declared in this scope; did you mean ‘[01m[KSOCK_NONBLOCK[m[K’?
+[2.358s]    79 |         fcntl(socket_fd_, F_SETFL, flags | [01;31m[KO_NONBLOCK[m[K);
+[2.358s]       |                                            [01;31m[K^~~~~~~~~~[m[K
+[2.358s]       |                                            [32m[KSOCK_NONBLOCK[m[K
+[2.828s] gmake[2]: *** [CMakeFiles/lidar_udp_receiver_node.dir/build.make:76: CMakeFiles/lidar_udp_receiver_node.dir/src/lidar_udp_receiver_node.cpp.o] Error 1
+[2.828s] gmake[1]: *** [CMakeFiles/Makefile2:137: CMakeFiles/lidar_udp_receiver_node.dir/all] Error 2
+[2.829s] gmake: *** [Makefile:146: all] Error 2
+[2.830s] Invoked command in '/home/ocean/Documents/Spiderverse/ros2_ws/build/lidar_udp_receiver' returned '2': CMAKE_PREFIX_PATH=/home/ocean/Documents/Spiderverse/ros2_ws/install/lidar_slam_new:/home/ocean/Documents/Spiderverse/ros2_ws/install/lidar_slam:/opt/ros/humble /usr/bin/cmake --build /home/ocean/Documents/Spiderverse/ros2_ws/build/lidar_udp_receiver -- -j16 -l16
