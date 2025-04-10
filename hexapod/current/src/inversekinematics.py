@@ -22,6 +22,11 @@ def solve_effector_IK(leg, effector_target, debug_channel=None):
     Raises:
         ValueError: If the target is unreachable (NaN in angle calculations).
     """
+    debugging_lm = leg.Name == "LR"
+    if debugging_lm:
+        print(f"\n--- DEBUG LM LEG ---")
+        print(f"Target: X:{effector_target.X}, Y:{effector_target.Y}, Z:{effector_target.Z}")
+    
     servo_angles = ServoAngles()
 
     # Inverse kinematics equation 1: Coxa angle
@@ -70,7 +75,20 @@ def solve_effector_IK(leg, effector_target, debug_channel=None):
 
     leg.servo_angles = servo_angles
     #print(servo_angles)
-
+    if debugging_lm:
+        print(f"Calculated angles - Coxa: {servo_angles.Coxa}, Femur: {servo_angles.Femur}, Tibia: {servo_angles.Tibia}")
+        
+        # When femur is lifting, manually adjust tibia
+        if servo_angles.Femur < -30:  # Adjust this threshold based on observation
+            # Apply manual correction to tibia angle
+            original_tibia = servo_angles.Tibia
+            
+            # Try a direct angle adjustment
+            # This forces a bend in the tibia proportional to femur lift
+            servo_angles.Tibia = 45  # Try a fixed value first
+            
+            print(f"LM Tibia correction applied: {original_tibia} → {servo_angles.Tibia}")
+    
 
     ## Test more on the middle leg, may need to make an exception for it, or rotate motor on leg manually    
     return servo_angles
@@ -90,6 +108,8 @@ def sim_solve_effector_IK(leg, effector_target, debug_channel=None):
     Raises:
         ValueError: If the target is unreachable (NaN in angle calculations).
     """
+
+   
     servo_angles = ServoAngles()
 
     # Inverse kinematics equation 1: Coxa angle

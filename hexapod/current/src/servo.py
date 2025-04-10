@@ -86,7 +86,7 @@ if __name__ == '__main__':
         time.sleep(0.02)
 
     time.sleep(0.25)
-
+    
     for leg in range(len(legs)):
         servos[2].set_angle(0)
         time.sleep(0.02)

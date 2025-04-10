@@ -17,6 +17,7 @@ from src.config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX
 import asyncio
 from bleak import BleakClient, BleakScanner
 import copy
+import time
 
 # BLE Configuration
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -98,13 +99,17 @@ def hexapod_control(hexapod, ble_data):
         # # # if foot_targets != None:
         # # #     angles = solve_effector_IK(leg, foot_targets[i])
         # # #     # Calculate new positions and update leg's angles
-            if (leg.Name == "LF") :
-                leg.move_leg()
-
+            
 
             if hexapod.currentMode == "neutral":
                 hexapod.start()
-               
+
+            if (leg.Name == "LM" ) :
+                leg.move_leg()
+
+            time.sleep(0.005)
+            # leg.move_leg()
+            #    
            
         # exit()
         # hexapod.start()

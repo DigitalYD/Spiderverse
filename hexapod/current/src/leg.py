@@ -92,7 +92,7 @@ class Leg:
         elif self.Name == "LM":
             radial_dir = get_radial_direction(coxa_pos, 0) # get direction of the coxa
         elif self.Name == "LF":
-            radial_dir = get_radial_direction(coxa_pos, 20) ## here
+            radial_dir = get_radial_direction(coxa_pos, 25) ## here
         elif self.Name == "RF":
             radial_dir = get_radial_direction(coxa_pos, -100)
         elif self.Name == "RM":
@@ -145,7 +145,7 @@ class Leg:
         elif self.Name == "LM":
             radial_dir = get_radial_direction(coxa_pos, 0) # get direction of the coxa
         elif self.Name == "LF":
-            radial_dir = get_radial_direction(coxa_pos, 20) ## here
+            radial_dir = get_radial_direction(coxa_pos, 25) ## here
         elif self.Name == "RF":
             radial_dir = get_radial_direction(coxa_pos, -100)
         elif self.Name == "RM":
@@ -161,9 +161,9 @@ class Leg:
         if self.Name =="RF" or self.Name == "RM" or self.Name == "RR":
             translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.right_toe_from_coxa)
         elif self.Name == "LM":
-            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
+            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa+20)
         elif self.Name == "LF":
-            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
+            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa+20)
         else:
             translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
             
@@ -198,16 +198,40 @@ class Leg:
     def get_adjusted_forward_bezier_control_points(self, start_pos: np.ndarray) -> dict:
         ''' Define control points for a Bézier curve. Walking forward motion '''
 
-        self.control_points = {
+        if self.Name == "LF" :
+            self.control_points = {
                 "start":    start_pos,
-                "lift":     start_pos + np.array([0, 30, -70]),
-                "peak":     start_pos + np.array([0, 50, -150]),
-                "lower":    start_pos + np.array([0, 75, -70]),
+                "lift":     start_pos + np.array([0, 15, -80]),
+                "peak":     start_pos + np.array([0, 50, -100]),
+                "lower":    start_pos + np.array([0, 75, -50]),
                 "touchdown":start_pos + np.array([0, 75, 0]),
                 "grounded": start_pos + np.array([0, 75, 0]),
                 "sliding":  start_pos + np.array([0, 75, 0]),
                 "return":   start_pos,
             }
+
+        # elif self.Name == "LM" :
+        #     self.control_points = {
+        #         "start":    start_pos,
+        #         "lift":     start_pos + np.array([0, 10, -250]),
+        #         "peak":     start_pos + np.array([0, 10, -150]),
+        #         "lower":    start_pos + np.array([0, 10, -100]),
+        #         "touchdown":start_pos + np.array([0, 75, 0]),
+        #         "grounded": start_pos + np.array([0, 75, 0]),
+        #         "sliding":  start_pos + np.array([0, 75, 0]),
+        #         "return":   start_pos,
+        #     }
+        else:
+            self.control_points = {
+                    "start":    start_pos,
+                    "lift":     start_pos + np.array([0, 30, -70]),
+                    "peak":     start_pos + np.array([0, 50, -150]),
+                    "lower":    start_pos + np.array([0, 75, -70]),
+                    "touchdown":start_pos + np.array([0, 75, 0]),
+                    "grounded": start_pos + np.array([0, 75, 0]),
+                    "sliding":  start_pos + np.array([0, 75, 0]),
+                    "return":   start_pos,
+                }
   
         return self.control_points
     
@@ -363,6 +387,22 @@ class Leg:
     def move_leg(self):
         ''' Shiver me timbers '''
         #print(self.servo_angles)
+
+        # if self.Name == "LF" or self.Name == "LM":
+        # # Adjust tibia angle based on femur angle for more natural movement
+        # # This creates a compensating motion to prevent "clawing"
+        #     femur_angle = self.servo_angles.Femur
+        
+        # # As femur lifts (becomes more negative), tibia should bend more
+        # if femur_angle < -20:
+        #     # Calculate a compensating tibia angle
+        #     compensation = (femur_angle + 20) * 0.5  # Adjust this ratio as needed
+        #     self.servo_angles.Tibia = max(0, self.servo_angles.Tibia + compensation)
+            
+        #     # Debug output
+        #     print(f"{self.Name} - Femur: {femur_angle}, Tibia: {self.servo_angles.Tibia}, Compensation: {compensation}")
+    
+
         self.Coxa.set_angle(self.servo_angles.Coxa)
         self.Femur.set_angle(self.servo_angles.Femur)
         self.Tibia.set_angle(self.servo_angles.Tibia)

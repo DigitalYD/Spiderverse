@@ -77,6 +77,15 @@ class Pod:
         ]
         self.gait = new_Gait(GaitType.TRIPOD) # Default Gait Tripod
 
+
+        ### worst case senicero
+        # for leg in self.Legs:
+        #     if leg.Name == "LM":
+        #         leg.Tibia.set_offset(-50)  # Apply 90 degree offset
+        #         # print(f"Applied tibia offset to {leg.Name} leg")
+
+            
+
     # Property & Setter Allows the height of the hexapod to be adjusted!
     # Note the further you set this down below ~70, the futher you need to put the leg tips out.
     @property
