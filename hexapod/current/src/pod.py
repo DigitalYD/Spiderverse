@@ -388,7 +388,7 @@ class Pod:
 
                     leg.recalculate_forward_kinematics(angles)
 
-                    leg.move_leg()
+                    # leg.move_leg()
 
                     foot_targets.append(angles)
 
