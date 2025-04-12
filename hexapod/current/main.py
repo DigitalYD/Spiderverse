@@ -106,11 +106,12 @@ def hexapod_control(hexapod, ble_data):
 
             if (leg.Name == "LM" ) :
                 leg.move_leg()
-
-            time.sleep(0.005)
+           
+            # time.sleep(0.005)
             # leg.move_leg()
             #    
-           
+        # if hexapod.currentMode == "neutral":
+        #     exit() 
         # exit()
         # hexapod.start()
                     

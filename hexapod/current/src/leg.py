@@ -59,8 +59,8 @@ class Leg:
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
     control_points: Dict[str, np.ndarray] = field(init=False)
     # For Real Time
-    right_toe_from_coxa:int = 90
-    left_toe_from_coxa:int = 90
+    right_toe_from_coxa:int = 150 #348 +89#120
+    left_toe_from_coxa:int = 150 #348 +89 #120
     # For simulation
     sim_toe_from_coxa = 150 # distance to place bezier curve away fro the hexapod coxa
     step_idx:int = 0
@@ -161,9 +161,9 @@ class Leg:
         if self.Name =="RF" or self.Name == "RM" or self.Name == "RR":
             translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.right_toe_from_coxa)
         elif self.Name == "LM":
-            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa+20)
+            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
         elif self.Name == "LF":
-            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa+20)
+            translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
         else:
             translated_start = adjust_point_away_from_coxa(from_coxa, radial_dir, self.left_toe_from_coxa)
             
@@ -198,40 +198,17 @@ class Leg:
     def get_adjusted_forward_bezier_control_points(self, start_pos: np.ndarray) -> dict:
         ''' Define control points for a Bézier curve. Walking forward motion '''
 
-        if self.Name == "LF" :
-            self.control_points = {
+    
+        self.control_points = {
                 "start":    start_pos,
-                "lift":     start_pos + np.array([0, 15, -80]),
-                "peak":     start_pos + np.array([0, 50, -100]),
-                "lower":    start_pos + np.array([0, 75, -50]),
+                "lift":     start_pos + np.array([0, 30, -70]),
+                "peak":     start_pos + np.array([0, 50, -150]),
+                "lower":    start_pos + np.array([0, 75, -70]),
                 "touchdown":start_pos + np.array([0, 75, 0]),
                 "grounded": start_pos + np.array([0, 75, 0]),
                 "sliding":  start_pos + np.array([0, 75, 0]),
                 "return":   start_pos,
             }
-
-        # elif self.Name == "LM" :
-        #     self.control_points = {
-        #         "start":    start_pos,
-        #         "lift":     start_pos + np.array([0, 10, -250]),
-        #         "peak":     start_pos + np.array([0, 10, -150]),
-        #         "lower":    start_pos + np.array([0, 10, -100]),
-        #         "touchdown":start_pos + np.array([0, 75, 0]),
-        #         "grounded": start_pos + np.array([0, 75, 0]),
-        #         "sliding":  start_pos + np.array([0, 75, 0]),
-        #         "return":   start_pos,
-        #     }
-        else:
-            self.control_points = {
-                    "start":    start_pos,
-                    "lift":     start_pos + np.array([0, 30, -70]),
-                    "peak":     start_pos + np.array([0, 50, -150]),
-                    "lower":    start_pos + np.array([0, 75, -70]),
-                    "touchdown":start_pos + np.array([0, 75, 0]),
-                    "grounded": start_pos + np.array([0, 75, 0]),
-                    "sliding":  start_pos + np.array([0, 75, 0]),
-                    "return":   start_pos,
-                }
   
         return self.control_points
     

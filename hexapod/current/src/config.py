@@ -21,7 +21,7 @@ RIGHT = -1
 # Anything Under 90 may cause problems with the legs. Basic height
 # Pod height 193 is horizontal
 # Notes: I do not suggest further than 250 (Requires testing on physical robot)
-POD_Z_HEIGHT:float = 140
+POD_Z_HEIGHT:float = 140 #140
 
 # height of arc for end effector during swing phase.
 Z_LIFT:float = 70.0

@@ -57,7 +57,7 @@ class Pod:
             if SIM_ACTIVE:  # Adjust initialization height of the leg
                 neutral_effector[i] = Coordinate(neutral_x, neutral_y, -30) # -30 for Simulation
             else:
-                neutral_effector[i] = Coordinate(neutral_x, neutral_y, -90) # For 3D
+                neutral_effector[i] = Coordinate(neutral_x, neutral_y, -90) # For 3D #-90
         # Generate six legs
         self.Legs = [
             Leg(
