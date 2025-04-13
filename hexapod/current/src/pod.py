@@ -263,7 +263,7 @@ class Pod:
         step_complete = True
         # delta_idx = 1 if self.direction == 1 else -1
 
-        speed_multiplier = 5
+        speed_multiplier = 6
         delta_idx = speed_multiplier if self.direction == 1 else -speed_multiplier
 
         for i, leg in enumerate(self.Legs):
@@ -388,7 +388,7 @@ class Pod:
 
                     leg.recalculate_forward_kinematics(angles)
 
-                    leg.move_leg()
+                    # leg.move_leg()
 
                     foot_targets.append(angles)
 

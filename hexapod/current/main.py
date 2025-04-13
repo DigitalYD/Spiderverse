@@ -17,6 +17,7 @@ from src.config import COXA_ORIGIN_INDEX, FEMUR_ORIGIN_INDEX, TIBIA_ORIGIN_INDEX
 import asyncio
 from bleak import BleakClient, BleakScanner
 import copy
+import time
 
 # BLE Configuration
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -93,7 +94,8 @@ def hexapod_control(hexapod, ble_data):
         '''
         
         hexapod.update()  # Get new foot targets from gait manager
-        # for i, leg in enumerate(hexapod.Legs):
+        # time.sleep(0.05)
+        for i, leg in enumerate(hexapod.Legs):
         #     print(leg.Name)
         #     print(leg.Coxa.servo_index, leg.Femur.servo_index, leg.Tibia.servo_index)
         #     print(leg.Coxa.pca_index, leg.Femur.pca_index, leg.Tibia.pca_index)
@@ -103,9 +105,11 @@ def hexapod_control(hexapod, ble_data):
         # #     angles = solve_effector_IK(leg, foot_targets[i])
         # #     # Calculate new positions and update leg's angles
 
-        if hexapod.currentMode == "neutral":
-           hexapod.start()
-               
+            # if hexapod.currentMode == "neutral":
+            #     hexapod.start()
+                
+            # # if leg.Name == "RR" or leg.Name == "LR":
+            # leg.move_leg()
            
 
                 #if hexapod.currentMode == "walking":
