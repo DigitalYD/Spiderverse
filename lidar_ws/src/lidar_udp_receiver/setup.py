@@ -33,6 +33,7 @@ setup(
             'trilateration_node = lidar_udp_receiver.trilateration:main',
             'bilateration_node = lidar_udp_receiver.bilateration:main',
             'vizualize_lidar = lidar_udp_receiver.vizualize_lidar:main',
+            'imu_receiver = lidar_udp_receiver.imu_receiver:main',
         ],
     },
 )
