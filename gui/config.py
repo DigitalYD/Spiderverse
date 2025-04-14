@@ -2,7 +2,7 @@
 
 # GStreamer configuration
 GSTREAMER_PORT = 5000
-GSTREAMER_HOST = "192.168.0.113"  # Change to your Raspberry Pi's IP address
+GSTREAMER_HOST = "192.168.0.49"  # Change to your Raspberry Pi's IP address
 GSTREAMER_PIPELINE = f"udpsrc port={GSTREAMER_PORT} caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264\" ! rtph264depay ! h264parse ! decodebin ! videoconvert ! video/x-raw,format=RGB ! autovideosink name=sink"
 
 # ROS configuration for LiDAR
