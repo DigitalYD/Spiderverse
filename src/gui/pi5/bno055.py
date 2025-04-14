@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""
-BNO055 IMU Demo for Raspberry Pi 5 with Ubuntu Desktop
------------------------------------------------------
-A simple demo to read and display data from the BNO055 IMU sensor
-connected to a Raspberry Pi 5 running Ubuntu Desktop.
-"""
 
 import time
 import smbus2
