@@ -31,7 +31,7 @@ class Servo():
         self.pca.setPWMFreq(freq)
 
 
-    def angle2pulse(self, kin_angle, reverse,  min_angle=-90, max_angle=120):
+    def angle2pulse(self, kin_angle, reverse,  min_angle=-90, max_angle=90):
         '''
         pulse = (max- min)/(max angle-min angle) * (angle - min angle) + min
         '''

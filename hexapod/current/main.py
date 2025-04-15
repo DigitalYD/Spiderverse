@@ -103,13 +103,13 @@ def hexapod_control(hexapod, ble_data):
         # # Get IK values from the targets
         # # if foot_targets != None:
         # #     angles = solve_effector_IK(leg, foot_targets[i])
-        # #     # Calculate new positions and update leg's angles
+        # # #     # Calculate new positions and update leg's angles
 
-            # if hexapod.currentMode == "neutral":
-            #     hexapod.start()
+            if hexapod.currentMode == "neutral":
+                hexapod.start()
                 
-            # # if leg.Name == "RR" or leg.Name == "LR":
-            # leg.move_leg()
+            # if  leg.Name == "LM":
+            leg.move_leg()
            
 
                 #if hexapod.currentMode == "walking":

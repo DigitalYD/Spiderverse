@@ -92,13 +92,13 @@ class Leg:
         elif self.Name == "LM":
             radial_dir = get_radial_direction(coxa_pos, 0) # get direction of the coxa
         elif self.Name == "LF":
-            radial_dir = get_radial_direction(coxa_pos, 60) ## here
+            radial_dir = get_radial_direction(coxa_pos, 50) ## here
         elif self.Name == "RF":
             radial_dir = get_radial_direction(coxa_pos, -100)
         elif self.Name == "RM":
             radial_dir = get_radial_direction(coxa_pos, -20)
         elif self.Name == "RR":
-            radial_dir = get_radial_direction(coxa_pos, 10)
+            radial_dir = get_radial_direction(coxa_pos, 0)
         else:
             radial_dir = get_radial_direction(coxa_pos)
 
@@ -145,7 +145,7 @@ class Leg:
         elif self.Name == "LM":
             radial_dir = get_radial_direction(coxa_pos, 0) # get direction of the coxa
         elif self.Name == "LF":
-            radial_dir = get_radial_direction(coxa_pos, 25) ## here
+            radial_dir = get_radial_direction(coxa_pos, 50) ## here
         elif self.Name == "RF":
             radial_dir = get_radial_direction(coxa_pos, -100)
         elif self.Name == "RM":

@@ -263,7 +263,7 @@ class Pod:
         step_complete = True
         # delta_idx = 1 if self.direction == 1 else -1
 
-        speed_multiplier = 6
+        speed_multiplier = 5
         delta_idx = speed_multiplier if self.direction == 1 else -speed_multiplier
 
         for i, leg in enumerate(self.Legs):
