@@ -242,6 +242,16 @@ class LidarWidget(QWidget):
         """)
         map_button_layout.addWidget(self.tri_slam_button, 0, 2)
         
+        # Add IMU-based SLAM button
+        self.imu_slam_button = QPushButton("IMU SLAM")
+        self.imu_slam_button.setToolTip("Launch SLAM with IMU odometry")
+        self.imu_slam_button.clicked.connect(self.launch_imu_slam)
+        self.imu_slam_button.setStyleSheet(button_style + """
+            background-color: #4b70e0;
+            color: white;
+        """)
+        map_button_layout.addWidget(self.imu_slam_button, 0, 3)
+        
         # Save map button in second row, spanning all columns - blue background
         self.save_map_button = QPushButton("SAVE MAP")
         self.save_map_button.setToolTip("Save the current SLAM map to a file")
@@ -252,7 +262,7 @@ class LidarWidget(QWidget):
             font-size: 14px;
             padding: 10px;
         """)
-        map_button_layout.addWidget(self.save_map_button, 1, 0, 1, 3)  # row, col, rowspan, colspan
+        map_button_layout.addWidget(self.save_map_button, 1, 0, 1, 4)  # row, col, rowspan, colspan (updated span for new button)
         
         # Current SLAM process tracking
         self.slam_process = None
@@ -751,7 +761,7 @@ class LidarWidget(QWidget):
                         break
                 else:
                     # No terminal found, run script directly
-                    cmd = ["bash", script_path]
+                    cmd = ["bash", "-c", f"cd ~/Documents/Spiderverse/lidar_ws && ./imu_slam.sh"]
                     self.slam_process = subprocess.Popen(
                         cmd,
                         cwd=os.path.expanduser("~/Documents/Spiderverse/lidar_ws")
@@ -760,7 +770,7 @@ class LidarWidget(QWidget):
                     self.status_label.setStyleSheet("color: lime;")
             else:
                 # For other platforms
-                cmd = ["bash", script_path]
+                cmd = ["bash", "-c", f"cd ~/Documents/Spiderverse/lidar_ws && ./imu_slam.sh"]
                 self.slam_process = subprocess.Popen(
                     cmd,
                     cwd=os.path.expanduser("~/Documents/Spiderverse/lidar_ws")
@@ -799,9 +809,114 @@ class LidarWidget(QWidget):
             self.slam_button.setEnabled(True)
             self.bi_slam_button.setEnabled(True)
             self.tri_slam_button.setEnabled(True)
+            self.imu_slam_button.setEnabled(True)
             
             # Stop the timer
             self.process_timer.stop()
+    
+    def launch_imu_slam(self):
+        """Launch SLAM with IMU-based odometry"""
+        from PyQt5.QtWidgets import QMessageBox
+        
+        # Check if a SLAM process is already running
+        if self.slam_process is not None:
+            if self.slam_process.poll() is None:  # Still running
+                response = QMessageBox.question(
+                    self,
+                    "SLAM Already Running",
+                    "A SLAM process is already running. Do you want to stop it and start IMU-based SLAM?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+                
+                if response == QMessageBox.No:
+                    return
+                    
+                # Kill the existing process
+                try:
+                    self.slam_process.terminate()
+                    self.slam_process.wait(timeout=3)
+                    if self.slam_process.poll() is None:
+                        self.slam_process.kill()
+                except Exception as e:
+                    print(f"Error terminating existing SLAM process: {e}")
+        
+        # Path to the IMU SLAM shell script in lidar_ws
+        script_path = os.path.expanduser("~/Documents/Spiderverse/lidar_ws/imu_slam.sh")
+        
+        if not os.path.exists(script_path):
+            QMessageBox.critical(self, "Error", f"IMU SLAM script not found at {script_path}")
+            return
+            
+        # Update button states
+        self.slam_button.setEnabled(False)
+        self.bi_slam_button.setEnabled(False)
+        self.tri_slam_button.setEnabled(False)
+        self.imu_slam_button.setEnabled(False)
+        
+        # Update status
+        self.status_label.setText("Starting IMU-based SLAM...")
+        self.status_label.setStyleSheet("color: orange;")
+        
+        # Force update UI
+        from PyQt5.QtCore import QCoreApplication
+        QCoreApplication.processEvents()
+        
+        try:
+            # Create a new terminal window to run the SLAM script
+            if sys.platform == 'linux':
+                # For Linux, use xterm, gnome-terminal, or konsole
+                for terminal in ['xterm', 'gnome-terminal', 'konsole']:
+                    if subprocess.call(['which', terminal], stdout=subprocess.PIPE) == 0:
+                        if terminal == 'gnome-terminal':
+                            cmd = [terminal, '--', 'bash', '-c', f"cd ~/Documents/Spiderverse/lidar_ws && ./imu_slam.sh; exec bash"]
+                        elif terminal == 'konsole':
+                            cmd = [terminal, '-e', f"cd ~/Documents/Spiderverse/lidar_ws && ./imu_slam.sh; exec bash"]
+                        else:  # xterm
+                            cmd = [terminal, '-e', f"cd ~/Documents/Spiderverse/lidar_ws && ./imu_slam.sh; exec bash"]
+                        
+                        self.slam_process = subprocess.Popen(cmd)
+                        self.status_label.setText("Running IMU-based SLAM in separate terminal")
+                        self.status_label.setStyleSheet("color: lime;")
+                        break
+                else:
+                    # No terminal found, run script directly
+                    cmd = ["python3", script_path]
+                    self.slam_process = subprocess.Popen(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        universal_newlines=True
+                    )
+                    self.status_label.setText("Running IMU-based SLAM (no terminal available)")
+                    self.status_label.setStyleSheet("color: lime;")
+            else:
+                # For other platforms
+                cmd = ["python3", script_path]
+                self.slam_process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    universal_newlines=True
+                )
+                self.status_label.setText("Running IMU-based SLAM")
+                self.status_label.setStyleSheet("color: lime;")
+            
+            # Start a timer to check process status
+            self.process_timer = QTimer()
+            self.process_timer.timeout.connect(self.check_slam_process)
+            self.process_timer.start(1000)  # Check every second
+            
+        except Exception as e:
+            self.status_label.setText(f"Error launching IMU-based SLAM: {e}")
+            self.status_label.setStyleSheet("color: red;")
+            QMessageBox.critical(self, "Error", f"Failed to launch IMU-based SLAM:\n{str(e)}")
+            
+            # Re-enable buttons
+            self.slam_button.setEnabled(True)
+            self.bi_slam_button.setEnabled(True)
+            self.tri_slam_button.setEnabled(True)
+            self.imu_slam_button.setEnabled(True)
     
     def save_map(self):
         """Run the save_map.sh script to save the current SLAM map using QProcess"""
