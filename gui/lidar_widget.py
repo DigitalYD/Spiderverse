@@ -247,17 +247,17 @@ class LidarWidget(QWidget):
         self.imu_slam_button.setToolTip("Launch SLAM with IMU odometry")
         self.imu_slam_button.clicked.connect(self.launch_imu_slam)
         self.imu_slam_button.setStyleSheet(button_style + """
-            background-color: #4b70e0;
-            color: white;
+            background-color: #dddddd;
+            color: black;
         """)
         map_button_layout.addWidget(self.imu_slam_button, 0, 3)
         
-        # Save map button in second row, spanning all columns - blue background
+        # Save map button in second row, spanning all columns - green background
         self.save_map_button = QPushButton("SAVE MAP")
         self.save_map_button.setToolTip("Save the current SLAM map to a file")
         self.save_map_button.clicked.connect(self.save_map)
         self.save_map_button.setStyleSheet(button_style + """
-            background-color: #3498db;
+            background-color: #2ecc71;
             color: white;
             font-size: 14px;
             padding: 10px;
