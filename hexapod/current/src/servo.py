@@ -18,7 +18,7 @@ class Servo():
 
         if pca == 0x40:
             self.pca_index = 0
-        elif pca == 0x70:
+        elif pca == 0x41:
             self.pca_index = 1
 
         self.offset = offset # make an array for offsets of legs

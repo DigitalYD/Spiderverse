@@ -79,8 +79,7 @@ def hexapod_control(hexapod, ble_data):
     #     hexapod.set_gait(gait_type, speed_factor, phase_shifts)
     #     hexapod.perform_gait(num_cycles=1)
     
-    #  aquire thetas and move hexapod legs
-
+    #  
 
     while True:
 
@@ -94,7 +93,10 @@ def hexapod_control(hexapod, ble_data):
         '''
         
         hexapod.update()  # Get new foot targets from gait manager
-        # time.sleep(0.05)
+        # time.sleep(0.025)
+
+      
+            
         for i, leg in enumerate(hexapod.Legs):
         #     print(leg.Name)
         #     print(leg.Coxa.servo_index, leg.Femur.servo_index, leg.Tibia.servo_index)
@@ -105,16 +107,22 @@ def hexapod_control(hexapod, ble_data):
         # #     angles = solve_effector_IK(leg, foot_targets[i])
         # #     # Calculate new positions and update leg's angles
 
-            # if hexapod.currentMode == "neutral":
-            #     hexapod.start()
+            if hexapod.currentMode == "neutral":
+                hexapod.start()
                 
-            # # if leg.Name == "RR" or leg.Name == "LR":
-            # leg.move_leg()
+            # if leg.Name == "RF" or leg.Name == "RM" or leg.Name == "RR":
+            leg.move_leg()
            
+            
 
                 #if hexapod.currentMode == "walking":
                     #print(leg.bezier_curve.curve())
                     #exit()
+        
+
+        
+
+        
     # In a loop starting here
     # -----
     # receive new message from controller

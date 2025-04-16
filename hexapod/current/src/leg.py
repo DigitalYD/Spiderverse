@@ -59,7 +59,7 @@ class Leg:
     t: float = 0.0                                  # Progress along the full bezier curve [0,1]
     control_points: Dict[str, np.ndarray] = field(init=False)
     # For Real Time
-    right_toe_from_coxa:int = 90
+    right_toe_from_coxa:int = 70
     left_toe_from_coxa:int = 70
     # For simulation
     sim_toe_from_coxa = 150 # distance to place bezier curve away fro the hexapod coxa
@@ -88,17 +88,17 @@ class Leg:
         from_coxa = coxa_pos + [0,0, POD_Z_HEIGHT]
         # NOTE: Ensure the legs don't hit the middle legs!
         if self.Name == "LR":
-            radial_dir = get_radial_direction(coxa_pos, -10) # get direction of the coxa
+            radial_dir = get_radial_direction(coxa_pos, 15) # get direction of the coxa
         elif self.Name == "LM":
             radial_dir = get_radial_direction(coxa_pos, 0) # get direction of the coxa
         elif self.Name == "LF":
-            radial_dir = get_radial_direction(coxa_pos, 60) ## here
+            radial_dir = get_radial_direction(coxa_pos, 50) ## here
         elif self.Name == "RF":
-            radial_dir = get_radial_direction(coxa_pos, -100)
+            radial_dir = get_radial_direction(coxa_pos, -50)
         elif self.Name == "RM":
-            radial_dir = get_radial_direction(coxa_pos, -20)
+            radial_dir = get_radial_direction(coxa_pos, -40)
         elif self.Name == "RR":
-            radial_dir = get_radial_direction(coxa_pos, 10)
+            radial_dir = get_radial_direction(coxa_pos, -15)
         else:
             radial_dir = get_radial_direction(coxa_pos)
 
@@ -141,17 +141,17 @@ class Leg:
         # Provide angle offset from coxa for rear legs
         # NOTE: Ensure the legs don't hit the middle legs!
         if self.Name == "LR":
-            radial_dir = get_radial_direction(coxa_pos, -10) # get direction of the coxa
+            radial_dir = get_radial_direction(coxa_pos, 15) # get direction of the coxa
         elif self.Name == "LM":
             radial_dir = get_radial_direction(coxa_pos, 0) # get direction of the coxa
         elif self.Name == "LF":
-            radial_dir = get_radial_direction(coxa_pos, 25) ## here
+            radial_dir = get_radial_direction(coxa_pos, 50) ## here
         elif self.Name == "RF":
-            radial_dir = get_radial_direction(coxa_pos, -100)
+            radial_dir = get_radial_direction(coxa_pos, -50)
         elif self.Name == "RM":
-            radial_dir = get_radial_direction(coxa_pos, -20)
+            radial_dir = get_radial_direction(coxa_pos, -40)
         elif self.Name == "RR":
-            radial_dir = get_radial_direction(coxa_pos, 10)
+            radial_dir = get_radial_direction(coxa_pos, -15)
         else:
             radial_dir = get_radial_direction(coxa_pos)
         # get the translated start position for each individual leg based off the coxa coord & offset
@@ -222,7 +222,7 @@ class Leg:
         # else:
         self.control_points = { # ported from original left side working code
             "start":    start_pos,
-            "lift":     start_pos + np.array([0, 0, -70]),
+            "lift":     start_pos + np.array([0, 0, -80]),
             "peak":     start_pos + np.array([0, 50, -150]),
             "lower":    start_pos + np.array([0, 75, -70]),
             "touchdown":start_pos + np.array([0, 75, 0]),
