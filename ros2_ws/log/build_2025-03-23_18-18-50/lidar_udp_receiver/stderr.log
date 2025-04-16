@@ -1,0 +1,17 @@
+[01m[K/home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver/src/lidar_udp_receiver_node.cpp:[m[K In member function ‘[01m[Kbool LidarUdpReceiver::setupUdpSocket()[m[K’:
+[01m[K/home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver/src/lidar_udp_receiver_node.cpp:78:39:[m[K [01;31m[Kerror: [m[K‘[01m[KF_GETFL[m[K’ was not declared in this scope
+   78 |         int flags = fcntl(socket_fd_, [01;31m[KF_GETFL[m[K, 0);
+      |                                       [01;31m[K^~~~~~~[m[K
+[01m[K/home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver/src/lidar_udp_receiver_node.cpp:78:21:[m[K [01;31m[Kerror: [m[K‘[01m[Kfcntl[m[K’ was not declared in this scope
+   78 |         int flags = [01;31m[Kfcntl[m[K(socket_fd_, F_GETFL, 0);
+      |                     [01;31m[K^~~~~[m[K
+[01m[K/home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver/src/lidar_udp_receiver_node.cpp:79:27:[m[K [01;31m[Kerror: [m[K‘[01m[KF_SETFL[m[K’ was not declared in this scope
+   79 |         fcntl(socket_fd_, [01;31m[KF_SETFL[m[K, flags | O_NONBLOCK);
+      |                           [01;31m[K^~~~~~~[m[K
+[01m[K/home/ocean/Documents/Spiderverse/ros2_ws/src/lidar_udp_receiver/src/lidar_udp_receiver_node.cpp:79:44:[m[K [01;31m[Kerror: [m[K‘[01m[KO_NONBLOCK[m[K’ was not declared in this scope; did you mean ‘[01m[KSOCK_NONBLOCK[m[K’?
+   79 |         fcntl(socket_fd_, F_SETFL, flags | [01;31m[KO_NONBLOCK[m[K);
+      |                                            [01;31m[K^~~~~~~~~~[m[K
+      |                                            [32m[KSOCK_NONBLOCK[m[K
+gmake[2]: *** [CMakeFiles/lidar_udp_receiver_node.dir/build.make:76: CMakeFiles/lidar_udp_receiver_node.dir/src/lidar_udp_receiver_node.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:137: CMakeFiles/lidar_udp_receiver_node.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2
