@@ -28,7 +28,7 @@ class PCA9685:
     __ALLLED_OFF_L = 0xFC
     __ALLLED_OFF_H = 0xFD
 
-    def __init__(self, address=0x40, debug=False):
+    def __init__(self, address=0x40, debug=True):
         self.bus = smbus.SMBus(1)
         self.address = address
         self.debug = debug
@@ -38,9 +38,18 @@ class PCA9685:
 
     def write(self, reg, value):
         "Writes an 8-bit value to the specified register/address"
-        self.bus.write_byte_data(self.address, reg, value)
-        if (self.debug):
-            print("I2C: Write 0x%02X to register 0x%02X" % (value, reg))
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                self.bus.write_byte_data(self.address, reg, value)
+                print(attempt)
+                print("I2C: Write 0x%02X to register 0x%02X" % (value, reg))
+                return
+            except OSError as e:
+                if attempt == max_retries - 1:
+                    raise e
+                import time
+                time.sleep(0.2)
 
     def read(self, reg):
         "Read an unsigned byte from the I2C device"

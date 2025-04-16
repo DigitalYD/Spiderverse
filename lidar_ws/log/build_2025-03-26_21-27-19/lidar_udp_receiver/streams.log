@@ -1,0 +1,23 @@
+[0.310s] Invoking command in '/home/asher/Documents/Spiderverse/lidar_ws/src/lidar_udp_receiver': PYTHONPATH=/home/asher/Documents/Spiderverse/lidar_ws/build/lidar_udp_receiver/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages: /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/lidar_udp_receiver build --build-base /home/asher/Documents/Spiderverse/lidar_ws/build/lidar_udp_receiver/build install --record /home/asher/Documents/Spiderverse/lidar_ws/build/lidar_udp_receiver/install.log --single-version-externally-managed install_data
+[0.427s] running egg_info
+[0.427s] writing ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/PKG-INFO
+[0.427s] writing dependency_links to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/dependency_links.txt
+[0.427s] writing entry points to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/entry_points.txt
+[0.427s] writing requirements to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/requires.txt
+[0.427s] writing top-level names to ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/top_level.txt
+[0.428s] reading manifest file '../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/SOURCES.txt'
+[0.429s] writing manifest file '../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info/SOURCES.txt'
+[0.429s] running build
+[0.429s] running build_py
+[0.429s] running install
+[0.429s] running install_lib
+[0.430s] running install_data
+[0.430s] copying config/slam.rviz -> /home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/share/lidar_udp_receiver/config
+[0.430s] running install_egg_info
+[0.431s] removing '/home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver-0.0.1-py3.10.egg-info' (and everything under it)
+[0.432s] Copying ../../build/lidar_udp_receiver/lidar_udp_receiver.egg-info to /home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages/lidar_udp_receiver-0.0.1-py3.10.egg-info
+[0.432s] running install_scripts
+[0.445s] Installing lidar_udp_receiver script to /home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/lidar_udp_receiver
+[0.445s] Installing tf_broadcaster script to /home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/lidar_udp_receiver
+[0.446s] writing list of installed files to '/home/asher/Documents/Spiderverse/lidar_ws/build/lidar_udp_receiver/install.log'
+[0.460s] Invoked command in '/home/asher/Documents/Spiderverse/lidar_ws/src/lidar_udp_receiver' returned '0': PYTHONPATH=/home/asher/Documents/Spiderverse/lidar_ws/build/lidar_udp_receiver/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/asher/Documents/Spiderverse/lidar_ws/install/lidar_udp_receiver/lib/python3.10/site-packages: /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/lidar_udp_receiver build --build-base /home/asher/Documents/Spiderverse/lidar_ws/build/lidar_udp_receiver/build install --record /home/asher/Documents/Spiderverse/lidar_ws/build/lidar_udp_receiver/install.log --single-version-externally-managed install_data
