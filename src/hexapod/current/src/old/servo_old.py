@@ -3,7 +3,7 @@ from pca9685 import PCA9685
 
 
 class Servo(object):
-    def __init__(self, left_address=0x40, right_address=0x41, pulse_min=544, pulse_max=2400, freq=50):
+    def __init__(self, left_address=0x40, right_address=0x70, pulse_min=544, pulse_max=2400, freq=50):
         self.offset = [[0, 0, 0]] * 6
         self.pwm_left = PCA9685(left_address)
         #self.pwm_right = PCA9685(right_address)

@@ -593,9 +593,9 @@ def new_legs(): #test code to add 6 new legs
             Index=i,
             Name=f"Leg {i}",
             #Setup Servo Motors ||| UNCOMMENT ON HEXAPOD |||
-            Coxa=Servo(i * 3, pca=0x40 if i * 3 < 8 else 0x41),  # Assign PCA based on ID
-            Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 8 else 0x41),
-            Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 8 else 0x41),
+            Coxa=Servo(i * 3, pca=0x40 if i * 3 < 8 else 0x70),  # Assign PCA based on ID
+            Femur=Servo(i * 3 + 1, pca=0x40 if i * 3 + 1 < 8 else 0x70),
+            Tibia=Servo(i * 3 + 2, pca=0x40 if i * 3 + 2 < 8 else 0x70),
             coxa_angle_offset=45.0,
             offset_transformation_matrix=np.eye(4), # Creates 4x4 identity matrix for an insert
             segment_length=SegmentLengths(45, 110, 193),
@@ -627,9 +627,9 @@ def new_leg():
             Index=1,
             Name=f"Leg {1}",
             #Setup Servo Motors ||| UNCOMMENT ON HEXAPOD |||
-            Coxa=Servo(0, pca= 0x41, offset=0),  # Assign PCA based on ID
-            Femur=Servo(1, pca= 0x41, offset=-120),
-            Tibia=Servo(2, pca= 0x41, offset= 0),
+            Coxa=Servo(0, pca= 0x70, offset=0),  # Assign PCA based on ID
+            Femur=Servo(1, pca= 0x70, offset=-120),
+            Tibia=Servo(2, pca= 0x70, offset= 0),
             coxa_angle_offset=coxa_offset,
             offset_transformation_matrix=offset_matrix, # Creates 4x4 identity matrix for an insert
             segment_length=SegmentLengths(45, 110, 193),
