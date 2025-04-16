@@ -109,7 +109,7 @@ def hexapod_control(hexapod, ble_data):
             #     hexapod.start()
                 
             # # if leg.Name == "RR" or leg.Name == "LR":
-            # leg.move_leg()
+            leg.move_leg()
            
 
                 #if hexapod.currentMode == "walking":
