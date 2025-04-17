@@ -273,11 +273,21 @@ class IMUWidget(QWidget):
         except Exception as e:
             print(f"Error processing message: {e}")
     
+    # Track last update time to throttle updates
+    last_update_time = 0
+    update_interval = 0.1  # Only update UI 10 times per second max
+    
     def update_with_imu_data(self, data):
         """Update UI with real IMU data (called from the UI thread via signal)"""
         status = data.get("status")
         
         if status == "data":
+            # Throttle updates to avoid UI congestion
+            current_time = time.time()
+            if current_time - self.last_update_time < self.update_interval:
+                return
+            self.last_update_time = current_time
+            
             # We received actual data, update the UI
             
             # Update quaternion

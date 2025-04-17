@@ -34,7 +34,8 @@ class LidarDataServer(Node):
         self.scan_buffer = []
         self.buffer_size = 3  # Number of scans to average
         self.last_write_time = 0
-        self.write_interval = 0.1  # Seconds between writes
+        self.write_interval = 0.2  # Increase interval to reduce file I/O 
+        self.last_data = None  # Cache previous data to avoid unnecessary writes
         
         # Create or clear output file
         with open(self.output_file, 'w') as f:
@@ -144,6 +145,26 @@ class LidarDataServer(Node):
                 }
             else:
                 return
+        
+        # Check if data is significantly different from last write to avoid unnecessary I/O
+        if self.last_data is not None:
+            # Only compare ranges arrays as they're the most important part
+            if len(data['ranges']) == len(self.last_data['ranges']):
+                # Calculate difference percentage
+                diff_count = 0
+                threshold = 0.1  # 10% difference threshold
+                
+                for i, r in enumerate(data['ranges']):
+                    old_r = self.last_data['ranges'][i]
+                    if abs(r - old_r) > threshold:
+                        diff_count += 1
+                
+                # If less than 10% of points changed significantly, skip the write
+                if diff_count < len(data['ranges']) * 0.1:
+                    return
+        
+        # Store the current data for future comparison
+        self.last_data = data
         
         # Write to file (atomic write to avoid partial reads)
         try:

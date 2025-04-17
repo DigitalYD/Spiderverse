@@ -40,12 +40,24 @@ def main():
     QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     
+    # Optimize for performance
+    # This disables some graphical effects but improves performance
+    QCoreApplication.setAttribute(Qt.AA_DisableHighDpiScaling, False)
+    QCoreApplication.setAttribute(Qt.AA_UseDesktopOpenGL, True)  # Use hardware acceleration if available
+    
     # Create application
     app = QApplication(sys.argv)
     
     # Set application name and organization
     app.setApplicationName("Pi5 Dashboard")
     app.setOrganizationName("Pi5Projects")
+    
+    # Enable cache for QPixmap operations if possible
+    try:
+        from PyQt5.QtGui import QPixmapCache
+        QPixmapCache.setCacheLimit(10240)  # 10MB cache
+    except:
+        pass
     
     # Create main window
     window = MainWindow()
@@ -64,7 +76,7 @@ def main():
                 print(f"Error shutting down ROS: {e}")
     
     # Connect cleanup to aboutToQuit signal
-    # app.aboutToQuit.connect(cleanup)
+    app.aboutToQuit.connect(cleanup)
     
     # Start event loop and exit cleanly
     try:

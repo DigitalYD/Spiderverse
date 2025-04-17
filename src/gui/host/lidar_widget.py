@@ -153,12 +153,21 @@ class LidarWidget(QWidget):
         # Timer to check for data file updates
         self.data_timer = QTimer(self)
         self.data_timer.timeout.connect(self.check_lidar_data)
-        self.data_timer.start(100)  # Check for updates every 100ms
+        self.data_timer.start(200)  # Reduced frequency: check every 200ms instead of 100ms
         
         # Timer for visualization updates
         self.viz_timer = QTimer(self)
         self.viz_timer.timeout.connect(self.update_visualization)
-        self.viz_timer.start(100)  # Update visualization every 100ms
+        self.viz_timer.start(200)  # Reduced frequency: update visualization every 200ms
+        
+        # Cache for visualization objects to avoid recreating them
+        self.viz_cache = {
+            'grid_pen': QPen(QColor(40, 40, 40)),
+            'angle_pen': QPen(QColor(70, 70, 70)),
+            'poly_brush': QBrush(QColor(0, 100, 150, 40)),
+            'line_pen': QPen(QColor(0, 150, 200, 100), 1),
+            'point_brush': QBrush(QColor(0, 180, 255, 180))
+        }
         
         # Simulated scan data for demo mode
         self.demo_angle = 0
@@ -393,10 +402,8 @@ class LidarWidget(QWidget):
     
     def draw_grid(self, painter, center_x, center_y, width, height):
         """Draw coordinate grid with distance markers"""
-        # Set up grid pen
-        grid_pen = QPen(QColor(40, 40, 40))
-        grid_pen.setWidth(1)
-        painter.setPen(grid_pen)
+        # Use cached grid pen
+        painter.setPen(self.viz_cache['grid_pen'])
         
         # Calculate max radius based on window size
         max_radius = min(center_x, center_y) - 20
@@ -405,22 +412,23 @@ class LidarWidget(QWidget):
         for distance in range(1, int(self.max_range) + 1):
             radius = distance * self.zoom_factor
             if radius <= max_radius:
-                painter.drawEllipse(
-                    int(center_x - radius),
-                    int(center_y - radius),
-                    int(radius * 2),
-                    int(radius * 2)
-                )
+                # Convert to integers once to reduce conversions
+                x = int(center_x - radius)
+                y = int(center_y - radius)
+                diam = int(radius * 2)
+                painter.drawEllipse(x, y, diam, diam)
                 
-                # Draw distance label
-                font = QFont()
-                font.setPointSize(8)
-                painter.setFont(font)
-                painter.setPen(QColor(60, 60, 60))
-                painter.drawText(
-                    QPointF(center_x + 5, center_y - radius + 15),
-                    f"{distance}m"
-                )
+                # Only draw labels for even distances to reduce text rendering
+                if distance % 2 == 0 or distance == 1:
+                    # Draw distance label
+                    font = QFont()
+                    font.setPointSize(8)
+                    painter.setFont(font)
+                    painter.setPen(QColor(60, 60, 60))
+                    painter.drawText(
+                        QPointF(center_x + 5, center_y - radius + 15),
+                        f"{distance}m"
+                    )
         
         # Draw axis lines
         painter.drawLine(center_x, 0, center_x, height)
@@ -499,8 +507,24 @@ class LidarWidget(QWidget):
         # Sort the points to ensure they're drawn in correct order
         point_data = []
         
-        # Process each scan point
+        # Calculate how many points to skip for optimization
+        # Skip factor increases with higher point counts
+        if hasattr(scan, 'ranges'):
+            total_points = len(scan.ranges)
+            # Only subsample if we have lots of points
+            if total_points > 360:  # More than 1 point per degree
+                skip_factor = 2  # Skip every other point
+            else:
+                skip_factor = 1  # Don't skip points
+        else:
+            skip_factor = 1
+        
+        # Process each scan point (with skipping for optimization)
         for i, range_value in enumerate(scan.ranges):
+            # Skip points based on skip_factor
+            if skip_factor > 1 and i % skip_factor != 0:
+                continue
+                
             # Skip invalid readings
             if math.isinf(range_value) or math.isnan(range_value):
                 continue
@@ -546,7 +570,7 @@ class LidarWidget(QWidget):
         if scan_points:
             # Draw scan polygon (fill)
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(QColor(0, 100, 150, 40)))
+            painter.setBrush(self.viz_cache['poly_brush'])
             if len(scan_points) > 2:
                 # Add center point to close the polygon
                 centered_polygon = QPolygonF(scan_polygon)
@@ -554,24 +578,28 @@ class LidarWidget(QWidget):
                 painter.drawPolygon(centered_polygon)
             
             # Draw point-to-point connections (outline)
-            painter.setPen(QPen(QColor(0, 150, 200, 100), 1))
+            painter.setPen(self.viz_cache['line_pen'])
             if len(scan_points) > 1:
-                for i in range(len(scan_points) - 1):
-                    x1, y1 = scan_points[i]
-                    x2, y2 = scan_points[i + 1]
-                    painter.drawLine(int(x1), int(y1), int(x2), int(y2))
+                # Draw lines more efficiently using a polygon instead of individual lines
+                outline_polygon = QPolygonF()
+                for x, y in scan_points:
+                    outline_polygon.append(QPointF(x, y))
+                # Draw the polygon outline
+                painter.drawPolyline(outline_polygon)
             
-            # Connect last point to first to complete the loop if we have enough points
-            if len(scan_points) > 2:
-                x1, y1 = scan_points[-1]
-                x2, y2 = scan_points[0]
-                painter.drawLine(int(x1), int(y1), int(x2), int(y2))
-            
-            # Draw individual points
+            # Always draw points, but adjust size based on point count for performance
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(QColor(0, 180, 255, 180)))
+            painter.setBrush(self.viz_cache['point_brush'])
+            
+            # Adjust point size based on number of points
+            point_size = 3
+            if len(scan_points) > 500:
+                point_size = 2
+            if len(scan_points) > 1000:
+                point_size = 1
+                
             for x, y in scan_points:
-                painter.drawEllipse(QPointF(x, y), 3, 3)
+                painter.drawEllipse(QPointF(x, y), point_size, point_size)
                 
             # Update status with point count info
             self.status_label.setText(f"LiDAR points: {valid_point_count}")

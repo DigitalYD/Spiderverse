@@ -243,8 +243,12 @@ class GStreamerWidget(QWidget):
         """Process pending GLib events (for GStreamer)"""
         try:
             context = GLib.MainContext.default()
-            while context.pending():
+            # Only process a limited number of events per tick to prevent UI blocking
+            max_iterations = 5
+            iteration_count = 0
+            while context.pending() and iteration_count < max_iterations:
                 context.iteration(False)
+                iteration_count += 1
         except Exception as e:
             print(f"Error in process_glib: {e}")
             # Don't let exceptions in GLib processing crash the app
