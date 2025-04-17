@@ -23,7 +23,7 @@ except ImportError as e:
     sys.exit(1)
 
 # MQTT Configuration - Updated options for better connection
-MQTT_BROKER = "localhost"  # Use localhost for broker on Pi5 itself
+MQTT_BROKER = "0.0.0.0"  # Use localhost for broker on Pi5 itself
 MQTT_PORT = 1883
 MQTT_TOPIC = "pi5/imu"
 MQTT_CLIENT_ID = "pi5_imu_sensor"

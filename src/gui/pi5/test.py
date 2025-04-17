@@ -5,7 +5,7 @@ import signal
 import sys
 
 # Default settings
-TARGET_IP = "192.168.0.77"  # Change this to your laptop's IP
+TARGET_IP = "192.168.0.41"  # Change this to your laptop's IP
 PORT = 5000
 WIDTH = 640
 HEIGHT = 480
