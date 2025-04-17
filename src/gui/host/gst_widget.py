@@ -148,26 +148,41 @@ class GStreamerWidget(QWidget):
                         print("Fallback pipeline 2 also failed to set READY state")
                         return
             
-            # Just setup the fallback display for autovideosink
-            # Create and display a message in the video container
-            self._setup_fallback_display()
-            
-            # Get and print information about the sink for debugging
+            # Try to set up window embedding for xvimagesink when on X11
             sink = self.pipeline.get_by_name("sink")
             if sink:
                 print(f"Sink: {sink.get_name()} of type {sink.__class__.__name__}")
                 print(f"Sink factory: {sink.get_factory().get_name()}")
                 
                 try:
-                    # Log available methods for debugging
-                    methods = [m for m in dir(sink) if not m.startswith('__')]
-                    print(f"Sink methods: {methods[:10]}...")  # Show first 10 to avoid log flood
+                    self.window_id = self.video_container.winId()
+                    print(f"Setting window ID: {self.window_id}")
                     
-                    print("Using autovideosink - video will appear in a separate window")
+                    # Check if running on Wayland
+                    import os
+                    is_wayland = os.environ.get('XDG_SESSION_TYPE', '').lower() == 'wayland'
+                    
+                    if is_wayland:
+                        print("WARNING: Running on Wayland - window embedding may not work")
+                        self._setup_fallback_display()
+                    else:
+                        print("Running on X11 - attempting window embedding")
+                        
+                        # For xvimagesink on X11
+                        if hasattr(sink, "set_window_handle"):
+                            print("Setting window handle via set_window_handle")
+                            sink.set_window_handle(self.window_id)
+                            self.status_label.setText("Status: Embedded video")
+                        else:
+                            print("WARNING: Sink does not support window embedding")
+                            self._setup_fallback_display()
                 except Exception as e:
-                    print(f"Error getting sink info: {e}")
+                    print(f"Error setting window handle: {e}")
+                    # Fall back to separate window with a message
+                    self._setup_fallback_display()
             else:
                 print("WARNING: Could not find sink element in the pipeline")
+                self._setup_fallback_display()
             
             # Now play the pipeline
             ret = self.pipeline.set_state(Gst.State.PLAYING)
@@ -200,10 +215,22 @@ class GStreamerWidget(QWidget):
             self.info_label.setWordWrap(True)
             self.info_label.resize(self.video_container.size())
         
-        # Show message
-        msg = ("Video is streaming in a separate window.\n\n" +
-               "This implementation uses a separate window to avoid X11 integration issues.\n\n" +
-               "If no window appears, check that the camera is streaming correctly.")
+        # Check if running on Wayland
+        import os
+        is_wayland = os.environ.get('XDG_SESSION_TYPE', '').lower() == 'wayland'
+        
+        # Show message with appropriate guidance
+        if is_wayland:
+            msg = ("Video is streaming in a separate window.\n\n" +
+                   "You are running on Wayland which has limited GStreamer embedding support.\n\n" +
+                   "To enable embedded video, log out and choose 'Ubuntu on Xorg' or 'GNOME on Xorg' at the login screen.\n\n" +
+                   "If no video appears, check that the camera is streaming correctly.")
+        else:
+            msg = ("Video is streaming in a separate window.\n\n" +
+                   "You are running on X11, but window embedding still failed.\n\n" +
+                   "This may be due to incompatible GStreamer plugins or version conflicts.\n\n" +
+                   "If no window appears, check that the camera is streaming correctly.")
+        
         self.info_label.setText(msg)
         self.info_label.show()
         
