@@ -30,7 +30,7 @@ class IMUWidget(QWidget):
         # MQTT client and connection parameters
         self.mqtt_client = None
         self.mqtt_connected = False
-        self.broker_address = "192.168.0.112"  # Default Pi address
+        self.broker_address = "192.168.0.49"  # Default Pi address
         self.port = 1883
         self.topic = "pi5/imu"
         
