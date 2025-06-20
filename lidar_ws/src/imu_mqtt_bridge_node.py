@@ -15,7 +15,7 @@ class IMUMQTTBridge(Node):
         super().__init__('imu_mqtt_bridge')
         
         # Get parameters from environment variables
-        self.broker_address = os.environ.get('BROKER_ADDRESS', '192.168.0.49')
+        self.broker_address = os.environ.get('BROKER_ADDRESS', '192.168.0.109')
         self.broker_port = int(os.environ.get('BROKER_PORT', '1883'))
         self.mqtt_topic = os.environ.get('MQTT_TOPIC', 'pi5/imu')
         self.imu_frame = os.environ.get('IMU_FRAME', 'imu_link')

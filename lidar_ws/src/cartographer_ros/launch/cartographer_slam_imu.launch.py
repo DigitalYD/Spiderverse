@@ -209,7 +209,7 @@ import math
 import paho.mqtt.client as mqtt
 
 # Default MQTT configuration
-MQTT_BROKER = "192.168.0.49"
+MQTT_BROKER = "192.168.0.109"
 MQTT_PORT = 1883
 MQTT_TOPIC = "pi5/imu"
 
@@ -372,7 +372,7 @@ if __name__ == '__main__':
             output='screen',
             parameters=[
                 {'use_sim_time': use_sim_time},
-                {'mqtt_broker': '192.168.0.49'},
+                {'mqtt_broker': '192.168.0.109'},
                 {'mqtt_port': 1883},
                 {'mqtt_topic': 'pi5/imu'}
             ],

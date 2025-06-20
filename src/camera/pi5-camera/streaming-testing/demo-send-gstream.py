@@ -4,8 +4,10 @@ import signal
 import sys
 
 # Configure settings
-DEST_IP = "192.168.0.41"  # Update to your laptop's IP
+DEST_IP = "192.168.0."  # Update to your laptop's IP
 #DEST_IP = "192.168.0.41"
+
+
 DEST_PORT = 5000
 
 def start_streaming():

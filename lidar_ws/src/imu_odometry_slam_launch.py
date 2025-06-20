@@ -83,7 +83,7 @@ def generate_launch_description():
         output='screen',
         # Pass parameters as environment variables
         additional_env={
-            'BROKER_ADDRESS': '192.168.0.49',
+            'BROKER_ADDRESS': '192.168.0.109',
             'BROKER_PORT': '1883',
             'MQTT_TOPIC': 'pi5/imu',
             'IMU_FRAME': 'imu_link'

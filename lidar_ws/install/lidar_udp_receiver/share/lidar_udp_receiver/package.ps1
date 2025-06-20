@@ -112,6 +112,5 @@ $env:COLCON_CURRENT_PREFIX=(Get-Item $PSCommandPath).Directory.Parent.Parent.Ful
 
 colcon_package_source_powershell_script "$env:COLCON_CURRENT_PREFIX\share/lidar_udp_receiver/hook/pythonpath.ps1"
 colcon_package_source_powershell_script "$env:COLCON_CURRENT_PREFIX\share/lidar_udp_receiver/hook/ament_prefix_path.ps1"
-colcon_package_source_powershell_script "$env:COLCON_CURRENT_PREFIX\../../build/lidar_udp_receiver/share/lidar_udp_receiver/hook/pythonpath_develop.ps1"
 
 Remove-Item Env:\COLCON_CURRENT_PREFIX
