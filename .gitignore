@@ -19,3 +19,10 @@ ENV/
 build/
 dist/
 *.egg-info/
+
+CLAUDE.md
+maps/
+lidar_ws/log/
+lidar_ws/build/
+install
+log
